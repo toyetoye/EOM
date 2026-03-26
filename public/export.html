@@ -113,7 +113,9 @@ h1{font-size:20px;font-weight:700;margin-bottom:5px}
 <script>
 var vesselId=null, vesselName='';
 
-var FLOORS=[{"id": "floor", "label": "ER Floor", "color": "#1570EF", "equip": [{"id": "me", "name": "Main Engine"}, {"id": "aux", "name": "Auxiliaries"}, {"id": "mgps", "name": "MGPS & ICCP"}]}, {"id": "deck3", "label": "3rd Deck", "color": "#7C3AED", "equip": [{"id": "purifiers", "name": "Purifiers"}, {"id": "ae1", "name": "D/G No.1"}, {"id": "ae2", "name": "D/G No.2"}, {"id": "ae3", "name": "D/G No.3"}, {"id": "sewage", "name": "Sewage Plant"}]}, {"id": "deck2", "label": "2nd Deck", "color": "#0891B2", "equip": [{"id": "aircmp", "name": "Air Compressors"}, {"id": "acplant", "name": "A/C Plant"}, {"id": "fridge", "name": "Fridge & Cold Rooms"}, {"id": "steering", "name": "Steering Gear"}]}, {"id": "upper", "label": "Upper Deck", "color": "#059669", "equip": [{"id": "boiler", "name": "Composite Boiler"}, {"id": "scr", "name": "G/E SCR System"}, {"id": "er_fans", "name": "E/R Fans"}]}, {"id": "tanks", "label": "Tanks", "color": "#B45309", "equip": [{"id": "fo_tanks", "name": "Fuel Oil Tanks"}, {"id": "lo_tanks", "name": "Lube Oil Tanks"}, {"id": "er_tanks", "name": "ER Misc Tanks"}]}, {"id": "weekly", "label": "Weekly Tests", "color": "#0EA5E9", "equip": [{"id": "lo_tests", "name": "Lube Oil Tests"}, {"id": "boiler_water", "name": "Boiler Water Tests"}, {"id": "cooling_water", "name": "Cooling Water Tests"}, {"id": "drinking_water", "name": "Drinking Water Tests"}]}, {"id": "monthly", "label": "Monthly Logs", "color": "#8B5CF6", "equip": [{"id": "scavenge", "name": "Scavenge Inspection"}, {"id": "me_perf", "name": "ME Performance"}, {"id": "chemicals", "name": "Chemicals Inventory"}, {"id": "gas_inv", "name": "Gas Inventory"}, {"id": "lo_grease", "name": "LO & Grease Inventory"}]}, {"id": "rh", "label": "Running Hours", "color": "#6366F1", "equip": [{"id": "rh_prop", "name": "Propulsion & ME"}, {"id": "rh_dg", "name": "Diesel Generators"}, {"id": "rh_air", "name": "Compressed Air"}, {"id": "rh_cool", "name": "Cooling & FW"}, {"id": "rh_lo", "name": "Lube Oil System"}, {"id": "rh_fo", "name": "Fuel Oil System"}, {"id": "rh_fbgs", "name": "Fire, Bilge & GS"}, {"id": "rh_acref", "name": "AC & Refrigeration"}, {"id": "rh_vent", "name": "Ventilation"}, {"id": "rh_cargo", "name": "Cargo System"}]}];
+
+// Catalog loaded from API
+var catalog = [];
 
 window.addEventListener('DOMContentLoaded', async function(){
   if(typeof EOM==='undefined') return;
@@ -121,31 +123,61 @@ window.addEventListener('DOMContentLoaded', async function(){
   try{
     var vessels=await EOM.get('/vessels');
     if(vessels.length){ vesselId=vessels[0].id; vesselName=vessels[0].name; document.getElementById('vessel-lbl').textContent='· '+vesselName; }
-  }catch(e){}
+    catalog = await EOM.get('/watches/field-catalog?vessel_id='+vesselId);
+    buildPicker();
+  }catch(e){ document.getElementById('sec-picker').innerHTML='<div style="color:var(--t3);font-size:12px;padding:10px">Error loading equipment: '+e.message+'</div>'; }
   setRange(30);
-  buildPicker();
 });
 
 function buildPicker(){
   var picker=document.getElementById('sec-picker');
-  picker.innerHTML=FLOORS.map(function(fl,fi){
-    var equips=fl.equip.map(function(eq){
-      return '<label class="equip-chip on" id="chip_'+eq.id+'" data-floor="'+fl.id+'" data-equip="'+eq.id+'">'
-        +'<input type="checkbox" value="'+fl.id+'/'+eq.id+'" checked onchange="onChipChange(''+fl.id+'',''+eq.id+'',this.checked)"/> '
-        +eq.name+'</label>';
+  if(!catalog.length){ picker.innerHTML='<div style="color:var(--t3);font-size:12px;padding:10px">No data available. Upload some ER logs first.</div>'; return; }
+
+  // Group by section from the catalog
+  var groups={};
+  catalog.forEach(function(c){
+    var grp=c.section||'Other';
+    if(!groups[grp]) groups[grp]=[];
+    groups[grp].push(c);
+  });
+
+  var openGroups={};
+  var grpKeys=Object.keys(groups).sort();
+  if(grpKeys.length) openGroups[grpKeys[0]]=true;
+
+  picker.innerHTML=grpKeys.map(function(grp){
+    var grpId=grp.replace(/[^a-zA-Z0-9]/g,'_');
+    var isOpen=!!openGroups[grp];
+    var chips=groups[grp].map(function(c){
+      return '<label class="equip-chip on" id="chip_'+c.fid.replace(/[^a-zA-Z0-9]/g,'_')+'">'
+        +'<input type="checkbox" value="'+c.fid+'" checked onchange="onChipChange(this)"/> '
+        +c.parameter+' <span style="opacity:.5;font-size:9px">('+c.equipment+')</span></label>';
     }).join('');
-    return '<div class="floor-group" id="fg_'+fl.id+'">'
-      +'<div class="floor-hdr" onclick="toggleFloor(''+fl.id+'',event)">'
-      +'<div class="floor-dot" style="background:'+fl.color+'"></div>'
-      +'<span class="floor-name">'+fl.label+'</span>'
-      +'<span class="floor-count" id="fc_'+fl.id+'">'+fl.equip.length+'/'+fl.equip.length+'</span>'
-      +'<span class="floor-chevron" id="chev_'+fl.id+'">▶</span></div>'
-      +'<div class="floor-body" id="fb_'+fl.id+'">'
-      +'<button class="floor-all all" id="fa_'+fl.id+'" onclick="toggleFloorAll(''+fl.id+'',event)">All</button>'
-      +equips+'</div></div>';
+    return '<div class="floor-group">'
+      +'<div class="floor-hdr" data-grpid="'+grpId+'" onclick="pickToggleGroup(this)">'
+      +'<span class="floor-chevron open" id="pchev_'+grpId+'">▶</span>'
+      +'<span class="floor-name">'+grp+'</span>'
+      +'<span class="floor-count" id="pfc_'+grpId+'">'+groups[grp].length+'/'+groups[grp].length+'</span>'
+      +'</div>'
+      +'<div class="floor-body open" id="pfb_'+grpId+'">'+chips+'</div>'
+      +'</div>';
   }).join('');
-  // Open first floor by default
-  if(FLOORS.length) toggleFloor(FLOORS[0].id, null, true);
+}
+
+function pickToggleGroup(el){
+  var grpId=el.getAttribute('data-grpid');
+  var body=document.getElementById('pfb_'+grpId);
+  var chev=document.getElementById('pchev_'+grpId);
+  if(!body) return;
+  var isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  if(chev){ chev.classList.toggle('open',!isOpen); }
+}
+
+function onChipChange(cb){
+  var chipId='chip_'+cb.value.replace(/[^a-zA-Z0-9]/g,'_');
+  var chip=document.getElementById(chipId);
+  if(chip) chip.classList.toggle('on',cb.checked);
 }
 
 function toggleFloor(flId, e, forceOpen){
@@ -161,19 +193,7 @@ function toggleFloor(flId, e, forceOpen){
   }
 }
 
-function toggleFloorAll(flId, e){
-  e.stopPropagation();
-  var fl=FLOORS.find(function(f){return f.id===flId;});
-  if(!fl) return;
-  var allOn=fl.equip.every(function(eq){
-    var cb=document.querySelector('#chip_'+eq.id+' input');
-    return cb&&cb.checked;
-  });
-  fl.equip.forEach(function(eq){
-    var cb=document.querySelector('#chip_'+eq.id+' input');
-    if(cb){ cb.checked=!allOn; onChipChange(flId,eq.id,!allOn); }
-  });
-}
+// toggleFloorAll removed - groups now managed by pickToggleGroup
 
 function onChipChange(flId, eqId, checked){
   // Update chip style
@@ -196,26 +216,15 @@ function onChipChange(flId, eqId, checked){
 }
 
 function selectAllEquip(on){
-  FLOORS.forEach(function(fl){
-    fl.equip.forEach(function(eq){
-      var cb=document.querySelector('#chip_'+eq.id+' input');
-      if(cb){ cb.checked=on; onChipChange(fl.id,eq.id,on); }
-    });
+  document.querySelectorAll('#sec-picker input[type="checkbox"]').forEach(function(cb){
+    cb.checked=on; onChipChange(cb);
   });
 }
 
 function getSelectedEquip(){
-  // Returns array of {floorId, equipId, equipName, section}
-  var selected=[];
-  var SECMAP={floor:'ER Floor',deck3:'3rd Deck',deck2:'2nd Deck',upper:'Upper Deck',tanks:'Tanks',
-              weekly:'Weekly Tests',monthly:'Monthly Logs',rh:'Running Hours'};
-  document.querySelectorAll('.equip-chip input:checked').forEach(function(cb){
-    var parts=cb.value.split('/');
-    var fl=FLOORS.find(function(f){return f.id===parts[0];});
-    var eq=fl&&fl.equip.find(function(e){return e.id===parts[1];});
-    if(eq) selected.push({floorId:parts[0],equipId:parts[1],name:eq.name,section:SECMAP[parts[0]]||parts[0]});
-  });
-  return selected;
+  var fids=[];
+  document.querySelectorAll('#sec-picker input:checked').forEach(function(cb){fids.push(cb.value);});
+  return fids;
 }
 
 function setRange(days){
@@ -243,30 +252,21 @@ function setProgress(pct,msg){
 async function doExport(type){
   var from=document.getElementById('date-from').value;
   var to=document.getElementById('date-to').value;
-  var equip=getSelectedEquip();
+  var fids=getSelectedEquip();
   if(!from||!to){alert('Select a date range');return;}
-  if(!equip.length){alert('Select at least one equipment item');return;}
+  if(!fids.length){alert('Select at least one parameter');return;}
   if(!vesselId){alert('No vessel loaded');return;}
 
   document.getElementById('btn-xlsx').disabled=true;
   document.getElementById('btn-pdf').disabled=true;
-
-  // Get unique section names for the API
-  var sections=[...new Set(equip.map(function(e){return e.floorId;}))];
-  setProgress(10,'Fetching '+equip.length+' equipment items…');
+  setProgress(10,'Fetching '+fids.length+' parameters from server…');
 
   try{
-    var data=await EOM.get('/watches/export?vessel_id='+vesselId+'&from='+from+'&to='+to+'&sections='+sections.join(','));
+    var data=await EOM.get('/watches/export?vessel_id='+vesselId+'&from='+from+'&to='+to+'&fids='+fids.join(','));
     var rows=data.rows||[];
-    setProgress(60,'Processing '+rows.length+' readings…');
-
-    // Filter to only selected equipment names
-    var selectedNames=equip.map(function(e){return e.name;});
-    rows=rows.filter(function(r){return selectedNames.indexOf(r.equipment)>-1;});
-    setProgress(75,'Building output…');
-
-    if(type==='xlsx') buildXLSX(rows,from,to,equip);
-    else buildPDF(rows,from,to,equip);
+    setProgress(70,'Processing '+rows.length+' readings…');
+    if(type==='xlsx') buildXLSX(rows,from,to,fids);
+    else buildPDF(rows,from,to,fids);
   }catch(e){
     alert('Export error: '+e.message);
     setProgress(0,'Error: '+e.message);
@@ -275,7 +275,7 @@ async function doExport(type){
   document.getElementById('btn-pdf').disabled=false;
 }
 
-function buildXLSX(rows,from,to,equip){
+function buildXLSX(rows,from,to,fids){
   setProgress(80,'Building workbook…');
   var wb=XLSX.utils.book_new();
 
@@ -283,7 +283,7 @@ function buildXLSX(rows,from,to,equip){
   var summ=[
     ['ENGINE ROOM LOG EXPORT'],[''],
     ['Vessel:',vesselName],['From:',from],['To:',to],
-    ['Equipment selected:',equip.map(function(e){return e.name;}).join(', ')],
+    ['Parameters selected:',fids.length+' parameters'],
     ['Total readings:',rows.length],['Generated:',new Date().toLocaleString()],
   ];
   var ws0=XLSX.utils.aoa_to_sheet(summ);
@@ -331,7 +331,7 @@ function buildXLSX(rows,from,to,equip){
   setProgress(100,'✅ Excel exported — '+rows.length+' readings across '+(wb.SheetNames.length-1)+' sections');
 }
 
-function buildPDF(rows,from,to,equip){
+function buildPDF(rows,from,to,fids){
   var grouped={};
   rows.forEach(function(r){
     var sec=r.section||'Other';
