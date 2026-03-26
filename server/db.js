@@ -112,9 +112,10 @@ async function initDB() {
       )
     `);
 
+    await client.query('COMMIT');
+    // Run DDL that must be outside transaction (CREATE FUNCTION, triggers)
     await addCycloneTable(client);
     await addDefectTables(client);
-    await client.query('COMMIT');
     console.log('✅ EOM DB initialised');
   } catch (e) {
     await client.query('ROLLBACK');
@@ -146,72 +147,77 @@ async function addCycloneTable(client) {
 module.exports.addCycloneTable = addCycloneTable;
 
 async function addDefectTables(client) {
+  // Each statement separate — node-postgres doesn't support multi-statement queries
+  // Also CREATE FUNCTION/TRIGGER must be outside transaction blocks
   await client.query(`
     CREATE TABLE IF NOT EXISTS eom_defects (
       id                SERIAL PRIMARY KEY,
       vessel_id         INTEGER NOT NULL REFERENCES eom_vessels(id),
-      ref_number        VARCHAR(30) UNIQUE,   -- auto-generated DEF-XXXX
+      ref_number        VARCHAR(30) UNIQUE,
       reported_by       VARCHAR(100) NOT NULL,
       date_reported     DATE NOT NULL DEFAULT CURRENT_DATE,
       location          VARCHAR(100),
       equipment         VARCHAR(150),
       description       TEXT NOT NULL,
       suggested_fix     TEXT,
-      priority          VARCHAR(20) DEFAULT 'normal', -- low/normal/high/critical
+      priority          VARCHAR(20) DEFAULT 'normal',
       reported_to       VARCHAR(100),
       date_reported_to  DATE,
       expected_closeout DATE,
       date_closed       DATE,
-      status            VARCHAR(30) DEFAULT 'open',   -- open/in_progress/closed/cancelled
+      status            VARCHAR(30) DEFAULT 'open',
       closed_by         VARCHAR(100),
       sire_relevant     BOOLEAN DEFAULT false,
       photo_paths       TEXT[],
       created_at        TIMESTAMP DEFAULT NOW(),
       updated_at        TIMESTAMP DEFAULT NOW()
-    );
-
+    )
+  `);
+  await client.query(`
     CREATE TABLE IF NOT EXISTS eom_defect_comments (
       id          SERIAL PRIMARY KEY,
       defect_id   INTEGER NOT NULL REFERENCES eom_defects(id) ON DELETE CASCADE,
       author      VARCHAR(100) NOT NULL,
-      role        VARCHAR(50),              -- vessel/superintendent/office
+      role        VARCHAR(50),
       comment     TEXT NOT NULL,
       created_at  TIMESTAMP DEFAULT NOW()
-    );
-
+    )
+  `);
+  await client.query(`
     CREATE TABLE IF NOT EXISTS eom_audit_log (
       id          SERIAL PRIMARY KEY,
       vessel_id   INTEGER REFERENCES eom_vessels(id),
-      entity_type VARCHAR(50),             -- defect/watch/reading
+      entity_type VARCHAR(50),
       entity_id   INTEGER,
-      action      VARCHAR(50),             -- created/updated/closed/amended
+      action      VARCHAR(50),
       changed_by  VARCHAR(100),
       changed_at  TIMESTAMP DEFAULT NOW(),
       old_value   JSONB,
       new_value   JSONB,
       ip_address  VARCHAR(45),
       user_agent  TEXT
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_defects_vessel ON eom_defects(vessel_id);
-    CREATE INDEX IF NOT EXISTS idx_defects_status  ON eom_defects(status);
-    CREATE INDEX IF NOT EXISTS idx_audit_entity    ON eom_audit_log(entity_type, entity_id);
-
-    -- Auto-generate ref number trigger
+    )
+  `);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_defects_vessel ON eom_defects(vessel_id)`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_defects_status  ON eom_defects(status)`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_audit_entity    ON eom_audit_log(entity_type, entity_id)`);
+  // Create trigger function — must use $$ not \$\$ — and outside transaction
+  await client.query(`
     CREATE OR REPLACE FUNCTION set_defect_ref()
-    RETURNS TRIGGER AS \$\$
+    RETURNS TRIGGER AS $$
     BEGIN
       IF NEW.ref_number IS NULL THEN
         NEW.ref_number := 'DEF-' || LPAD(NEW.id::TEXT, 4, '0');
       END IF;
       RETURN NEW;
     END;
-    \$\$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trg_defect_ref ON eom_defects;
+    $$ LANGUAGE plpgsql
+  `);
+  await client.query(`DROP TRIGGER IF EXISTS trg_defect_ref ON eom_defects`);
+  await client.query(`
     CREATE TRIGGER trg_defect_ref
       BEFORE INSERT ON eom_defects
-      FOR EACH ROW EXECUTE FUNCTION set_defect_ref();
+      FOR EACH ROW EXECUTE FUNCTION set_defect_ref()
   `);
 }
 module.exports.addDefectTables = addDefectTables;
