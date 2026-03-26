@@ -531,7 +531,7 @@ router.get('/export', requireAuth, async (req, res) => {
 
     let query = `
       SELECT
-        w.watch_date::date  AS date,
+        TO_CHAR(w.watch_date, 'YYYY-MM-DD') AS date,
         r.section,
         r.equipment,
         r.parameter,
