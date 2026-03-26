@@ -187,7 +187,6 @@ function renderSidebar(items){
     groups[grp].push(c);
   });
 
-  // Open first group by default
   var grpKeys = Object.keys(groups).sort();
   if(grpKeys.length && Object.keys(openGroups).length === 0) {
     openGroups[grpKeys[0]] = true;
@@ -195,265 +194,56 @@ function renderSidebar(items){
 
   var h = '';
   grpKeys.forEach(function(grp){
-    var isOpen = openGroups[grp];
-    var selCount = groups[grp].filter(function(c){ return selectedFids.includes(c.fid); }).length;
-    var badge = selCount > 0 ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">'+selCount+'</span>' : '';
+    var isOpen = !!openGroups[grp];
+    var selCount = groups[grp].filter(function(c){ return selectedFids.indexOf(c.fid) > -1; }).length;
+    var grpId = grp.replace(/[^a-zA-Z0-9]/g, '_');
+    var badge = selCount > 0
+      ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">' + selCount + '</span>'
+      : '';
 
-    h += '<div class="acc-group" id="acc_'+grp.replace(/\s/g,'_')+'">';
-    h += '<div class="acc-hdr" onclick="toggleGroup(''+grp.replace(/'/g,'\\'')+'')">';
-    h += '<span class="acc-chevron '+(isOpen?'open':'')+'">▶</span>';
-    h += '<span class="acc-label">'+esc(grp)+'</span>';
+    h += '<div class="acc-group">';
+    h += '<div class="acc-hdr" data-grp="' + grpId + '" onclick="handleGroupClick(this)">';
+    h += '<span class="acc-chevron' + (isOpen ? ' open' : '') + '">▶</span>';
+    h += '<span class="acc-label">' + esc(grp) + '</span>';
     h += badge;
     h += '</div>';
-    h += '<div class="acc-body' + (isOpen?' open':'') + '">';
+    h += '<div class="acc-body' + (isOpen ? ' open' : '') + '" id="ab_' + grpId + '">';
     groups[grp].forEach(function(c){
-      var isSel = selectedFids.includes(c.fid);
-      h += '<button class="param-btn'+(isSel?' selected':'')+'" onclick="toggleParam(\''+c.fid+'\')">';
-      h += '<span class="param-name">'+esc(c.parameter)+'</span>';
-      h += '<span class="param-unit">'+esc(c.unit||'')+'</span>';
-      h += '<span class="param-count">'+c.reading_count+'×</span>';
+      var isSel = selectedFids.indexOf(c.fid) > -1;
+      h += '<button class="param-btn' + (isSel ? ' selected' : '') + '" data-fid="' + c.fid + '" onclick="handleParamClick(this)">';
+      h += '<span class="param-name">' + esc(c.parameter) + '</span>';
+      h += '<span class="param-unit">' + esc(c.unit || '') + '</span>';
+      h += '<span class="param-count">' + c.reading_count + '×</span>';
       h += '</button>';
     });
     h += '</div></div>';
   });
-  document.getElementById('sb-list').innerHTML = h || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
+  document.getElementById('sb-list').innerHTML = h
+    || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
+
+  // Store grp name map for click handler
+  window._grpMap = {};
+  grpKeys.forEach(function(grp){
+    var grpId = grp.replace(/[^a-zA-Z0-9]/g, '_');
+    window._grpMap[grpId] = grp;
+  });
 }
 
-function toggleGroup(grp){
+function handleGroupClick(el){
+  var grpId = el.getAttribute('data-grp');
+  var grp = window._grpMap && window._grpMap[grpId] ? window._grpMap[grpId] : grpId;
   openGroups[grp] = !openGroups[grp];
-  // Re-render to reflect state
-  var filtered = document.getElementById('param-search').value
-    ? catalog.filter(function(c){ return c.parameter.toLowerCase().includes(document.getElementById('param-search').value.toLowerCase()) || c.equipment.toLowerCase().includes(document.getElementById('param-search').value.toLowerCase()); })
-    : catalog;
-  renderSidebar(filtered);
+  var body = document.getElementById('ab_' + grpId);
+  var chev = el.querySelector('.acc-chevron');
+  if(body) body.classList.toggle('open', !!openGroups[grp]);
+  if(chev) chev.classList.toggle('open', !!openGroups[grp]);
 }
 
-function toggleParam(fid){
-  var idx = selectedFids.indexOf(fid);
-  if(idx > -1){
-    selectedFids.splice(idx, 1);
-  } else {
-    if(selectedFids.length >= 12){ alert('Max 12 parameters at once'); return; }
-    selectedFids.push(fid);
-  }
-  renderChips();
-  filterParams();
+function handleParamClick(el){
+  toggleParam(el.getAttribute('data-fid'));
 }
 
-function renderChips(){
-  var wrap = document.getElementById('selected-chips');
-  wrap.innerHTML = selectedFids.map(function(fid){
-    var meta = catalog.find(function(c){return c.fid===fid;});
-    var label = meta ? meta.parameter : fid;
-    return '<span class="chip">'+esc(label.split(' ').slice(0,3).join(' '))+'<span class="chip-x" onclick="toggleParam(\''+fid+'\')">×</span></span>';
-  }).join('');
-}
 
-function clearSelected(){
-  selectedFids = [];
-  renderChips();
-  filterParams();
-  document.getElementById('charts-area').innerHTML = '<div class="empty"><div class="empty-ico">📈</div><div class="empty-title">Select parameters to plot</div></div>';
-  destroyCharts();
-}
-
-async function plotSelected(){
-  if(!selectedFids.length){ alert('Select at least one parameter'); return; }
-  const days = document.getElementById('days-sel').value;
-  const mode = document.getElementById('mode-sel').value;
-  const area = document.getElementById('charts-area');
-  area.innerHTML = '<div style="padding:40px;text-align:center"><div class="spinner"></div><div style="font-size:12px;color:var(--t3);margin-top:8px">Loading '+selectedFids.length+' parameters…</div></div>';
-  destroyCharts();
-
-  try{
-    const data = await EOM.get('/watches/analytics?vessel_id='+vesselId+'&fids='+selectedFids.join(',')+'&days='+days);
-    if(!data.series.length){ area.innerHTML = '<div class="empty"><div class="empty-ico">📭</div><div class="empty-title">No data found</div><div class="empty-sub">No readings for the selected parameters in this period.</div></div>'; return; }
-
-    if(mode==='overlay') renderOverlay(data.series, area);
-    else if(mode==='separate') renderSeparate(data.series, area);
-    else renderCompare(data.series, area);
-  }catch(e){ area.innerHTML = '<div class="empty"><div class="empty-ico">❌</div><div class="empty-title">'+esc(e.message)+'</div></div>'; }
-}
-
-function renderOverlay(series, area){
-  // All series on one chart
-  var allDates = [...new Set(series.flatMap(function(s){return s.points.map(function(p){return p.date;});}))].sort();
-
-  var h = '<div class="chart-card"><div class="chart-head"><span class="chart-title">';
-  h += series.map(function(s){return s.parameter;}).join(' · ');
-  h += '</span><span style="font-size:11px;color:var(--t3)">'+allDates.length+' data points</span></div>';
-  h += '<div class="chart-body" style="height:320px"><canvas id="chart_overlay"></canvas></div></div>';
-
-  // Stats table
-  h += buildStatsTable(series);
-  area.innerHTML = h;
-
-  var datasets = series.map(function(s, i){
-    var dateMap = {};
-    s.points.forEach(function(p){ dateMap[p.date] = p.value; });
-    return {
-      label: s.parameter + (s.unit?' ('+s.unit+')':''),
-      data: allDates.map(function(d){ return dateMap[d] !== undefined ? dateMap[d] : null; }),
-      borderColor: COLORS[i%COLORS.length],
-      backgroundColor: COLORS[i%COLORS.length]+'22',
-      borderWidth: 2, pointRadius: 2, tension: 0.3, fill: false, spanGaps: true
-    };
-  });
-
-  var ctx = document.getElementById('chart_overlay');
-  chartInstances.push(new Chart(ctx, {
-    type:'line',
-    data:{ labels: allDates.map(shortDate), datasets },
-    options: defaultChartOpts()
-  }));
-}
-
-function renderSeparate(series, area){
-  var h = buildStatsTable(series);
-  h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">';
-  series.forEach(function(s, i){
-    var cid = 'chart_sep_'+i;
-    var vals = s.points.map(function(p){return p.value;});
-    var avg = vals.length ? (vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2) : '—';
-    h += '<div class="chart-card">'
-       + '<div class="chart-head"><div><div class="chart-title">'+esc(s.parameter)+'</div>'
-       + '<div style="font-size:10px;color:var(--t3)">'+esc(s.equipment||s.section)+' · avg: '+avg+' '+(s.unit||'')+'</div></div></div>'
-       + '<div class="chart-body" style="height:200px"><canvas id="'+cid+'"></canvas></div></div>';
-  });
-  h += '</div>';
-  area.innerHTML = h;
-
-  series.forEach(function(s, i){
-    var ctx = document.getElementById('chart_sep_'+i);
-    if(!ctx) return;
-    chartInstances.push(new Chart(ctx, {
-      type:'line',
-      data:{
-        labels: s.points.map(function(p){return shortDate(p.date);}),
-        datasets:[{
-          label: s.parameter,
-          data: s.points.map(function(p){return p.value;}),
-          borderColor: COLORS[i%COLORS.length],
-          backgroundColor: COLORS[i%COLORS.length]+'22',
-          borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true
-        }]
-      },
-      options: defaultChartOpts(s.unit)
-    }));
-  });
-}
-
-function renderCompare(series, area){
-  // Bar chart comparing averages, then stats table
-  var h = '<div class="chart-card"><div class="chart-head"><span class="chart-title">Parameter Comparison — Average Values</span></div>';
-  h += '<div class="chart-body" style="height:300px"><canvas id="chart_compare"></canvas></div></div>';
-  h += buildStatsTable(series);
-  area.innerHTML = h;
-
-  var ctx = document.getElementById('chart_compare');
-  var avgs = series.map(function(s){
-    var vals = s.points.map(function(p){return p.value;});
-    return vals.length ? +(vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2) : 0;
-  });
-
-  chartInstances.push(new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels: series.map(function(s){return s.parameter.split(' ').slice(0,3).join(' ');}),
-      datasets:[{
-        label:'Average',
-        data: avgs,
-        backgroundColor: COLORS.slice(0, series.length).map(function(c){return c+'cc';}),
-        borderRadius: 6
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){ return c.parsed.y + ' ' + (series[c.dataIndex].unit||''); }}}},
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:11}}},
-        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10}},beginAtZero:false}
-      }
-    }
-  }));
-}
-
-function buildStatsTable(series){
-  var h = '<div class="chart-card"><div class="chart-head"><span class="chart-title">Statistical Summary</span></div>';
-  h += '<div style="overflow-x:auto"><table class="comp-tbl"><thead><tr>';
-  h += '<th style="text-align:left;min-width:200px">Parameter</th><th>Equipment</th><th>Readings</th><th>Min</th><th>Avg</th><th>Max</th><th>Latest</th><th>Trend</th></tr></thead><tbody>';
-
-  series.forEach(function(s){
-    var vals = s.points.map(function(p){return p.value;});
-    if(!vals.length) return;
-    var min = Math.min.apply(null,vals);
-    var max = Math.max.apply(null,vals);
-    var avg = (vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2);
-    var latest = vals[vals.length-1];
-    // Simple trend: compare last 3 vs first 3
-    var trend = '—'; var tClass = 'trend-flat';
-    if(vals.length >= 6){
-      var firstAvg = (vals.slice(0,3).reduce(function(a,b){return a+b;},0)/3);
-      var lastAvg  = (vals.slice(-3).reduce(function(a,b){return a+b;},0)/3);
-      var pct = ((lastAvg-firstAvg)/firstAvg*100).toFixed(1);
-      if(Math.abs(parseFloat(pct)) < 1){ trend='→ stable'; tClass='trend-flat'; }
-      else if(parseFloat(pct)>0){ trend='↑ +'+pct+'%'; tClass='trend-up'; }
-      else { trend='↓ '+pct+'%'; tClass='trend-dn'; }
-    }
-    var u = s.unit||'';
-    h += '<tr>'
-       + '<td><span style="font-weight:600">'+esc(s.parameter)+'</span> <span style="color:var(--t3);font-size:10px">'+u+'</span></td>'
-       + '<td style="color:var(--t3)">'+esc(s.equipment||s.section)+'</td>'
-       + '<td>'+vals.length+'</td>'
-       + '<td>'+min+'</td>'
-       + '<td style="font-weight:600">'+avg+'</td>'
-       + '<td>'+max+'</td>'
-       + '<td style="color:var(--blue)">'+latest+'</td>'
-       + '<td class="'+tClass+'">'+trend+'</td>'
-       + '</tr>';
-  });
-
-  h += '</tbody></table></div></div>';
-  return h;
-}
-
-function defaultChartOpts(unit){
-  return {
-    responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}},
-      tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.parsed.y+(unit?' '+unit:'');}}}
-    },
-    scales:{
-      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10},maxTicksLimit:12}},
-      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10}}}
-    }
-  };
-}
-
-function destroyCharts(){
-  chartInstances.forEach(function(c){try{c.destroy();}catch(e){}});
-  chartInstances=[];
-}
-
-function shortDate(d){
-  if(!d) return '';
-  var p = d.split('-');
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return p[2]+' '+months[parseInt(p[1])-1];
-}
-
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function showMsg(type,msg){ document.getElementById('charts-area').innerHTML='<div class="empty"><div class="empty-ico">❌</div><div class="empty-title">'+esc(msg)+'</div></div>'; }
-
-// Patch EOM with get if missing
-if(typeof EOM!=='undefined' && !EOM.get){
-  EOM.get=async function(path){
-    const token=localStorage.getItem('eom_token');
-    const r=await fetch('/api'+path,{headers:{'Authorization':'Bearer '+token}});
-    const d=await r.json(); if(!r.ok) throw new Error(d.error||'Failed'); return d;
-  };
-}
 </script>
 </body>
 </html>
