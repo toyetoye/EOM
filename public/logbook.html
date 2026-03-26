@@ -559,6 +559,9 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
       <a href="/export.html" class="dash-btn nav-super-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
         <span class="db-ico">📤</span>Export Logs
       </a>
+      <a href="/export.html" class="dash-btn nav-super-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">📤</span>Export Logs
+      </a>
       <a href="/admin.html" class="dash-btn nav-admin-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
         <span class="db-ico">⚙️</span>Admin
       </a>
@@ -569,9 +572,9 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
     </div>
     <div class="ls" id="ls"></div>
     <div class="left-foot">
-      <div class="prog-row"><span>Progress</span><span id="prog-lbl">—</span></div>
-      <div class="prog-track"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
-      <button class="btn-submit" onclick="submitLog()">📋 Submit Daily Log</button>
+      <div style="padding:4px 0 6px;font-size:10px;font-weight:700;color:var(--sidebar-t3);text-transform:uppercase;letter-spacing:.5px">Daily Progress</div>
+      <div id="floor-prog-bars"></div>
+      <button class="btn-submit" onclick="submitLog()" style="margin-top:8px">📋 Submit Daily Log</button>
     </div>
   </div>
 
@@ -1832,7 +1835,27 @@ function tabSt(eq,tab){
   let w='e';const ck=(f,v)=>{if(!v)return;const s=gs(v,f);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';};(tab.fields||[]).forEach(f=>ck(f,V[f.id]??''));(tab.duoFields||[]).forEach(f=>{ck(f,V[f.id]??'');ck(f,V[f.id2]??'');});if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++)ck(p,CYL[`${eq.id}_${tab.id}_${p.id}_${c}`]??'');});return w;}
 function eqSt(eq){let w='e';eq.tabs.forEach(t=>{const s=tabSt(eq,t);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';});return w;}
 function flSt(fl){let w='e';fl.equip.forEach(e=>{const s=eqSt(e);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';});return w;}
-function getProgress(){let t=0,f=0;FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{(tab.fields||[]).forEach(fi=>{t++;if((V[fi.id]??'')!=='')f++;});(tab.duoFields||[]).forEach(fi=>{t+=2;if((V[fi.id]??'')!=='')f++;if((V[fi.id2]??'')!=='')f++;});(tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(fi=>{t++;if((V[fi.id]??'')!=='')f++;}));if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++){t++;if((CYL[`${eq.id}_${tab.id}_${p.id}_${c}`]??'')!=='')f++;}});})));return{t,f};}
+function getProgress(){
+  var t=0,f=0;
+  FLOORS.filter(function(fl){return fl.freq==='daily';}).forEach(function(fl){
+    fl.equip.forEach(function(eq){eq.tabs.forEach(function(tab){
+      (tab.fields||[]).forEach(function(fi){t++;if((V[fi.id]??'')!=='')f++;});
+      (tab.duoFields||[]).forEach(function(fi){t+=2;if((V[fi.id]??'')!=='')f++;if((V[fi.id2]??'')!=='')f++;});
+      (tab.unitGroups||[]).forEach(function(ug){ug.fields.forEach(function(fi){t++;if((V[fi.id]??'')!=='')f++;});});
+      if(tab.cylinders)tab.cylinders.params.forEach(function(p){for(var c=1;c<=tab.cylinders.count;c++){t++;if((CYL[eq.id+'_'+tab.id+'_'+p.id+'_'+c]??'')!=='')f++;}});
+    });});
+  });
+  return{t,f};
+}
+function getFloorProgress(flId){
+  var t=0,f=0,fl=FL_MAP[flId];if(!fl)return{t:0,f:0};
+  fl.equip.forEach(function(eq){eq.tabs.forEach(function(tab){
+    (tab.fields||[]).forEach(function(fi){t++;if((V[fi.id]??'')!=='')f++;});
+    (tab.duoFields||[]).forEach(function(fi){t+=2;if((V[fi.id]??'')!=='')f++;if((V[fi.id2]??'')!=='')f++;});
+    (tab.unitGroups||[]).forEach(function(ug){ug.fields.forEach(function(fi){t++;if((V[fi.id]??'')!=='')f++;});});
+  });});
+  return{t,f};
+}
 
 // Accordion state: which floor is expanded
 const EXPANDED_FLOOR = {current: null};
@@ -1882,11 +1905,25 @@ function buildLeft(){
   });
 
   sb.innerHTML = out;
-  var prog = getProgress();
-  var pb = document.getElementById("prog-bar");
-  var pl = document.getElementById("prog-lbl");
-  if(pb) pb.style.width = (prog.t ? Math.round(prog.f/prog.t*100) : 0) + "%";
-  if(pl) pl.textContent = prog.f + "/" + prog.t + " fields";
+  // Per-floor progress bars in sidebar
+  var fpWrap=document.getElementById('floor-prog-bars');
+  if(fpWrap){
+    var fpHtml='';
+    FLOORS.filter(function(fl){return fl.freq==='daily';}).forEach(function(fl){
+      var fp=getFloorProgress(fl.id);
+      var pct=fp.t?Math.round(fp.f/fp.t*100):0;
+      var bc=pct===100?'var(--ok)':pct>0?fl.color:'rgba(255,255,255,.12)';
+      fpHtml+='<div style="margin-bottom:5px">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
+        +'<div style="width:8px;height:8px;border-radius:2px;flex-shrink:0;background:'+fl.color+'"></div>'
+        +'<span style="font-size:10px;color:var(--sidebar-t2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+fl.label+'</span>'
+        +'<span style="font-size:9px;font-family:var(--mono);color:var(--sidebar-t3)">'+fp.f+'/'+fp.t+'</span>'
+        +'</div>'
+        +'<div style="height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+bc+';border-radius:2px;transition:width .3s"></div></div></div>';
+    });
+    fpWrap.innerHTML=fpHtml;
+  }
   updateGSt();
 }
 
@@ -2289,148 +2326,125 @@ function setWatchEngineerFocus(){var el=document.getElementById('duty_eng');if(e
 
 function buildDashboard(){
   try{
-  const el=document.getElementById('dashboard-view');
-  if(!el)return;
-
-  const prog=getProgress();
-  const pct=prog.t?Math.round(prog.f/prog.t*100):0;
-  let alms=0,warns=0;
-  FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{
-    (tab.fields||[]).forEach(f=>{if(!V[f.id])return;const s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;});
-    (tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(f=>{if(!V[f.id])return;const s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;}));
-  })));
-
-  // Frequency completion
-  const freqC={daily:{t:0,f:0},weekly:{t:0,f:0},monthly:{t:0,f:0},rh:{t:0,f:0}};
-  FLOORS.forEach(fl=>{
-    // Running Hours floor gets its own 'rh' bucket
-    const freq = fl.id==='rh' ? 'rh' : (fl.freq||'daily');
-    const fc=freqC[freq]||(freqC[freq]={t:0,f:0});
-    fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{
-      (tab.fields||[]).forEach(fi=>{fc.t++;if((V[fi.id]||'')!=='')fc.f++;});
-      (tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(fi=>{fc.t++;if((V[fi.id]||'')!=='')fc.f++;}));
-    }));
+  var el=document.getElementById('dashboard-view');
+  if(!el) return;
+  var prog=getProgress();
+  var pct=prog.t?Math.round(prog.f/prog.t*100):0;
+  var alms=0,warns=0;
+  FLOORS.filter(function(fl){return fl.freq==='daily';}).forEach(function(fl){
+    fl.equip.forEach(function(eq){eq.tabs.forEach(function(tab){
+      (tab.fields||[]).forEach(function(f){if(!V[f.id])return;var s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;});
+      (tab.unitGroups||[]).forEach(function(ug){ug.fields.forEach(function(f){if(!V[f.id])return;var s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;});});
+    });});
   });
+  var openDef=DEFECT_STATS?(parseInt(DEFECT_STATS.open||0)+parseInt(DEFECT_STATS.in_progress||0)):0;
+  var critDef=DEFECT_STATS?parseInt(DEFECT_STATS.critical||0):0;
+  var overDef=DEFECT_STATS?parseInt(DEFECT_STATS.overdue||0):0;
+  var cyc_alerts=CYCLONE_STATUS?[1,2,3].filter(function(n){return CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning);}).length:0;
+  var today=document.getElementById('log_date')?document.getElementById('log_date').value:(new Date().toISOString().slice(0,10));
+  var de=document.getElementById('de_select');
+  var deName=(de&&de.value&&de.options[de.selectedIndex])?de.options[de.selectedIndex].text:'Not selected';
+  var h='';
 
-  const pctOf=(fc)=>fc.t?Math.round(fc.f/fc.t*100):0;
-  const today=document.getElementById('log_date')?.value||(new Date().toISOString().slice(0,10));
-  const de=document.getElementById('de_select');
-  const deName=de&&de.value?de.options[de.selectedIndex]?.text:'Not selected';
+  // Header row
+  h+='<div class="db-header"><div class="db-title">Engine Room Daily Log</div>';
+  h+='<div class="db-sub">'+esc(WATCH_STATE.vesselName||'Alfred Temile')+' &nbsp;&middot;&nbsp; '+today+' &nbsp;&middot;&nbsp; D/E: '+esc(deName)+'</div></div>';
 
-  let h='';
-  h+=`<div class="db-header">
-    <div class="db-title">Engine Room Daily Log</div>
-    <div class="db-sub">${WATCH_STATE.vesselName||'Alfred Temile'} &nbsp;·&nbsp; ${today} &nbsp;·&nbsp; D/E: ${deName}</div>
-  </div>`;
-
-  // Watch engineer + overall progress
-  h+=`<div class="db-watch-row" style="margin-bottom:16px">
-    <div class="db-watch-icon">👷</div>
-    <div class="db-watch-body">
-      <div class="db-watch-title">Duty Engineer: ${deName}</div>
-      <div class="db-watch-detail">${prog.f} of ${prog.t} fields entered across all sections</div>
-      <div class="db-progress-bar"><div class="db-progress-fill ${pct===100?'ok':''}" style="width:${pct}%"></div></div>
-    </div>
-    <button class="db-watch-action" onclick="setDEFocus()">Change D/E</button>
-  </div>`;
-
-  // 4 frequency cards
-  const FREQ=[
-    {key:'daily',  label:'Daily Logs',     icon:'📅', color:'var(--blue)',  sub:'ER Rounds · MGPS · Stern Tube'},
-    {key:'weekly', label:'Weekly Tests',   icon:'📊', color:'var(--warn)',  sub:'Lube Oil · Boiler Water'},
-    {key:'monthly',label:'Monthly Logs',   icon:'📆', color:'var(--ok-tx)', sub:'Scavenge · Performance · Inventory'},
-    {key:'rh',     label:'Running Hours',  icon:'⏱️', color:'#7c3aed',     sub:'141 equipment items'},
-  ];
-  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">`;
-  FREQ.forEach(fc=>{
-    const c=freqC[fc.key]||{t:0,f:0};
-    const p=pctOf(c);
-    h+=`<div class="db-chart-card" style="cursor:pointer" onclick="jumpToFreq('${fc.key}')">
-      <div class="db-chart-head">
-        <span class="db-chart-title">${fc.icon} ${fc.label}</span>
-        <span class="db-chart-sub">${c.f}/${c.t}</span>
-      </div>
-      <div style="padding:14px;text-align:center">
-        <div style="font-size:30px;font-weight:700;font-family:var(--mono);color:${fc.color}">${p}%</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:3px">${fc.sub}</div>
-        <div style="height:4px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden">
-          <div style="height:100%;background:${fc.color};width:${p}%;border-radius:2px;transition:width .4s"></div>
-        </div>
-      </div>
-    </div>`;
-  });
-  h+=`</div>`;
-
-  // Summary stats
-  const openDefects = DEFECT_STATS ? (parseInt(DEFECT_STATS.open||0)+parseInt(DEFECT_STATS.in_progress||0)) : 0;
-  const critDefects = DEFECT_STATS ? parseInt(DEFECT_STATS.critical||0) : 0;
-  const overdueDefects = DEFECT_STATS ? parseInt(DEFECT_STATS.overdue||0) : 0;
-  // Cyclone alerts
-  const cycloneAlerts = CYCLONE_STATUS ? [1,2,3].filter(n=>CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning)).length : 0;
-
-  h+=`<div class="db-stats" style="margin-bottom:16px">
-    <div class="db-stat ${pct===100?'ok-card':''}">
-      <div class="db-stat-icon">✅</div><div class="db-stat-val">${pct}%</div>
-      <div class="db-stat-label">Today Complete</div>
-    </div>
-    <div class="db-stat ${alms>0?'alm-card':''}">
-      <div class="db-stat-icon">🚨</div><div class="db-stat-val">${alms}</div>
-      <div class="db-stat-label">Active Alarms</div>
-    </div>
-    <div class="db-stat ${openDefects>0?'alm-card':''}">
-      <div class="db-stat-icon">🔧</div>
-      <div class="db-stat-val" style="color:${critDefects>0?'var(--al-tx)':openDefects>0?'var(--warn)':'var(--ok-tx)'}">${openDefects}</div>
-      <div class="db-stat-label">Open Defects${critDefects>0?' ('+critDefects+' critical)':''}</div>
-    </div>
-    <div class="db-stat ${overdueDefects>0?'alm-card':''}">
-      <div class="db-stat-icon">⏰</div>
-      <div class="db-stat-val" style="color:${overdueDefects>0?'var(--al-tx)':'var(--t2)'}">${overdueDefects}</div>
-      <div class="db-stat-label">Overdue Close-outs</div>
-    </div>
-  </div>`;
-
-  // Cyclone filter alerts
-  if(CYCLONE_STATUS && cycloneAlerts > 0){
-    var cyc_dglist = [1,2,3].filter(function(n){return CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning);}).map(function(n){
-      var c=CYCLONE_STATUS[n];
-      var hrs = c.hours_since_change!==null ? Math.round(c.hours_since_change) : '?';
-      return 'D/G No.'+n+': '+hrs+' hrs '+(c.alert?'🚨':'⚠️');
-    }).join(' &nbsp;·&nbsp; ');
-    h += '<div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">';
-    h += '<span style="font-size:20px">⚠️</span>';
-    h += '<div><div style="font-size:13px;font-weight:700;color:#fca5a5">Cyclone Filter Alert</div>';
-    h += '<div style="font-size:12px;color:var(--t2);margin-top:2px">'+cyc_dglist+' — filter change overdue</div></div>';
-    h += '<a href="/defects.html" style="margin-left:auto;padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.2);color:#fca5a5;text-decoration:none;font-size:11px;font-weight:700">View Defects →</a>';
-    h += '</div>';
+  // Cyclone banner
+  if(CYCLONE_STATUS&&cyc_alerts>0){
+    var cdgs=[1,2,3].filter(function(n){return CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning);}).map(function(n){
+      var c=CYCLONE_STATUS[n];var hrs=c.hours_since_change!==null?Math.round(c.hours_since_change):'?';
+      return 'D/G No.'+n+': '+hrs+'hrs '+(c.alert?'🚨':'⚠️');
+    }).join(' &nbsp;&middot;&nbsp; ');
+    h+='<div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      +'<span style="font-size:20px">⚠️</span>'
+      +'<div><div style="font-size:13px;font-weight:700;color:#fca5a5">Cyclone Filter Alert</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+cdgs+' — filter change overdue</div></div>'
+      +'<a href="/defects.html" style="margin-left:auto;padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.2);color:#fca5a5;text-decoration:none;font-size:11px;font-weight:700">View Defects →</a>'
+      +'</div>';
   }
 
-  // Daily sections deck overview
-  h+=`<div class="db-grid">`;
-  FLOORS.filter(fl=>fl.freq==='daily').forEach(fl=>{
-    const items=fl.equip.map(eq=>{
-      const ws=eqSt(eq);const wc=ws==='e'?'dim':ws;
-      let ef=0,et=0;
-      eq.tabs.forEach(t=>{(t.fields||[]).forEach(f=>{et++;if((V[f.id]||'')!=='')ef++;});(t.unitGroups||[]).forEach(ug=>ug.fields.forEach(f=>{et++;if((V[f.id]||'')!=='')ef++;}));});
-      return`<div class="db-eq-row" onclick="showEquipment_nav('${fl.id}','${eq.id}')">
-        <span style="font-size:13px">${eq.icon}</span>
-        <span class="db-eq-name">${eq.name}</span>
-        <span class="db-eq-filled">${ef}/${et}</span>
-        <div class="db-eq-dot ${wc}"></div>
-      </div>`;
-    }).join('');
-    h+=`<div class="db-deck-card">
-      <div class="db-deck-head">
-        <div class="db-deck-pip" style="background:${fl.color}"></div>
-        <span class="db-deck-title">${fl.label}</span>
-        <span class="db-deck-count">${fl.sub}</span>
-      </div>${items}
-    </div>`;
+  // 4 stat cards
+  h+='<div class="db-stats" style="margin-bottom:16px">';
+  h+='<div class="db-stat '+(pct===100?'ok-card':'')+'"><div class="db-stat-icon">✅</div><div class="db-stat-val">'+pct+'%</div><div class="db-stat-label">Daily Complete</div></div>';
+  h+='<div class="db-stat '+(alms>0?'alm-card':'')+'"><div class="db-stat-icon">🚨</div><div class="db-stat-val">'+alms+'</div><div class="db-stat-label">Active Alarms</div></div>';
+  h+='<div class="db-stat '+(openDef>0?'alm-card':'')+'"><div class="db-stat-icon">🔧</div>'
+    +'<div class="db-stat-val" style="color:'+(critDef>0?'var(--al-tx)':openDef>0?'var(--warn)':'var(--ok-tx)')+'">'+openDef+'</div>'
+    +'<div class="db-stat-label">Open Defects'+(critDef>0?' ('+critDef+' critical)':'')+'</div></div>';
+  h+='<div class="db-stat '+(overDef>0?'alm-card':'')+'"><div class="db-stat-icon">⏰</div>'
+    +'<div class="db-stat-val" style="color:'+(overDef>0?'var(--al-tx)':'var(--t2)')+'">'+overDef+'</div>'
+    +'<div class="db-stat-label">Overdue Close-outs</div></div>';
+  h+='</div>';
+
+  // ── FLOOR PROGRESS — horizontal bar per deck ────────────────────────────
+  h+='<div style="background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);overflow:hidden;margin-bottom:16px">';
+  h+='<div style="padding:10px 16px;border-bottom:1px solid var(--line2);background:var(--surface2);display:flex;align-items:center;justify-content:space-between">';
+  h+='<span style="font-size:13px;font-weight:700">Daily Log Progress by Deck</span>';
+  h+='<span style="font-size:11px;color:var(--t3)">'+prog.f+'/'+prog.t+' fields &nbsp;&middot;&nbsp; '+pct+'% complete</span></div>';
+  h+='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">';
+
+  FLOORS.filter(function(fl){return fl.freq==='daily';}).forEach(function(fl){
+    var fp=getFloorProgress(fl.id);
+    var fpct=fp.t?Math.round(fp.f/fp.t*100):0;
+    var bc=fpct===100?'var(--ok)':fpct>0?fl.color:'rgba(255,255,255,.1)';
+    var flAlms=0,flWarns=0;
+    fl.equip.forEach(function(eq){eq.tabs.forEach(function(tab){
+      (tab.fields||[]).forEach(function(f){if(!V[f.id])return;var s=gs(V[f.id],f);if(s==='alm')flAlms++;else if(s==='warn')flWarns++;});
+    });});
+    var badge='';
+    if(flAlms>0) badge='<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)">'+flAlms+' ALM</span>';
+    else if(flWarns>0) badge='<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)">'+flWarns+' WRN</span>';
+    else if(fpct===100) badge='<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(34,197,94,.1);color:#86efac;border:1px solid rgba(34,197,94,.3)">✓ Done</span>';
+    h+='<div style="cursor:pointer" data-flid="'+fl.id+'" onclick="jumpToFreq(this.dataset.flid)">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+      +'<div style="width:10px;height:10px;border-radius:2px;background:'+fl.color+';flex-shrink:0"></div>'
+      +'<span style="font-size:12px;font-weight:600;color:var(--t1);flex:1">'+fl.label+'</span>'
+      +badge
+      +'<span style="font-size:11px;font-weight:700;font-family:var(--mono);color:'+bc+';min-width:36px;text-align:right">'+fpct+'%</span>'
+      +'</div>'
+      +'<div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">'
+      +'<div style="height:100%;width:'+fpct+'%;background:'+bc+';border-radius:3px;transition:width .5s ease"></div>'
+      +'</div></div>';
   });
-  h+=`</div>`;
+  h+='</div></div>';
+
+  // 4 frequency summary cards
+  var freqC={daily:{t:0,f:0},weekly:{t:0,f:0},monthly:{t:0,f:0},rh:{t:0,f:0}};
+  FLOORS.forEach(function(fl){
+    var key=fl.id==='rh'?'rh':(fl.freq||'daily');
+    var fc=freqC[key]||(freqC[key]={t:0,f:0});
+    fl.equip.forEach(function(eq){eq.tabs.forEach(function(tab){
+      (tab.fields||[]).forEach(function(fi){fc.t++;if((V[fi.id]||'')!=='')fc.f++;});
+      (tab.unitGroups||[]).forEach(function(ug){ug.fields.forEach(function(fi){fc.t++;if((V[fi.id]||'')!=='')fc.f++;});});
+    });});
+  });
+  var pctOf=function(fc){return fc.t?Math.round(fc.f/fc.t*100):0;};
+  var FREQ=[
+    {key:'daily',  label:'Daily Logs',    icon:'📅',color:'var(--blue)',  sub:'ER Rounds · MGPS · Stern Tube'},
+    {key:'weekly', label:'Weekly Tests',  icon:'📊',color:'var(--warn)',  sub:'Lube Oil · Boiler · Cooling'},
+    {key:'monthly',label:'Monthly Logs',  icon:'📆',color:'var(--ok-tx)',sub:'Scavenge · Performance · Inventory'},
+    {key:'rh',     label:'Running Hours', icon:'⏱️', color:'#a855f7',    sub:'141 equipment items'},
+  ];
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">';
+  FREQ.forEach(function(fc){
+    var c=freqC[fc.key]||{t:0,f:0};var p=pctOf(c);
+    h+='<div style="background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);cursor:pointer" data-freq="'+fc.key+'" onclick="jumpToFreq(this.dataset.freq)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line2);background:var(--surface2)">'
+      +'<span style="font-size:11px;font-weight:700;color:var(--t1)">'+fc.icon+' '+fc.label+'</span>'
+      +'<span style="font-size:10px;color:var(--t3)">'+c.f+'/'+c.t+'</span></div>'
+      +'<div style="padding:12px 14px;text-align:center">'
+      +'<div style="font-size:28px;font-weight:700;font-family:var(--mono);color:'+fc.color+'">'+p+'%</div>'
+      +'<div style="font-size:10px;color:var(--t3);margin-top:3px">'+fc.sub+'</div>'
+      +'<div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:8px;overflow:hidden">'
+      +'<div style="height:100%;background:'+fc.color+';width:'+p+'%;border-radius:2px;transition:width .4s"></div>'
+      +'</div></div></div>';
+  });
+  h+='</div>';
+
   el.innerHTML=h;
   }catch(err){
-    const el2=document.getElementById('dashboard-view');
-    if(el2)el2.innerHTML='<div style="padding:20px;color:red;font-size:13px;font-family:monospace"><b>Dashboard Error:</b><br>'+err.message+'<br><pre>'+err.stack+'</pre></div>';
+    var el2=document.getElementById('dashboard-view');
+    if(el2)el2.innerHTML='<div style="padding:20px;color:var(--alm);font-family:monospace;font-size:12px"><b>Dashboard Error:</b><br>'+err.message+'<br><pre>'+err.stack+'</pre></div>';
   }
 }
 
