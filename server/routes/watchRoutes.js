@@ -514,3 +514,48 @@ router.get('/field-catalog', requireAuth, async (req, res) => {
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+// ── EXPORT — fetch readings by date range ────────────────────────────────────
+// GET /api/watches/export?vessel_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&sections=a,b
+router.get('/export', requireAuth, async (req, res) => {
+  const { vessel_id, from, to, sections } = req.query;
+  if (!vessel_id || !from || !to) return res.status(400).json({ error: 'vessel_id, from, to required' });
+  try {
+    const sectionList = sections ? sections.split(',') : null;
+    const SECTION_MAP = {
+      floor: 'ER Floor', deck3: '3rd Deck', deck2: '2nd Deck',
+      upper: 'Upper Deck', tanks: 'Tanks', weekly: 'Weekly Tests',
+      monthly: 'Monthly Logs', rh: 'Running Hours'
+    };
+    const sectionNames = sectionList ? sectionList.map(s => SECTION_MAP[s] || s) : null;
+
+    let query = `
+      SELECT
+        w.watch_date::date  AS date,
+        r.section,
+        r.equipment,
+        r.parameter,
+        r.unit_label        AS unit,
+        r.location_path     AS fid,
+        r.value,
+        r.is_alarm,
+        r.is_warning,
+        w.duty_engineer
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1
+        AND w.watch_date >= $2::date
+        AND w.watch_date <= $3::date
+        AND r.value IS NOT NULL
+    `;
+    const params = [vessel_id, from, to];
+    if (sectionNames) {
+      query += ` AND r.section = ANY($4)`;
+      params.push(sectionNames);
+    }
+    query += ` ORDER BY w.watch_date, r.section, r.equipment, r.parameter`;
+
+    const { rows } = await pool.query(query, params);
+    res.json({ rows, from, to });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
