@@ -271,7 +271,7 @@ async function renderAnomalies(){
         var dir=a.direction==='high'?'↑ HIGH':'↓ LOW';
         var pct=a.pct_from_mean!==null?(a.pct_from_mean>0?'+':'')+a.pct_from_mean+'%':'';
         var interp=interpretAnomaly(a);
-        h+='<div class="arow s'+sev+'" style="cursor:pointer" onclick="openDrill(''+a.fid+'',''+esc(a.parameter)+'',''+esc(a.section)+'')">';
+        h+='<div class="arow s'+sev+'" style="cursor:pointer" data-fid="'+a.fid+'" data-p="'+a.parameter+'" data-s="'+a.section+'" onclick="onDrillClick(this)">';
         h+='<div style="flex:1;min-width:0">';
         h+='<div style="font-size:12px;font-weight:700">'+esc(a.equipment)+' — '+esc(a.parameter)+'</div>';
         h+='<div style="font-size:10px;color:var(--t3)">'+esc(a.section)+'</div>';
@@ -381,7 +381,7 @@ async function loadReportData(y,m){
         else cls='fall-ok';
       }
       var cid='sp_'+sec.replace(/\W/g,'_')+'_'+pi;
-      h+='<tr class="clickable" onclick="openDrill(''+p.fid+'',''+esc(p.parameter)+'',''+esc(sec)+'')">';
+      h+='<tr class="clickable" data-fid="'+p.fid+'" data-p="'+esc(p.parameter)+'" data-s="'+esc(sec)+'" onclick="onDrillClick(this)">';
       h+='<td style="font-weight:600">'+esc(p.parameter)+'</td>';
       h+='<td style="color:var(--t3);font-size:10px">'+esc(p.unit||'')+'</td>';
       h+='<td class="r">'+(p.current?curr:'<span class="na">—</span>')+'</td>';
@@ -433,7 +433,7 @@ async function renderYOY(){
         items.forEach(function(p){
           var curr=p.current?parseFloat(p.current.avg).toFixed(2):'—';
           var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'—';
-          h+='<div class="arow" style="border-left:3px solid '+col+';cursor:pointer" onclick="openDrill(''+p.fid+'',''+esc(p.parameter)+'',''+esc(p.section)+'')">';
+          h+='<div class="arow" style="border-left:3px solid '+col+';cursor:pointer" data-fid="'+p.fid+'" data-p="'+esc(p.parameter)+'" data-s="'+esc(p.section)+'" onclick="onDrillClick(this)">';
           h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+esc(p.parameter)+'</div><div style="font-size:10px;color:var(--t3)">'+esc(p.section)+' · '+esc(p.equipment)+'</div></div>';
           h+='<div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+col+'">'+curr+' '+esc(p.unit||'')+'</div>';
           h+='<div style="font-size:10px;color:var(--t3)">was '+prev+' · <span style="color:'+(dir==="rise"?"#fca5a5":"#86efac")+'">'+(p.yoy_pct>0?'+':'')+p.yoy_pct+'%</span></div></div>';
