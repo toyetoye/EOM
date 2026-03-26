@@ -750,3 +750,106 @@ router.get('/monthly-report', requireAuth, async (req, res) => {
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+// ── PARAMETER DETAIL — for drill-down + AI analysis ──────────────────────────
+// GET /api/watches/parameter-detail?vessel_id=X&fid=Y&months=24
+router.get('/parameter-detail', requireAuth, async (req, res) => {
+  const { vessel_id, fid, months = 24 } = req.query;
+  if (!vessel_id || !fid) return res.status(400).json({ error: 'vessel_id and fid required' });
+  try {
+    const n = parseInt(months);
+
+    // Get metadata for this fid
+    const { rows: meta } = await pool.query(`
+      SELECT r.location_path AS fid, r.parameter, r.unit_label AS unit,
+             r.section, r.equipment,
+             COUNT(*)::int AS n,
+             AVG(r.value)::numeric(10,3) AS mean,
+             STDDEV_POP(r.value)::numeric(10,3) AS stddev,
+             MIN(r.value)::numeric(10,3) AS min_val,
+             MAX(r.value)::numeric(10,3) AS max_val
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1 AND r.location_path = $2 AND r.value IS NOT NULL
+      GROUP BY r.location_path, r.parameter, r.unit_label, r.section, r.equipment
+    `, [vessel_id, fid]);
+
+    if (!meta.length) return res.status(404).json({ error: 'Parameter not found' });
+
+    // Monthly series for this parameter (last n months)
+    const { rows: series } = await pool.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', w.watch_date), 'YYYY-MM') AS month,
+        AVG(r.value)::numeric(10,3)  AS avg,
+        MIN(r.value)::numeric(10,3)  AS min,
+        MAX(r.value)::numeric(10,3)  AS max,
+        STDDEV_POP(r.value)::numeric(10,3) AS stddev,
+        COUNT(*)::int                AS n
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1 AND r.location_path = $2 AND r.value IS NOT NULL
+        AND w.watch_date >= (CURRENT_DATE - ($3 * INTERVAL '1 month'))
+      GROUP BY DATE_TRUNC('month', w.watch_date)
+      ORDER BY 1
+    `, [vessel_id, fid, n]);
+
+    // Also get last 30 days of individual readings for fine-grained chart
+    const { rows: daily } = await pool.query(`
+      SELECT
+        TO_CHAR(w.watch_date, 'YYYY-MM-DD') AS date,
+        AVG(r.value)::numeric(10,3) AS avg
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1 AND r.location_path = $2 AND r.value IS NOT NULL
+        AND w.watch_date >= CURRENT_DATE - INTERVAL '60 days'
+      GROUP BY w.watch_date ORDER BY 1
+    `, [vessel_id, fid]);
+
+    res.json({
+      meta: meta[0],
+      monthly: series,
+      daily,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── MULTI-PARAMETER HISTORY — for correlated param overlay ───────────────────
+// POST /api/watches/multi-param { vessel_id, fids: [...], months }
+router.post('/multi-param', requireAuth, async (req, res) => {
+  const { vessel_id, fids, months = 24 } = req.body;
+  if (!vessel_id || !fids?.length) return res.status(400).json({ error: 'vessel_id and fids required' });
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        r.location_path AS fid,
+        r.parameter,
+        r.unit_label AS unit,
+        r.section,
+        r.equipment,
+        TO_CHAR(DATE_TRUNC('month', w.watch_date), 'YYYY-MM') AS month,
+        AVG(r.value)::numeric(10,3) AS avg,
+        COUNT(*)::int AS n
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1
+        AND r.location_path = ANY($2)
+        AND r.value IS NOT NULL
+        AND w.watch_date >= (CURRENT_DATE - ($3 * INTERVAL '1 month'))
+      GROUP BY r.location_path, r.parameter, r.unit_label, r.section, r.equipment,
+               DATE_TRUNC('month', w.watch_date)
+      ORDER BY r.location_path, 1
+    `, [vessel_id, fids, months]);
+
+    // Group by fid
+    const byFid = {};
+    rows.forEach(r => {
+      if (!byFid[r.fid]) byFid[r.fid] = {
+        fid: r.fid, parameter: r.parameter, unit: r.unit,
+        section: r.section, equipment: r.equipment, monthly: []
+      };
+      byFid[r.fid].monthly.push({ month: r.month, avg: parseFloat(r.avg), n: r.n });
+    });
+
+    res.json(Object.values(byFid));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
