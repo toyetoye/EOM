@@ -2324,6 +2324,8 @@ function eqFilledCount(eq){
 
 function setWatchEngineerFocus(){var el=document.getElementById('duty_eng');if(el)el.focus();}
 
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
 function buildDashboard(){
   try{
   var el=document.getElementById('dashboard-view');
