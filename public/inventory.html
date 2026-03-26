@@ -108,12 +108,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
     <option value="loi_,ch_,gas_">All Inventory</option>
   </select>
   <span class="filter-label">Months</span>
-  <select class="filter-sel" id="month-range">
+  <select class="filter-sel" id="month-range" onchange="onRangeChange()">
     <option value="6">Last 6 months</option>
     <option value="12">Last 12 months</option>
     <option value="24">Last 24 months</option>
     <option value="0">All time</option>
+    <option value="custom">Custom range…</option>
   </select>
+  <span class="filter-label" id="cmp-date-lbl" style="display:none">From</span>
+  <input type="month" class="filter-sel" id="cmp-from" style="display:none" onchange="renderTab()" placeholder="YYYY-MM"/>
+  <span class="filter-label" id="cmp-date-lbl2" style="display:none">To</span>
+  <input type="month" class="filter-sel" id="cmp-to" style="display:none" onchange="renderTab()" placeholder="YYYY-MM"/>
   <input class="search-inp" id="search-inp" placeholder="🔍 Filter products…" oninput="renderTab()"/>
   <span class="filter-badge" id="product-count">—</span>
 </div>
@@ -151,18 +156,50 @@ async function loadData(){
   } catch(e){ showError(e.message); }
 }
 
+function onRangeChange(){
+  var rangeEl = document.getElementById('month-range');
+  var isCustom = rangeEl && rangeEl.value === 'custom';
+  var isComp = currentTab === 'comparison';
+  ['cmp-date-lbl','cmp-from','cmp-date-lbl2','cmp-to'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = (isComp && isCustom) ? '' : 'none';
+  });
+  renderTab();
+}
+
 function setTab(tab){
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   event.target.classList.add('active');
+  // Show custom date pickers only on comparison tab
+  var isComp = tab === 'comparison';
+  var rangeEl = document.getElementById('month-range');
+  var showCustom = isComp && rangeEl && rangeEl.value === 'custom';
+  ['cmp-date-lbl','cmp-from','cmp-date-lbl2','cmp-to'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = showCustom ? '' : 'none';
+  });
   renderTab();
 }
 
 function getFilteredMonths(){
-  const range = parseInt(document.getElementById('month-range').value);
+  const rangeEl = document.getElementById('month-range');
+  const range = rangeEl ? rangeEl.value : '6';
   if(!allData || !allData.months.length) return [];
-  if(range === 0) return allData.months;
-  return allData.months.slice(-range);
+  if(range === 'custom'){
+    const fromEl = document.getElementById('cmp-from');
+    const toEl   = document.getElementById('cmp-to');
+    const from = fromEl ? fromEl.value : '';
+    const to   = toEl   ? toEl.value   : '';
+    if(!from && !to) return allData.months;
+    return allData.months.filter(function(m){
+      if(from && m < from) return false;
+      if(to   && m > to)   return false;
+      return true;
+    });
+  }
+  if(range === '0') return allData.months;
+  return allData.months.slice(-parseInt(range));
 }
 
 function getFilteredProducts(){
