@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP — Data Import</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="/eom-api.js"></script>
+<style>
+:root{--bg:#070d1a;--surface:#0f172a;--surface2:#1e293b;--border:rgba(255,255,255,0.08);--text:#f1f5f9;--muted:#64748b;--accent:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+.header{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.htitle{font-size:14px;font-weight:600}
+.hbtn{margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-block}
+.container{max-width:900px;margin:0 auto;padding:32px 20px}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+
+/* Log type cards */
+.log-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.log-card{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
+.log-card:hover{border-color:var(--accent)}
+.log-card.selected{border-color:var(--accent);background:rgba(59,130,246,.1)}
+.log-icon{font-size:24px;margin-bottom:8px}
+.log-name{font-size:13px;font-weight:700;margin-bottom:3px}
+.log-desc{font-size:11px;color:var(--muted)}
+.log-freq{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-top:6px}
+.freq-d{background:rgba(59,130,246,.15);color:#60a5fa}
+.freq-w{background:rgba(245,158,11,.15);color:#fbbf24}
+.freq-m{background:rgba(16,185,129,.15);color:#34d399}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;position:relative}
+.drop-zone.drag-over{border-color:var(--accent);background:rgba(59,130,246,.05)}
+.drop-zone.has-file{border-color:var(--green);background:rgba(34,197,94,.05)}
+.dz-icon{font-size:36px;margin-bottom:10px}
+.dz-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.dz-sub{font-size:12px;color:var(--muted)}
+#file-input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* Preview table */
+.preview-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.preview-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.preview-title{font-size:13px;font-weight:700}
+.preview-meta{font-size:11px;color:var(--muted)}
+.preview-scroll{overflow-x:auto;max-height:320px;overflow-y:auto}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.preview-tbl th{background:var(--surface2);padding:6px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+.preview-tbl td{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-family:var(--mono)}
+.preview-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.matched{color:var(--green)}
+.unmatched{color:var(--amber)}
+
+/* Progress */
+.progress-wrap{margin-bottom:20px;display:none}
+.progress-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.progress-lbl{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* Buttons */
+.btn-row{display:flex;gap:10px}
+.btn{padding:10px 24px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.2s}
+.btn-primary{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{background:var(--surface2)}
+
+/* Log */
+.import-log{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:1.7;max-height:200px;overflow-y:auto;display:none;margin-top:12px;white-space:pre-wrap}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">FC</div>
+  <span class="htitle">FORCAP — Data Import</span>
+  <a class="hbtn" href="/inventory.html">📊 Inventory Analytics</a><a class="hbtn" href="/logbook.html">← Back to Logbook</a>
+</div>
+<div class="container">
+  <h1>Import Historical Logs</h1>
+  <div class="sub">Upload Excel files from any previous month. The importer reads your existing format and maps data automatically.</div>
+
+  <!-- Step 1: Select log type -->
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Step 1 — Select Log Type</div>
+  <div class="log-grid" id="log-grid"></div>
+
+  <!-- Step 2: Drop file -->
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Step 2 — Drop Excel File</div>
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])"/>
+    <div class="dz-icon">📂</div>
+    <div class="dz-title" id="dz-title">Drop your Excel file here, or click to browse</div>
+    <div class="dz-sub" id="dz-sub">Supports .xlsx and .xls — any month, any year</div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-wrap" id="preview-wrap" style="display:none">
+    <div class="preview-head">
+      <span class="preview-title" id="preview-title">Preview</span>
+      <span class="preview-meta" id="preview-meta"></span>
+    </div>
+    <div class="preview-scroll"><table class="preview-tbl" id="preview-tbl"></table></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-lbl" id="progress-lbl">Preparing…</div>
+  </div>
+
+  <!-- Action -->
+  <div class="btn-row">
+    <button class="btn btn-primary" id="import-btn" onclick="runImport()" disabled>Import Data</button>
+    <button class="btn btn-ghost" onclick="resetAll()">Reset</button>
+  </div>
+  <div class="import-log" id="import-log"></div>
+</div>
+
+<script>
+// ── Log type definitions ──────────────────────────────────────────────────────
+const LOG_TYPES = [
+  {id:'er_rounds',   name:'Daily ER Rounds',     icon:'⚙️',  freq:'d', desc:'A/C, Fridge, Pumps, Tanks, Counters',
+   parser: parseERRounds},
+  {id:'stern_tube',  name:'Stern Tube Logs',      icon:'⚓',  freq:'d', desc:'Daily seal temps, pump pressures, levels',
+   parser: parseSternTube},
+  {id:'boiler_water',name:'Boiler Water Tests',   icon:'🔥',  freq:'w', desc:'Daily chemistry values',
+   parser: parseBoilerWater},
+  {id:'lube_oil',    name:'Lube Oil Tests',        icon:'🛢️', freq:'w', desc:'TBN, water content, viscosity',
+   parser: parseLubeOil},
+  {id:'running_hrs', name:'Running Hours',         icon:'⏱️', freq:'m', desc:'All equipment monthly hours',
+   parser: parseRunningHours},
+  {id:'chemicals',   name:'Chemicals Inventory',   icon:'🧪',  freq:'m', desc:'Groups A-E monthly stock',
+   parser: parseChemicals},
+  {id:'gas_inv',     name:'Gas Inventory',         icon:'🔴',  freq:'m', desc:'R407C, Oxygen, Acetylene',
+   parser: parseGas},
+  {id:'lub_grease',  name:'LO & Grease Inventory', icon:'🛢️', freq:'m', desc:'All 82 products monthly ROB',
+   parser: parseLubGrease},
+  {id:'mgps',        name:'MGPS & ICCP Logs',      icon:'⚡',  freq:'d', desc:'ICCP current, voltage, hull potential',
+   parser: parseMGPS},
+];
+
+const FREQ_CLASS = {d:'freq-d',w:'freq-w',m:'freq-m'};
+const FREQ_LABEL = {d:'DAILY',w:'WEEKLY',m:'MONTHLY'};
+
+// ── Render log type grid ──────────────────────────────────────────────────────
+let selectedType = null;
+let parsedData = null;
+
+document.getElementById('log-grid').innerHTML = LOG_TYPES.map(lt => `
+  <div class="log-card" id="lt_${lt.id}" onclick="selectType('${lt.id}')">
+    <div class="log-icon">${lt.icon}</div>
+    <div class="log-name">${lt.name}</div>
+    <div class="log-desc">${lt.desc}</div>
+    <span class="log-freq ${FREQ_CLASS[lt.freq]}">${FREQ_LABEL[lt.freq]}</span>
+  </div>`).join('');
+
+function selectType(id){
+  document.querySelectorAll('.log-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('lt_'+id).classList.add('selected');
+  selectedType = LOG_TYPES.find(t=>t.id===id);
+  resetFile();
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');handleFile(e.dataTransfer.files[0]);});
+
+function handleFile(file){
+  if(!file) return;
+  if(!selectedType){ alert('Please select a log type first.'); return; }
+  document.getElementById('dz-title').textContent = file.name;
+  document.getElementById('dz-sub').textContent = (file.size/1024).toFixed(0) + ' KB';
+  dz.classList.add('has-file');
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array',cellDates:true});
+    try {
+      parsedData = selectedType.parser(wb);
+      showPreview(parsedData);
+      document.getElementById('import-btn').disabled = parsedData.rows.length === 0;
+    } catch(err) {
+      log('❌ Parse error: ' + err.message);
+      document.getElementById('import-log').style.display='block';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Preview ───────────────────────────────────────────────────────────────────
+function showPreview(data){
+  const wrap = document.getElementById('preview-wrap');
+  const tbl  = document.getElementById('preview-tbl');
+  document.getElementById('preview-title').textContent = data.title || 'Preview';
+  document.getElementById('preview-meta').textContent = data.rows.length + ' records across ' + data.dates.length + ' dates';
+
+  const cols = ['Date','Section','Parameter','Value','Unit'];
+  tbl.innerHTML = '<thead><tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr></thead>'
+    + '<tbody>' + data.rows.slice(0,50).map(r=>`<tr>
+      <td>${r.date}</td>
+      <td>${r.section||''}</td>
+      <td class="${r.matched?'matched':'unmatched'}">${r.parameter}</td>
+      <td style="font-weight:600">${r.value}</td>
+      <td style="color:var(--muted)">${r.unit||''}</td>
+    </tr>`).join('') + '</tbody>';
+
+  if(data.rows.length > 50){
+    tbl.querySelector('tbody').innerHTML += `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:10px">… and ${data.rows.length-50} more rows</td></tr>`;
+  }
+  wrap.style.display='block';
+}
+
+// ── Import ────────────────────────────────────────────────────────────────────
+async function runImport(){
+  if(!parsedData || !parsedData.rows.length) return;
+  if(typeof EOM === 'undefined'){ log('❌ Not connected to server. Open from Railway URL.'); return; }
+
+  const user = EOM.user();
+  if(!user){ log('❌ Not logged in.'); return; }
+
+  const vessels = await EOM.get('/vessels');
+  if(!vessels.length){ log('❌ No vessels found.'); return; }
+  const vesselId = vessels[0].id;
+
+  document.getElementById('import-btn').disabled = true;
+  const pw = document.getElementById('progress-wrap');
+  const pf = document.getElementById('progress-fill');
+  const pl = document.getElementById('progress-lbl');
+  pw.style.display = 'block';
+
+  // Group rows by date
+  const byDate = {};
+  parsedData.rows.forEach(r => {
+    if(!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r);
+  });
+
+  const dates = Object.keys(byDate).sort();
+  let done = 0, totalInserted = 0;
+
+  for(const dateStr of dates){
+    pl.textContent = `Importing ${dateStr} (${done+1}/${dates.length})…`;
+    pf.style.width = Math.round((done/dates.length)*100) + '%';
+
+    try {
+      // Get or create watch
+      const watchData = await EOM.get(`/watches/current?vessel_id=${vesselId}&date=${dateStr}&watch_number=4`);
+      const watchId = watchData.watch.id;
+
+      // Build readings array
+      const readings = byDate[dateStr].map(r => ({
+        location_path: r.fid || r.parameter.toLowerCase().replace(/\s+/g,'_').slice(0,50),
+        section: r.section || selectedType.name,
+        equipment: r.equipment || selectedType.name,
+        parameter: r.parameter,
+        unit_label: r.unit || '',
+        value: parseFloat(r.value),
+        is_alarm: false,
+        is_warning: false
+      })).filter(r => !isNaN(r.value));
+
+      if(readings.length){
+        await EOM.post(`/watches/${watchId}/readings`, {readings});
+        totalInserted += readings.length;
+      }
+    } catch(e) {
+      log(`⚠️ ${dateStr}: ${e.message}`);
+    }
+    done++;
+  }
+
+  pf.style.width = '100%';
+  pl.textContent = `✅ Complete — ${totalInserted} readings imported across ${dates.length} dates`;
+  log(`✅ Import complete.\n   Dates: ${dates.length}\n   Readings: ${totalInserted}\n   Source: ${selectedType.name}`);
+  document.getElementById('import-log').style.display = 'block';
+}
+
+// ── PARSERS ───────────────────────────────────────────────────────────────────
+function getSheet(wb, hints){
+  // Try to find best matching sheet
+  for(const hint of hints){
+    const found = wb.SheetNames.find(n => n.toUpperCase().includes(hint.toUpperCase()));
+    if(found) return wb.Sheets[found];
+  }
+  return wb.Sheets[wb.SheetNames[wb.SheetNames.length-1]];
+}
+
+function parseERRounds(wb){
+  const rows = []; const dates = [];
+  // File has multiple sheets (one per month) — import ALL
+  wb.SheetNames.forEach(sheetName => {
+    const ws = wb.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+    if(!data.length) return;
+
+    // Row 0 = dates, subsequent rows = parameters
+    const dateRow = data[0];
+    const dateCols = {};
+    dateRow.forEach((cell,ci)=>{
+      if(ci===0||!cell) return;
+      const d = parseExcelDate(cell);
+      if(d) dateCols[ci] = d;
+    });
+    if(!Object.keys(dateCols).length) return;
+    Object.values(dateCols).forEach(d=>{ if(!dates.includes(d)) dates.push(d); });
+
+    const PMAP = buildERParamMap();
+    data.slice(1).forEach(row=>{
+      const paramName = String(row[0]||'').trim();
+      if(!paramName) return;
+      const mapping = PMAP[paramName.toUpperCase()];
+      Object.entries(dateCols).forEach(([ci,dateStr])=>{
+        const val = parseFloat(String(row[ci]||'').replace(/[^0-9.-]/g,''));
+        if(isNaN(val)) return;
+        rows.push({date:dateStr, fid:mapping?.fid||null, section:mapping?.section||'ER Rounds',
+          equipment:mapping?.equipment||'ER Rounds', parameter:paramName,
+          unit:mapping?.unit||'', value:val, matched:!!mapping});
+      });
+    });
+  });
+  return {title:`ER Rounds — ${rows.length} readings`, rows, dates};
+}
+
+function parseSternTube(wb){
+  const rows = []; const dates = [];
+  wb.SheetNames.forEach(sheetName=>{
+    const ws = wb.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    // Find header row
+    const hdrIdx = data.findIndex(r=>r.some(c=>String(c).trim().toUpperCase()==='DATE'));
+    if(hdrIdx===-1) return;
+    const hdrs = data[hdrIdx].map(c=>String(c).trim().toUpperCase());
+    const SMAP = {'FWD SEAL':{fid:'st_fwd1',param:'FWD Seal Temp',unit:'°C',section:'Auxiliaries',equipment:'Stern Tube LO'},
+                  'AFT SEAL':{fid:'st_aft1',param:'AFT Seal Temp',unit:'°C',section:'Auxiliaries',equipment:'Stern Tube LO'},
+                  'FWD SEAL LVL':{fid:'st_fsl',param:'FWD Seal Level',unit:'%',section:'Auxiliaries',equipment:'Stern Tube LO'},
+                  'ST TK LEVEL':{fid:'st_htl',param:'Header Tank Level',unit:'%',section:'Auxiliaries',equipment:'Stern Tube LO'},
+                  'ME RPM':{fid:'me_rpm',param:'ME Speed',unit:'rpm',section:'Main Engine',equipment:'Main Engine'},
+                  'SUCT':{fid:'st1_s',param:'ST Pump Suction',unit:'Bar',section:'Auxiliaries',equipment:'Stern Tube LO'},
+                  'DISCH':{fid:'st1_d',param:'ST Pump Discharge',unit:'Bar',section:'Auxiliaries',equipment:'Stern Tube LO'}};
+    data.slice(hdrIdx+1).forEach(row=>{
+      const dateStr = parseExcelDate(row[0]);
+      if(!dateStr) return;
+      if(!dates.includes(dateStr)) dates.push(dateStr);
+      hdrs.slice(1).forEach((h,i)=>{
+        const ci=i+1; if(ci>=row.length) return;
+        for(const [key,m] of Object.entries(SMAP)){
+          if(h.includes(key)){
+            const val=parseFloat(String(row[ci]||'').split('/')[0].replace(/[^0-9.-]/g,''));
+            if(!isNaN(val)) rows.push({date:dateStr,fid:m.fid,section:m.section,equipment:m.equipment,parameter:m.param,unit:m.unit,value:val,matched:true});
+            break;
+          }
+        }
+      });
+    });
+  });
+  return {title:`Stern Tube — ${rows.length} readings`, rows, dates};
+}
+
+function parseBoilerWater(wb){
+  const rows = []; const dates = [];
+  const ws = wb.Sheets[wb.SheetNames.find(n=>n.toUpperCase().includes('BOILER')&&!n.toUpperCase().includes('PRINT'))||wb.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+  const hdrIdx = data.findIndex(r=>r.some(c=>String(c).trim().toUpperCase()==='DAY'||String(c).trim().toUpperCase()==='DATE'));
+  if(hdrIdx===-1) return {title:'Boiler Water',rows:[],dates:[]};
+  const hdrs = data[hdrIdx].map(c=>String(c).trim().toUpperCase());
+  const BMAP={'CHLORIDE':{fid:'blr_cl',param:'Boiler Water Chloride',unit:'ppm'},
+              'PHOSPHATE':{fid:'blr_po',param:'Boiler Water Phosphate',unit:'ppm'},
+              'PH':{fid:'blr_ph',param:'Condensate pH',unit:''},
+              'HARDNESS':{fid:'blr_hd',param:'Boiler Water Hardness',unit:'ppm'},
+              'HYDRATE':{fid:'blr_hy',param:'Hydrate Alkalinity',unit:'ppm'},
+              'DEHA':{fid:'blr_dh',param:'Feed Water DEHA',unit:'ppm'},
+              'MAKEUP':{fid:'blr_mu',param:'Makeup Water Chloride',unit:'ppm'}};
+  data.slice(hdrIdx+1).forEach(row=>{
+    const dateStr=parseExcelDate(row[0]);if(!dateStr) return;
+    if(!dates.includes(dateStr)) dates.push(dateStr);
+    hdrs.slice(1).forEach((h,i)=>{
+      const ci=i+1;
+      for(const [key,m] of Object.entries(BMAP)){
+        if(h.includes(key)){
+          const val=parseFloat(String(row[ci]||'').replace(/[^0-9.]/g,''));
+          if(!isNaN(val)) rows.push({date:dateStr,fid:m.fid,section:'Boiler',equipment:'Boiler',parameter:m.param,unit:m.unit,value:val,matched:true});
+          break;
+        }
+      }
+    });
+  });
+  return {title:`Boiler Water — ${rows.length} readings`,rows,dates};
+}
+
+function parseLubeOil(wb){
+  const rows=[]; const dates=[];
+  wb.SheetNames.forEach(sname=>{
+    const ws=wb.Sheets[sname];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    const hdrIdx=data.findIndex(r=>r.some(c=>String(c).trim().toUpperCase().includes('DATE')||String(c).trim().toUpperCase().includes('TBN')));
+    if(hdrIdx===-1) return;
+    const hdrs=data[hdrIdx].map(c=>String(c).trim().toUpperCase());
+    const LMAP={'WATER IN OIL D/G1':{fid:'lo_w_g1',param:'Water in Oil DG1',unit:'%'},
+                'TBN D/G 1':{fid:'lo_tbn_g1',param:'TBN DG1',unit:'mgKOH/g'},
+                'VISCOSITY D/G1':{fid:'lo_vis_g1',param:'Viscosity DG1',unit:'cSt'},
+                'WATER IN OIL D/G2':{fid:'lo_w_g2',param:'Water in Oil DG2',unit:'%'},
+                'TBN D/G 2':{fid:'lo_tbn_g2',param:'TBN DG2',unit:'mgKOH/g'},
+                'VISCOSITY D/G2':{fid:'lo_vis_g2',param:'Viscosity DG2',unit:'cSt'},
+                'WATER IN OIL D/G3':{fid:'lo_w_g3',param:'Water in Oil DG3',unit:'%'},
+                'TBN D/G 3':{fid:'lo_tbn_g3',param:'TBN DG3',unit:'mgKOH/g'},
+                'WATER IN OIL M/E':{fid:'lo_w_me',param:'Water in Oil ME',unit:'%'},
+                'TBN M/E':{fid:'lo_tbn_me',param:'TBN ME',unit:'mgKOH/g'},
+                'TBN EMGCY':{fid:'lo_tbn_edg',param:'TBN Emcy DG',unit:'mgKOH/g'},
+                'WATER IN OIL ST/T':{fid:'lo_w_st',param:'Water in Oil ST',unit:'%'}};
+    data.slice(hdrIdx+1).forEach(row=>{
+      const dateStr=parseExcelDate(row[0]);if(!dateStr) return;
+      if(!dates.includes(dateStr)) dates.push(dateStr);
+      hdrs.slice(1).forEach((h,i)=>{
+        const ci=i+1;
+        for(const [key,m] of Object.entries(LMAP)){
+          if(h.includes(key)){
+            const val=parseFloat(String(row[ci]||'').replace(/[^0-9.]/g,''));
+            if(!isNaN(val)) rows.push({date:dateStr,fid:m.fid,section:'Lube Oil Tests',equipment:'Lube Oil Tests',parameter:m.param,unit:m.unit,value:val,matched:true});
+            break;
+          }
+        }
+      });
+    });
+  });
+  return {title:`Lube Oil — ${rows.length} readings`,rows,dates};
+}
+
+function parseRunningHours(wb){
+  const rows=[]; const dates=[];
+  wb.SheetNames.forEach(sname=>{
+    const ws=wb.Sheets[sname];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    // Find header row with RUN HOURS
+    const hdrIdx=data.findIndex(r=>r.some(c=>String(c).toUpperCase().includes('RUN HOURS')));
+    if(hdrIdx===-1) return;
+    const hdrs=data[hdrIdx];
+    const monthCols={};
+    hdrs.forEach((h,ci)=>{
+      if(!h||!String(h).toUpperCase().includes('RUN HOURS')) return;
+      const m=/([A-Z]+)\s+(\d{2,4})/i.exec(String(h));
+      if(m){
+        const MMAP={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+        const mnum=MMAP[m[1].substring(0,3).toUpperCase()];
+        let yr=parseInt(m[2]);if(yr<100)yr+=2000;
+        if(mnum) monthCols[ci]=`${yr}-${String(mnum).padStart(2,'0')}-01`;
+      }
+    });
+    Object.values(monthCols).forEach(d=>{if(!dates.includes(d))dates.push(d);});
+    data.slice(hdrIdx+1).forEach(row=>{
+      if(!row[0]||!row[1]||!/^\d/.test(String(row[0]).trim())) return;
+      const sn=String(row[0]).trim();
+      const equipName=String(row[1]).trim();
+      const fid='rh_'+sn.replace(/\./g,'_');
+      Object.entries(monthCols).forEach(([ci,dateStr])=>{
+        const val=parseFloat(String(row[ci]||'').replace(/[^0-9.]/g,''));
+        if(!isNaN(val)&&val>0) rows.push({date:dateStr,fid,section:'Running Hours',equipment:'All Equipment',parameter:equipName,unit:'hrs',value:val,matched:true});
+      });
+    });
+  });
+  return {title:`Running Hours — ${rows.length} readings`,rows,dates};
+}
+
+function parseChemicals(wb){
+  const rows=[]; const dates=[];
+  wb.SheetNames.forEach(sname=>{
+    const ws=wb.Sheets[sname];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    // Find month from sheet name
+    const mMatch=/([A-Z]+)\s*(\d{4})/i.exec(sname);
+    if(!mMatch) return;
+    const MMAP={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+    const mnum=MMAP[mMatch[1].substring(0,3).toUpperCase()]; const yr=parseInt(mMatch[2]);
+    if(!mnum) return;
+    const dateStr=`${yr}-${String(mnum).padStart(2,'0')}-01`;
+    if(!dates.includes(dateStr)) dates.push(dateStr);
+    // Find ROB column (last month)
+    const hdrRow=data.find(r=>r.some(c=>String(c).toUpperCase().includes('ROB')));
+    if(!hdrRow) return;
+    const robCi=hdrRow.findIndex(c=>String(c).toUpperCase().includes('ROB')&&String(c).toUpperCase().includes('DEC')||String(c).toUpperCase().includes('ROB')&&hdrRow.indexOf(c)===hdrRow.length-2);
+    // Use column 6 (index 6 = ROB current month)
+    data.forEach(row=>{
+      const name=String(row[1]||'').trim();
+      if(!name||name.toUpperCase().includes('PRODUCT NAME')) return;
+      const robVal=String(row[6]||'').trim();
+      const val=parseFloat(robVal.replace(/[^0-9.]/g,''));
+      if(isNaN(val)) return;
+      const fid='ch_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30);
+      rows.push({date:dateStr,fid,section:'Monthly Logs',equipment:'Chemicals Inventory',parameter:name,unit:'',value:val,matched:true});
+    });
+  });
+  return {title:`Chemicals — ${rows.length} readings`,rows,dates};
+}
+
+function parseGas(wb){
+  const rows=[]; const dates=[];
+  // All sheets have data for same month — get date from header
+  const firstWs=wb.Sheets[wb.SheetNames[0]];
+  const firstData=XLSX.utils.sheet_to_json(firstWs,{header:1,raw:false,defval:''});
+  const titleRow=firstData[0]||[];
+  const mMatch=/([A-Z]+)\s+(\d{4})/i.exec(titleRow.join(' '));
+  const MMAP={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+  let dateStr='2024-12-01';
+  if(mMatch){ const mn=MMAP[mMatch[1].substring(0,3).toUpperCase()]; const yr=parseInt(mMatch[2]); if(mn)dateStr=`${yr}-${String(mn).padStart(2,'0')}-01`; }
+  dates.push(dateStr);
+  // Freon
+  if(wb.Sheets['FREON']){
+    const fd=XLSX.utils.sheet_to_json(wb.Sheets['FREON'],{header:1,raw:false,defval:''});
+    fd.slice(1).forEach((r,i)=>{
+      const rob=parseFloat(String(r[2]||'').replace(/[^0-9.]/g,''));
+      if(!isNaN(rob)) rows.push({date:dateStr,fid:`gas_r407c_b${i+1}`,section:'Monthly Logs',equipment:'Gas Inventory',parameter:`R407C Bottle ${i+1} ROB`,unit:'kg',value:rob,matched:true});
+    });
+  }
+  // Oxygen & Acetylene
+  ['OXYGEN','ACETYLENE'].forEach(sheet=>{
+    if(!wb.Sheets[sheet]) return;
+    const sd=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,raw:false,defval:''});
+    const prefix=sheet==='OXYGEN'?'gas_oxy':'gas_acet';
+    sd.slice(1).forEach((r,i)=>{
+      const val=parseFloat(String(r[1]||'').replace(/[^0-9.]/g,''));
+      if(!isNaN(val)) rows.push({date:dateStr,fid:`${prefix}_${String.fromCharCode(97+i)}`,section:'Monthly Logs',equipment:'Gas Inventory',parameter:`${sheet} Bottle ${String.fromCharCode(65+i)} ROB`,unit:'kg',value:val,matched:true});
+    });
+  });
+  return {title:`Gas Inventory — ${rows.length} readings`,rows,dates};
+}
+
+function parseLubGrease(wb){
+  const rows=[]; const dates=[];
+  wb.SheetNames.forEach(sname=>{
+    if(sname.toUpperCase().includes('DASH')||sname.toUpperCase().includes('RECVD')) return;
+    const ws=wb.Sheets[sname];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    const mMatch=/([A-Z]+)\s*(\d{4})/i.exec(sname.replace(/\(.*\)/g,''));
+    if(!mMatch) return;
+    const MMAP={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+    const mn=MMAP[mMatch[1].substring(0,3).toUpperCase()]; const yr=parseInt(mMatch[2]);
+    if(!mn||yr<2020) return;
+    const dateStr=`${yr}-${String(mn).padStart(2,'0')}-01`;
+    if(!dates.includes(dateStr)) dates.push(dateStr);
+    // Header row has ROB column at index 9
+    data.slice(1).forEach((row,i)=>{
+      const name=String(row[0]||'').trim();
+      if(!name) return;
+      const robVal=String(row[9]||row[6]||'').trim();
+      const val=parseFloat(robVal.replace(/[^0-9.]/g,''));
+      if(isNaN(val)||val<=0) return;
+      const fid='loi_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30)+'_'+i;
+      rows.push({date:dateStr,fid,section:'Monthly Logs',equipment:'LO & Grease Inventory',parameter:name,unit:String(row[2]||'L').trim(),value:val,matched:true});
+    });
+  });
+  return {title:`LO & Grease — ${rows.length} readings (${dates.length} months)`,rows,dates};
+}
+
+function parseMGPS(wb){
+  const rows=[]; const dates=[];
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+  const hdrIdx=data.findIndex(r=>r.some(c=>String(c).trim().toUpperCase()==='DATE'));
+  if(hdrIdx===-1) return {title:'MGPS',rows:[],dates:[]};
+  const hdrs=data[hdrIdx].map(c=>String(c).trim().toUpperCase());
+  const MMAP2={'SEA TEMP':{fid:'iccp_sea_temp',param:'Sea Temperature',unit:'°C'},
+               'OUTPUT':{fid:'iccp_amp',param:'ICCP Output Current',unit:'A'},
+               'VOLT':{fid:'iccp_volt',param:'ICCP Voltage',unit:'V'},
+               'CELL 1':{fid:'iccp_cell1',param:'Sensing Electrode Cell 1',unit:'mV'},
+               'CELL 2':{fid:'iccp_cell2',param:'Sensing Electrode Cell 2',unit:'mV'}};
+  data.slice(hdrIdx+1).forEach(row=>{
+    const day=parseFloat(String(row[0]||'').replace(/[^0-9.]/g,''));
+    if(isNaN(day)||day<1||day>31) return;
+    // Need the month — get from title
+    const titleRow=data.find(r=>r.some(c=>String(c).toUpperCase().includes('ALFRED')));
+    const mMatch=/([A-Z]+)\s+(\d{4})/i.exec((titleRow||[]).join(' '));
+    const MMAP={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+    let yr=2024,mn=12;
+    if(mMatch){ mn=MMAP[mMatch[1].substring(0,3).toUpperCase()]||12; yr=parseInt(mMatch[2]); }
+    const dateStr=`${yr}-${String(mn).padStart(2,'0')}-${String(Math.round(day)).padStart(2,'0')}`;
+    if(!dates.includes(dateStr)) dates.push(dateStr);
+    hdrs.slice(1).forEach((h,i)=>{
+      const ci=i+1;
+      for(const [key,m] of Object.entries(MMAP2)){
+        if(h.includes(key)){
+          const val=parseFloat(String(row[ci]||'').replace(/[^0-9.]/g,''));
+          if(!isNaN(val)) rows.push({date:dateStr,fid:m.fid,section:'ER Floor',equipment:'MGPS & ICCP',parameter:m.param,unit:m.unit,value:val,matched:true});
+          break;
+        }
+      }
+    });
+  });
+  return {title:`MGPS — ${rows.length} readings`,rows,dates};
+}
+
+// ── ER Rounds param map ───────────────────────────────────────────────────────
+function buildERParamMap(){
+  return {
+    'H.P PRESSURE (BAR)':{fid:'ac1_hp',section:'A/C Plant',equipment:'A/C Plant',unit:'Bar'},
+    'H.P TEMPT (DEGC)':{fid:'ac1_ht',section:'A/C Plant',equipment:'A/C Plant',unit:'°C'},
+    'L.P PRESSURE (BAR)':{fid:'ac1_lp',section:'A/C Plant',equipment:'A/C Plant',unit:'Bar'},
+    'L.P TEMPT (DEGC)':{fid:'ac1_lt',section:'A/C Plant',equipment:'A/C Plant',unit:'°C'},
+    'SUPERHEAT (KELVEIN)':{fid:'ac1_sh',section:'A/C Plant',equipment:'A/C Plant',unit:'K'},
+    'COOLING WATER PRESS':{fid:'ac1_cfp',section:'A/C Plant',equipment:'A/C Plant',unit:'Bar'},
+    'COOLING FW IN':{fid:'ac1_cfi',section:'A/C Plant',equipment:'A/C Plant',unit:'°C'},
+    'COOLING FW OUT':{fid:'ac1_cfo',section:'A/C Plant',equipment:'A/C Plant',unit:'°C'},
+    'RECEIVER LEVEL':{fid:'ac1_rl',section:'A/C Plant',equipment:'A/C Plant',unit:'%'},
+    'OIL LEVEL':{fid:'ac1_ol',section:'A/C Plant',equipment:'A/C Plant',unit:'%'},
+    'DISCHARGE PRESSURE':{fid:'fr1_dp',section:'Fridge',equipment:'Fridge Plant',unit:'Bar'},
+    'SUCTION PRESSURE':{fid:'fr1_sp',section:'Fridge',equipment:'Fridge Plant',unit:'Bar'},
+    'MEAT ROOM':{fid:'rm_mt',section:'Fridge',equipment:'Cold Rooms',unit:'°C'},
+    'FISH ROOM':{fid:'rm_ft',section:'Fridge',equipment:'Cold Rooms',unit:'°C'},
+    'VEGETABLE ROOM':{fid:'rm_vt',section:'Fridge',equipment:'Cold Rooms',unit:'°C'},
+    'DIARY ROOM':{fid:'rm_dt',section:'Fridge',equipment:'Cold Rooms',unit:'°C'},
+    'SCAV AIR BEFORE COOLER':{fid:'sa_b4',section:'Main Engine',equipment:'Air & Exhaust',unit:'°C'},
+    'SCAV AIR AFTER COOLER':{fid:'sa_af',section:'Main Engine',equipment:'Air & Exhaust',unit:'°C'},
+    'NO.1 MAIN CSW P/P':{fid:'csw1_d',section:'Auxiliaries',equipment:'Sea Water',unit:'Bar'},
+    'NO.2 MAIN CSW P/P':{fid:'csw2_d',section:'Auxiliaries',equipment:'Sea Water',unit:'Bar'},
+    'NO.3 MAIN CSW P/P':{fid:'csw3_d',section:'Auxiliaries',equipment:'Sea Water',unit:'Bar'},
+    'SEA WATER INLET TEMPT':{fid:'swt',section:'Auxiliaries',equipment:'Sea Water',unit:'°C'},
+    'ENGINE ROOM TEMPT':{fid:'ert',section:'Auxiliaries',equipment:'Sea Water',unit:'°C'},
+    'STERN TUBE LO DISCH TEMPT':{fid:'st_dt',section:'Auxiliaries',equipment:'Stern Tube LO',unit:'°C'},
+    'S/T HEADER TANK LEVEL':{fid:'st_htl',section:'Auxiliaries',equipment:'Stern Tube LO',unit:'%'},
+    'STBD FW TANK':{fid:'fw_stbd',section:'Tanks',equipment:'ER Misc Tanks',unit:'m'},
+    'PORT FW TANK':{fid:'fw_port',section:'Tanks',equipment:'ER Misc Tanks',unit:'m'},
+    'RUNNING HOURS DG 1':{fid:'rh_ae1',section:'Running Hours',equipment:'Running Hours',unit:'hrs'},
+    'RUNNING HOURS DG 2':{fid:'rh_ae2',section:'Running Hours',equipment:'Running Hours',unit:'hrs'},
+    'RUNNING HOURS DG 3':{fid:'rh_ae3',section:'Running Hours',equipment:'Running Hours',unit:'hrs'},
+  };
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function parseExcelDate(cell){
+  if(!cell||cell==='') return null;
+  if(cell instanceof Date){
+    return cell.toISOString().slice(0,10);
+  }
+  const s=String(cell).trim();
+  // Try ISO format
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  // Try date string
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return null;
+}
+
+function log(msg){
+  const el=document.getElementById('import-log');
+  el.style.display='block';
+  el.textContent += (el.textContent?'\n':'')+msg;
+}
+
+function resetFile(){
+  parsedData=null;
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('progress-wrap').style.display='none';
+  document.getElementById('import-btn').disabled=true;
+  document.getElementById('import-log').style.display='none';
+  document.getElementById('import-log').textContent='';
+  dz.classList.remove('has-file');
+  document.getElementById('dz-title').textContent='Drop your Excel file here, or click to browse';
+  document.getElementById('dz-sub').textContent='Supports .xlsx and .xls — any month, any year';
+  document.getElementById('file-input').value='';
+}
+
+function resetAll(){ resetFile(); selectedType=null; document.querySelectorAll('.log-card').forEach(c=>c.classList.remove('selected')); }
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP EOM — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#070d1a;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#f1f5f9}
+  .card{width:360px;background:rgba(15,23,42,0.9);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px}
+  .logo{width:52px;height:52px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;margin:0 auto 16px;color:#fff;letter-spacing:1px}
+  h1{text-align:center;font-size:22px;font-weight:700;margin-bottom:4px}
+  .sub{text-align:center;font-size:12px;color:#64748b;margin-bottom:28px}
+  label{display:block;font-size:10px;font-weight:600;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;font-size:14px;color:#f1f5f9;font-family:inherit;outline:none;transition:.2s}
+  input:focus{border-color:#3b82f6;background:rgba(59,130,246,0.08)}
+  .field{margin-bottom:16px}
+  .btn{width:100%;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;margin-top:8px;transition:.2s}
+  .btn:hover{opacity:.9}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;color:#fca5a5;font-size:13px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">EOM</div>
+  <h1>Engine Room Log</h1>
+  <div class="sub">FORCAP — NSML Fleet Operations</div>
+  <div id="err" class="error" style="display:none"></div>
+  <div class="field">
+    <label>Username</label>
+    <input id="user" type="text" autocomplete="username" placeholder="e.g. alfred_temile"/>
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••"/>
+  </div>
+  <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+</div>
+<script>
+  // If already logged in, redirect
+  const tok = localStorage.getItem('eom_token');
+  if (tok) window.location.href = '/logbook.html';
+
+  document.getElementById('pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('err');
+    const username = document.getElementById('user').value.trim();
+    const password = document.getElementById('pass').value;
+    if (!username || !password) return;
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    errEl.style.display = 'none';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      localStorage.setItem('eom_token', data.token);
+      localStorage.setItem('eom_user', JSON.stringify(data.user));
+      const role = data.user.role;
+      if (role === 'vessel') window.location.href = '/logbook.html';
+      else window.location.href = '/dashboard.html';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+</script>
+</body>
+</html>

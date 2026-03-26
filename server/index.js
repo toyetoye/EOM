@@ -1,0 +1,64 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { initDB } = require('./db');
+
+const app = express();
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      'https://eom.forcap.io',
+      'https://forcap.io',
+      // Railway preview URLs
+      /https:\/\/.*\.up\.railway\.app$/,
+      // Localhost for dev
+      /^http:\/\/localhost/,
+    ];
+    const ok = allowed.some(p =>
+      typeof p === 'string' ? p === origin : p.test(origin)
+    );
+    callback(ok ? null : new Error('CORS blocked: ' + origin), ok);
+  },
+  credentials: true
+}));
+app.use(express.json({ limit: '2mb' }));
+
+// ── API ROUTES ────────────────────────────────────────────────────────────────
+app.use('/api/auth',    require('./routes/authRoutes'));
+app.use('/api/vessels', require('./routes/vesselRoutes'));
+app.use('/api/watches', require('./routes/watchRoutes'));
+app.use('/api/admin',   require('./routes/adminRoutes'));
+app.use('/api/defects',  require('./routes/defectRoutes'));
+
+// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
+app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+
+// ── SERVE FRONTEND ────────────────────────────────────────────────────────────
+const PUBLIC = path.join(__dirname, '..', 'public');
+app.use(express.static(PUBLIC));
+// Named HTML pages served directly; everything else → index.html
+app.get('*', (req, res) => {
+  const fs = require('fs');
+  // If the request looks like a specific file that exists, serve it
+  const filePath = path.join(PUBLIC, req.path);
+  if (req.path.endsWith('.html') && fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  res.sendFile(path.join(PUBLIC, 'index.html'));
+});
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3002;
+
+initDB()
+  .then(() => {
+    app.listen(PORT, () => console.log(`EOM backend on :${PORT}`));
+  })
+  .catch(err => {
+    console.error('Failed to initialise DB:', err.message);
+    process.exit(1);
+  });

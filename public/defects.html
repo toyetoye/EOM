@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP — Defect Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="/eom-api.js"></script>
+<style>
+:root{--bg:#070d1a;--sf:#0f172a;--sf2:#1e293b;--bd:rgba(255,255,255,.08);--t1:#f1f5f9;--t2:#94a3b8;--t3:#475569;--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;flex-direction:column}
+/* Header */
+.hdr{height:56px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.hdr-title{font-size:14px;font-weight:700}
+.hdr-vessel{font-size:12px;color:var(--t2)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.hbtn:hover{background:var(--sf2);color:var(--t1)}
+.hbtn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.hbtn-primary:hover{opacity:.9}
+/* Layout */
+.layout{flex:1;display:flex;overflow:hidden}
+.sidebar{width:240px;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:20px}
+/* Sidebar */
+.sb-sect{padding:12px 14px 4px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:none;background:transparent;color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);border-radius:0;transition:.15s;text-align:left}
+.sb-btn:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.sb-btn.active{background:rgba(59,130,246,.1);color:var(--blue)}
+.sb-count{margin-left:auto;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--t2)}
+.sb-count.red{background:rgba(239,68,68,.2);color:#fca5a5}
+.sb-count.amber{background:rgba(245,158,11,.2);color:#fcd34d}
+/* Summary cards */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:14px}
+.stat-val{font-size:28px;font-weight:700;font-family:var(--mono)}
+.stat-lbl{font-size:10px;color:var(--t2);margin-top:3px}
+.stat.crit .stat-val{color:var(--red)}
+.stat.high .stat-val{color:var(--amber)}
+.stat.open .stat-val{color:var(--blue)}
+.stat.closed .stat-val{color:var(--green)}
+/* Defect cards */
+.defect-card{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden;cursor:pointer;transition:all .15s}
+.defect-card:hover{border-color:rgba(255,255,255,.15)}
+.defect-card.critical{border-left:3px solid var(--red)}
+.defect-card.high{border-left:3px solid var(--amber)}
+.defect-card.normal{border-left:3px solid var(--blue)}
+.defect-card.low{border-left:3px solid var(--t3)}
+.dc-head{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.dc-ref{font-size:10px;font-weight:700;font-family:var(--mono);color:var(--t3);flex-shrink:0}
+.dc-title{font-size:13px;font-weight:600;flex:1}
+.dc-meta{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid}
+.pill-crit{background:rgba(239,68,68,.15);color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.pill-high{background:rgba(245,158,11,.15);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.pill-norm{background:rgba(59,130,246,.15);color:#93c5fd;border-color:rgba(59,130,246,.3)}
+.pill-low{background:rgba(71,85,105,.2);color:var(--t3);border-color:rgba(71,85,105,.3)}
+.pill-open{background:rgba(59,130,246,.1);color:#93c5fd;border-color:rgba(59,130,246,.3)}
+.pill-prog{background:rgba(245,158,11,.1);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.pill-closed{background:rgba(34,197,94,.1);color:#86efac;border-color:rgba(34,197,94,.3)}
+.pill-sire{background:rgba(168,85,247,.15);color:#d8b4fe;border-color:rgba(168,85,247,.3)}
+.dc-body{padding:0 16px 12px;display:none}
+.dc-body.open{display:block}
+.dc-field{display:grid;grid-template-columns:140px 1fr;gap:4px;margin-bottom:6px;font-size:12px}
+.dc-fl{color:var(--t3);font-size:11px}
+.dc-fv{color:var(--t1)}
+.dc-comments{margin-top:10px;border-top:1px solid var(--bd);padding-top:10px}
+.cmt{background:var(--sf2);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px}
+.cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.cmt-author{font-weight:700;font-size:11px}
+.cmt-role{font-size:10px;color:var(--t3)}
+.cmt-date{font-size:10px;color:var(--t3);margin-left:auto}
+.cmt-text{color:var(--t2);line-height:1.5}
+.cmt-office{border-left:2px solid var(--purple)}
+.dc-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.act-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s}
+.act-btn:hover{background:var(--sf2);color:var(--t1)}
+.act-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.act-btn.danger{border-color:rgba(239,68,68,.4);color:var(--red)}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:transparent;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+.modal-body{padding:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{background:var(--sf2);border:1px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:13px;padding:8px 12px;border-radius:8px;outline:none;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);cursor:pointer}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+/* Overdue highlight */
+.overdue{background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.3)!important}
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-ico{font-size:40px;margin-bottom:10px}
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--t3);font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">FC</div>
+  <span class="hdr-title">Defect Register</span>
+  <span class="hdr-vessel" id="vessel-lbl"></span>
+  <div class="hdr-right">
+    <button class="hbtn hbtn-primary" onclick="openNewDefect()">+ New Defect</button>
+    <a class="hbtn" href="/logbook.html">← Logbook</a>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-sect">Status</div>
+    <button class="sb-btn active" onclick="filterStatus('')">All Defects <span class="sb-count" id="cnt-all">—</span></button>
+    <button class="sb-btn" onclick="filterStatus('open')">Open <span class="sb-count red" id="cnt-open">—</span></button>
+    <button class="sb-btn" onclick="filterStatus('in_progress')">In Progress <span class="sb-count amber" id="cnt-prog">—</span></button>
+    <button class="sb-btn" onclick="filterStatus('closed')">Closed <span class="sb-count" id="cnt-closed">—</span></button>
+    <div class="sb-sect" style="margin-top:8px">Priority</div>
+    <button class="sb-btn" onclick="filterPriority('critical')">🔴 Critical</button>
+    <button class="sb-btn" onclick="filterPriority('high')">🟠 High</button>
+    <button class="sb-btn" onclick="filterPriority('normal')">🔵 Normal</button>
+    <button class="sb-btn" onclick="filterPriority('low')">⚪ Low</button>
+    <div class="sb-sect" style="margin-top:8px">Special</div>
+    <button class="sb-btn" onclick="filterSire()">🔍 SIRE / Vetting</button>
+    <button class="sb-btn" onclick="filterOverdue()">⏰ Overdue</button>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main">
+    <div class="loading">Loading defect register…</div>
+  </div>
+</div>
+
+<!-- New/Edit Defect Modal -->
+<div class="modal-bg" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Report New Defect</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Reported By *</label>
+          <input class="form-input" id="f-reported-by" placeholder="Your name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" id="f-date"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Location / Deck</label>
+          <select class="form-select" id="f-location">
+            <option value="">Select location</option>
+            <option>ER Floor — Tank Top</option>
+            <option>3rd Deck — Purifier Room</option>
+            <option>3rd Deck — Generator Flat</option>
+            <option>2nd Deck — ECR</option>
+            <option>2nd Deck — AC Plant Room</option>
+            <option>Upper Deck — Boiler Room</option>
+            <option>Cargo Deck — Manifold</option>
+            <option>Deck — External</option>
+            <option>Accommodation</option>
+            <option>Bridge</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Equipment</label>
+          <input class="form-input" id="f-equipment" placeholder="e.g. D/G No.2, A/C Plant"/>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea class="form-textarea" id="f-description" rows="3" placeholder="Describe the defect in detail — what was observed, when, any readings…"></textarea>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">Suggested Fix</label>
+          <textarea class="form-textarea" id="f-fix" rows="2" placeholder="Recommended action or spare parts required…"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="f-priority">
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reported To</label>
+          <input class="form-input" id="f-reported-to" placeholder="Superintendent / Office"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date Reported To</label>
+          <input class="form-input" type="date" id="f-date-reported-to"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Close-Out</label>
+          <input class="form-input" type="date" id="f-closeout"/>
+        </div>
+      </div>
+      <label class="form-check">
+        <input type="checkbox" id="f-sire"/>
+        Mark as SIRE / Vetting relevant
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="act-btn" onclick="closeModal()">Cancel</button>
+      <button class="act-btn primary" onclick="submitDefect()" id="submit-btn">Submit Defect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-bg" id="comment-modal" style="display:none" onclick="if(event.target===this)closeCommentModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title">Add Comment</span>
+      <button class="modal-close" onclick="closeCommentModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">Your Name / Role</label>
+          <input class="form-input" id="c-author" placeholder="Name"/>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-select" id="c-role">
+            <option value="vessel">Vessel (Engineer)</option>
+            <option value="superintendent">Superintendent</option>
+            <option value="office">Office / Management</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">Comment *</label>
+          <textarea class="form-textarea" id="c-text" rows="4" placeholder="Enter your comment, update, or instruction…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="act-btn" onclick="closeCommentModal()">Cancel</button>
+      <button class="act-btn primary" onclick="submitComment()">Add Comment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var vesselId = null;
+var allDefects = [];
+var currentFilter = {status:'', priority:'', sire:false, overdue:false};
+var activeDefectId = null;
+var commentDefectId = null;
+
+window.addEventListener('DOMContentLoaded', async function(){
+  if(typeof EOM==='undefined'){ showError('Open from Railway URL.'); return; }
+  if(!EOM.requireAuth()) return;
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  try {
+    const vessels = await EOM.get('/vessels');
+    if(!vessels.length){ showError('No vessels assigned.'); return; }
+    vesselId = vessels[0].id;
+    document.getElementById('vessel-lbl').textContent = '· ' + vessels[0].name;
+    await loadDefects();
+    await loadStats();
+  } catch(e){ showError(e.message); }
+});
+
+async function loadDefects(){
+  allDefects = await EOM.get('/defects?vessel_id=' + vesselId + '&limit=200');
+  renderDefects();
+}
+
+async function loadStats(){
+  try {
+    const s = await EOM.get('/defects/stats/summary?vessel_id=' + vesselId);
+    const total = parseInt(s.open||0)+parseInt(s.in_progress||0)+parseInt(s.closed||0);
+    document.getElementById('cnt-all').textContent   = total;
+    document.getElementById('cnt-open').textContent  = s.open||0;
+    document.getElementById('cnt-prog').textContent  = s.in_progress||0;
+    document.getElementById('cnt-closed').textContent = s.closed||0;
+  } catch(e){}
+}
+
+function filterStatus(status){
+  currentFilter = {status, priority:'', sire:false, overdue:false};
+  document.querySelectorAll('.sb-btn').forEach(function(b){ b.classList.remove('active'); });
+  event.target.classList.add('active');
+  renderDefects();
+}
+function filterPriority(p){
+  currentFilter = {status:'', priority:p, sire:false, overdue:false};
+  document.querySelectorAll('.sb-btn').forEach(function(b){ b.classList.remove('active'); });
+  event.target.classList.add('active');
+  renderDefects();
+}
+function filterSire(){
+  currentFilter = {status:'', priority:'', sire:true, overdue:false};
+  document.querySelectorAll('.sb-btn').forEach(function(b){ b.classList.remove('active'); });
+  event.target.classList.add('active');
+  renderDefects();
+}
+function filterOverdue(){
+  currentFilter = {status:'', priority:'', sire:false, overdue:true};
+  document.querySelectorAll('.sb-btn').forEach(function(b){ b.classList.remove('active'); });
+  event.target.classList.add('active');
+  renderDefects();
+}
+
+function renderDefects(){
+  const today = new Date().toISOString().slice(0,10);
+  let filtered = allDefects.filter(function(d){
+    if(currentFilter.status && d.status !== currentFilter.status) return false;
+    if(currentFilter.priority && d.priority !== currentFilter.priority) return false;
+    if(currentFilter.sire && !d.sire_relevant) return false;
+    if(currentFilter.overdue && !(d.expected_closeout && d.expected_closeout < today && !['closed','cancelled'].includes(d.status))) return false;
+    return true;
+  });
+
+  const main = document.getElementById('main');
+  if(!filtered.length){
+    main.innerHTML = '<div class="empty"><div class="empty-ico">✅</div><div style="font-size:14px;font-weight:600;color:var(--t2)">No defects found</div><div style="font-size:12px;color:var(--t3);margin-top:4px">No defects match this filter</div></div>';
+    return;
+  }
+
+  const today2 = new Date().toISOString().slice(0,10);
+  main.innerHTML = filtered.map(function(d){
+    const isOverdue = d.expected_closeout && d.expected_closeout.slice(0,10) < today2 && !['closed','cancelled'].includes(d.status);
+    const isOpen = activeDefectId === d.id;
+    const PCLS = {critical:'pill-crit',high:'pill-high',normal:'pill-norm',low:'pill-low'};
+    const SCLS = {open:'pill-open',in_progress:'pill-prog',closed:'pill-closed'};
+    const PLBL = {critical:'CRITICAL',high:'HIGH',normal:'NORMAL',low:'LOW'};
+    const SLBL = {open:'OPEN',in_progress:'IN PROGRESS',closed:'CLOSED'};
+
+    return '<div class="defect-card ' + (d.priority||'normal') + (isOverdue?' overdue':'') + '" id="dc_'+d.id+'">'
+      + '<div class="dc-head" onclick="toggleDefect('+d.id+')">'
+      + '<span class="dc-ref">' + (d.ref_number||'DEF-????') + '</span>'
+      + '<div class="dc-title">' + esc(d.equipment ? d.equipment+' — '+d.description : d.description) + '</div>'
+      + '<div class="dc-meta">'
+      + (d.sire_relevant ? '<span class="pill pill-sire">SIRE</span> ' : '')
+      + (isOverdue ? '<span class="pill" style="background:rgba(239,68,68,.15);color:#fca5a5;border-color:rgba(239,68,68,.3)">OVERDUE</span> ' : '')
+      + '<span class="pill ' + (PCLS[d.priority]||'pill-norm') + '">' + (PLBL[d.priority]||'NORMAL') + '</span> '
+      + '<span class="pill ' + (SCLS[d.status]||'pill-open') + '">' + (SLBL[d.status]||'OPEN') + '</span>'
+      + '</div></div>'
+
+      + '<div class="dc-body' + (isOpen?' open':'') + '" id="dcb_'+d.id+'">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:10px">'
+      + fRow('Location', d.location||'—')
+      + fRow('Reported By', d.reported_by)
+      + fRow('Date Reported', fmtDate(d.date_reported))
+      + fRow('Reported To', d.reported_to||'—')
+      + fRow('Date Reported To', fmtDate(d.date_reported_to))
+      + fRow('Expected Close-Out', fmtDate(d.expected_closeout))
+      + fRow('Date Closed', fmtDate(d.date_closed))
+      + fRow('Comment Count', d.comment_count||0)
+      + '</div>'
+      + (d.suggested_fix ? '<div style="background:var(--sf2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px"><span style="color:var(--t3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Suggested Fix</span><br><span style="color:var(--t2);margin-top:4px;display:block">'+esc(d.suggested_fix)+'</span></div>' : '')
+
+      + '<div class="dc-comments" id="cmts_'+d.id+'"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Comments & Updates</div><div style="font-size:12px;color:var(--t3)">Loading comments…</div></div>'
+
+      + '<div class="dc-actions">'
+      + (d.status!=='closed' ? '<button class="act-btn primary" onclick="openCommentModal('+d.id+')">💬 Add Comment</button>' : '')
+      + (d.status==='open' ? '<button class="act-btn" onclick="updateStatus('+d.id+',\'in_progress\')">▶ Mark In Progress</button>' : '')
+      + (d.status!=='closed' ? '<button class="act-btn" onclick="closeDefect('+d.id+')">✅ Close Out</button>' : '')
+      + '<button class="act-btn" onclick="viewAudit('+d.id+')">🔍 Audit Trail</button>'
+      + '</div>'
+
+      + '</div></div>';
+  }).join('');
+}
+
+function fRow(label, val){
+  return '<div><div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.4px">'+label+'</div>'
+        +'<div style="font-size:12px;color:var(--t1);margin-top:2px">'+esc(String(val||'—'))+'</div></div>';
+}
+
+async function toggleDefect(id){
+  if(activeDefectId === id){
+    activeDefectId = null;
+  } else {
+    activeDefectId = id;
+    // Load comments
+    loadComments(id);
+  }
+  renderDefects();
+}
+
+async function loadComments(defectId){
+  try {
+    const d = await EOM.get('/defects/'+defectId);
+    const el = document.getElementById('cmts_'+defectId);
+    if(!el) return;
+    if(!d.comments || !d.comments.length){
+      el.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Comments & Updates</div><div style="font-size:12px;color:var(--t3)">No comments yet.</div>';
+      return;
+    }
+    el.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Comments & Updates</div>'
+      + d.comments.map(function(c){
+        const isOffice = c.role==='office'||c.role==='superintendent';
+        return '<div class="cmt' + (isOffice?' cmt-office':'') + '">'
+          + '<div class="cmt-head"><span class="cmt-author">'+esc(c.author)+'</span><span class="cmt-role">'+esc(c.role||'')+'</span><span class="cmt-date">'+fmtDate(c.created_at)+'</span></div>'
+          + '<div class="cmt-text">'+esc(c.comment)+'</div></div>';
+      }).join('');
+  } catch(e){}
+}
+
+function openNewDefect(){
+  document.getElementById('f-reported-by').value='';
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-location').value='';
+  document.getElementById('f-equipment').value='';
+  document.getElementById('f-description').value='';
+  document.getElementById('f-fix').value='';
+  document.getElementById('f-priority').value='normal';
+  document.getElementById('f-reported-to').value='';
+  document.getElementById('f-date-reported-to').value='';
+  document.getElementById('f-closeout').value='';
+  document.getElementById('f-sire').checked=false;
+  document.getElementById('modal-title').textContent='Report New Defect';
+  document.getElementById('modal').style.display='flex';
+}
+
+function closeModal(){ document.getElementById('modal').style.display='none'; }
+
+async function submitDefect(){
+  const btn = document.getElementById('submit-btn');
+  const desc = document.getElementById('f-description').value.trim();
+  const by   = document.getElementById('f-reported-by').value.trim();
+  if(!desc||!by){ alert('Reported By and Description are required.'); return; }
+  btn.disabled=true; btn.textContent='Saving…';
+  try {
+    await EOM.post('/defects', {
+      vessel_id: vesselId,
+      reported_by: by,
+      location: document.getElementById('f-location').value,
+      equipment: document.getElementById('f-equipment').value.trim(),
+      description: desc,
+      suggested_fix: document.getElementById('f-fix').value.trim(),
+      priority: document.getElementById('f-priority').value,
+      reported_to: document.getElementById('f-reported-to').value.trim(),
+      date_reported_to: document.getElementById('f-date-reported-to').value||null,
+      expected_closeout: document.getElementById('f-closeout').value||null,
+      sire_relevant: document.getElementById('f-sire').checked,
+    });
+    closeModal();
+    await loadDefects();
+    await loadStats();
+  } catch(e){ alert('Error: '+e.message); }
+  btn.disabled=false; btn.textContent='Submit Defect';
+}
+
+function openCommentModal(defectId){
+  commentDefectId = defectId;
+  document.getElementById('c-text').value='';
+  document.getElementById('comment-modal').style.display='flex';
+}
+function closeCommentModal(){ document.getElementById('comment-modal').style.display='none'; }
+
+async function submitComment(){
+  const text = document.getElementById('c-text').value.trim();
+  const author = document.getElementById('c-author').value.trim();
+  if(!text||!author){ alert('Name and comment are required.'); return; }
+  try {
+    await EOM.post('/defects/'+commentDefectId+'/comments', {
+      author, role: document.getElementById('c-role').value, comment: text
+    });
+    closeCommentModal();
+    await loadComments(commentDefectId);
+    await loadDefects();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function updateStatus(id, status){
+  try {
+    await EOM.patch('/defects/'+id, {status});
+    await loadDefects();
+    await loadStats();
+    activeDefectId = id;
+    renderDefects();
+    loadComments(id);
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function closeDefect(id){
+  const closeDate = prompt('Close-out date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
+  if(!closeDate) return;
+  const closedBy = prompt('Closed by:');
+  if(!closedBy) return;
+  try {
+    await EOM.patch('/defects/'+id, {status:'closed', date_closed:closeDate, closed_by:closedBy});
+    await loadDefects();
+    await loadStats();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function viewAudit(id){
+  try {
+    const trail = await EOM.get('/defects/'+id+'/audit');
+    if(!trail.length){ alert('No audit records found for this defect.'); return; }
+    const txt = trail.map(function(e){
+      return '['+e.changed_at.slice(0,16)+'] '+e.action.toUpperCase()+' by '+e.changed_by;
+    }).join('\n');
+    alert('Audit Trail — DEF-'+String(id).padStart(4,'0')+'\n\n'+txt);
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+function fmtDate(d){
+  if(!d) return '—';
+  return String(d).slice(0,10);
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Patch EOM to support PATCH method
+if(typeof EOM !== 'undefined' && !EOM.patch){
+  EOM.patch = async function(path, body){
+    const token = localStorage.getItem('eom_token');
+    const r = await fetch('/api'+path, {method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||'Request failed');
+    return d;
+  };
+}
+
+function showError(msg){
+  document.getElementById('main').innerHTML='<div class="empty"><div class="empty-ico">❌</div><div style="font-size:14px;font-weight:600;color:var(--t2)">Error</div><div style="font-size:12px;color:var(--t3);margin-top:4px">'+esc(msg)+'</div></div>';
+}
+</script>
+</body>
+</html>

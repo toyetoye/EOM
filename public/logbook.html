@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP · Engine Room Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/eom-api.js"></script>
+<style>
+
+
+[data-theme="light"]{--canvas:#E8ECF2;--app:#FFFFFF;--sidebar:#131C2E;--sidebar-hover:rgba(255,255,255,0.06);--sidebar-active:rgba(255,255,255,0.12);--sidebar-t1:#F1F5F9;--sidebar-t2:#94A3B8;--sidebar-t3:#475569;--sidebar-line:rgba(255,255,255,0.08);--surface:#FFFFFF;--surface2:#EEF1F6;--line:#D0D5DD;--line2:#C0C8D6;--t1:#101828;--t2:#475467;--t3:#98A2B3;--t4:#D0D5DD;--blue:#1264D8;--blue2:#1044B8;--blue-soft:#EFF4FF;--blue-mid:rgba(18,100,216,.15);--inp-bg:#FFFFFF;--inp-bd:#C8D0DC;--hover:#F0F4F9;--selected:#E0EBFF;--shadow:0 2px 6px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);--field-line:rgba(0,0,0,0.09);color-scheme:light}
+[data-theme="dark"]{--canvas:#070C17;--app:#0F1621;--sidebar:#0B1120;--sidebar-hover:rgba(255,255,255,0.05);--sidebar-active:rgba(255,255,255,0.1);--sidebar-t1:#E2E8F0;--sidebar-t2:#94A3B8;--sidebar-t3:#475569;--sidebar-line:rgba(255,255,255,0.07);--surface:#0F1621;--surface2:#151E2D;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--t1:#F1F5F9;--t2:#94A3B8;--t3:#475569;--t4:#2D3F57;--blue:#3B82F6;--blue2:#2563EB;--blue-soft:rgba(59,130,246,.1);--blue-mid:rgba(59,130,246,.2);--inp-bg:#151E2D;--inp-bd:rgba(255,255,255,.12);--hover:rgba(255,255,255,.04);--selected:rgba(59,130,246,.12);--shadow:0 2px 8px rgba(0,0,0,.4);--field-line:rgba(255,255,255,0.06);color-scheme:dark}
+:root{--ok:#12B76A;--warn:#F79009;--alm:#F04438;--font:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace;--r:8px;--rsm:6px}
+[data-theme="light"]{--ok-bg:#DCFCE7;--ok-bd:#86EFAC;--ok-tx:#15803D;--wn-bg:#FEF3C7;--wn-bd:#FCD34D;--wn-tx:#92400E;--al-bg:#FEF3F2;--al-bd:#FECDCA;--al-tx:#B42318}
+[data-theme="dark"]{--ok-bg:rgba(18,183,106,.15);--ok-bd:rgba(18,183,106,.4);--ok-tx:#4ADE80;--wn-bg:rgba(247,144,9,.15);--wn-bd:rgba(247,144,9,.4);--wn-tx:#FBBF24;--al-bg:rgba(240,68,56,.1);--al-bd:rgba(240,68,56,.25);--al-tx:#F87171}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:14px;display:flex;flex-direction:column;transition:background .2s,color .2s}
+
+/* TOPBAR */
+.topbar{height:56px;background:var(--app);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:12px;flex-shrink:0;box-shadow:var(--shadow);z-index:20;transition:background .2s;position:relative}
+.brand{display:flex;align-items:center;gap:8px;padding-right:14px;border-right:1px solid var(--line)}
+.logo{width:36px;height:36px;background:var(--blue2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:-.5px;box-shadow:0 2px 8px rgba(18,68,184,.3)}
+.brand-txt{font-size:16px;font-weight:700;letter-spacing:-.4px}
+.vessel-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surface2);border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--t2);font-weight:500;font-family:var(--font)}
+.run-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.g-status{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;border:1px solid;font-size:11px;font-weight:600;transition:all .2s}
+.g-status.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.g-status.g-status.neutral{background:var(--surface2);border-color:var(--line2);color:var(--t3)}
+.g-status.warn{background:var(--wn-bg);border-color:var(--wn-bd);color:var(--wn-tx)}
+.g-status.alm{background:var(--al-bg);border-color:var(--al-bd);color:var(--al-tx)}
+.gsd{width:6px;height:6px;border-radius:50%;background:currentColor}
+.topbar-mid{flex:1;display:flex;align-items:center;justify-content:center}
+.topbar-right{display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--line);font-size:11.5px;color:var(--t2)}
+.topbar-right label{display:flex;align-items:center;gap:5px;font-weight:500}
+.topbar-right input,.topbar-right select{border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none;font-weight:500}
+.topbar-right input:focus,.topbar-right select:focus{border-color:var(--blue)}
+.theme-toggle{display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--line);border-radius:20px;padding:3px}
+.tt{width:28px;height:22px;border-radius:14px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .15s;color:var(--t3)}
+.tt.on{background:var(--app);box-shadow:var(--shadow);color:var(--t1)}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:242px 1fr 284px;grid-template-rows:1fr;flex:1;overflow:hidden;min-height:0}
+
+/* LEFT */
+.left{background:var(--sidebar);border-right:none;display:flex;flex-direction:column;overflow:hidden;transition:background .2s;box-shadow:4px 0 20px rgba(0,0,0,0.2)}
+/* Logo block — matches UiUX blue accent header */
+.left-logo{padding:16px 16px 14px;border-bottom:1px solid var(--sidebar-line);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.02)}
+.left-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px;box-shadow:0 3px 10px rgba(18,100,216,.4)}
+.left-logo-txt{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--font)}
+.left-logo-sub{font-size:10px;color:var(--sidebar-t3);margin-top:1px;font-family:var(--font)}
+/* Nav section label */
+.left-head{padding:12px 14px 6px;border-bottom:none;display:flex;align-items:center;gap:9px}
+.left-head-txt{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--sidebar-t3);text-transform:uppercase;font-family:var(--font)}
+.ls{flex:1;overflow-y:auto;padding:6px 10px 10px}
+.ls::-webkit-scrollbar{width:3px}
+.ls::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.loc-h{display:flex;align-items:center;gap:7px;padding:7px 6px 4px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-top:5px;border-top:1px solid var(--line)}
+.loc-h:first-child{border-top:none;margin-top:0;padding-top:4px}
+.loc-pip{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.eq{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;background:transparent;border-radius:10px;cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s;position:relative;margin-bottom:2px}
+.eq:hover{background:var(--sidebar-hover)}
+.eq.active{background:var(--blue);box-shadow:0 3px 12px rgba(18,100,216,.35)}
+.eq.active .eq-name{color:#fff;font-weight:700}
+.eq.active .eq-sub{display:none}
+.eq.active .eq-badge{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);color:#fff}
+.eq.active .eq-ico{opacity:1}
+.eq-ico{font-size:15px;flex-shrink:0;opacity:.7}
+.eq-ico{font-size:14px;flex-shrink:0}
+.eq-body{flex:1;min-width:0}
+.eq-name{font-size:13px;font-weight:500;color:var(--sidebar-t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-sub{font-size:10px;color:var(--sidebar-t2);margin-top:1px;opacity:.7}
+.eq-badge{font-size:8.5px;font-weight:700;padding:1.5px 6px;border-radius:8px;flex-shrink:0;border:1px solid transparent}
+.eq-badge.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.eq-badge.warn{background:var(--wn-bg);border-color:var(--wn-bd);color:var(--wn-tx)}
+.eq-badge.alm{background:var(--al-bg);border-color:var(--al-bd);color:var(--al-tx)}
+.eq-badge.dim{background:rgba(255,255,255,0.06);color:var(--sidebar-t2);border-color:rgba(255,255,255,0.1)}
+.left-foot{padding:12px 10px;border-top:1px solid var(--sidebar-line);background:rgba(0,0,0,.15);flex-shrink:0;transition:background .2s}
+.prog-row{display:flex;justify-content:space-between;font-size:10.5px;color:var(--sidebar-t2);margin-bottom:5px}
+.prog-track{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.prog-bar{height:100%;background:var(--blue);border-radius:2px;transition:width .4s}
+.btn-submit{width:100%;padding:9px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s}
+.btn-submit:hover{background:var(--blue2)}
+
+/* MIDDLE */
+.mid{display:flex;flex-direction:column;overflow:hidden;background:var(--canvas);transition:background .2s}
+.tabs{display:flex;align-items:center;background:var(--app);border-bottom:1px solid var(--line2);padding:10px 18px;flex-shrink:0;gap:0;overflow-x:auto;transition:background .2s}
+.tabs::-webkit-scrollbar{height:0}
+/* Pill container wrapping all tabs */
+.tab-pill-wrap{display:flex;align-items:center;flex-wrap:nowrap;background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:4px;gap:3px;flex-shrink:0;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:6px;padding:7px 16px;height:auto;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;border-radius:8px;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:var(--t2);background:rgba(0,0,0,.04)}
+[data-theme="dark"] .tab:hover{background:rgba(255,255,255,.06)}
+.tab.active{background:var(--app);color:var(--t1);font-weight:700;box-shadow:0 1px 6px rgba(0,0,0,.12),0 0 0 1px var(--line2)}
+.tab-badge{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700}
+.tab-badge.warn{background:var(--wn-bg);color:var(--wn-tx);border:1px solid var(--wn-bd)}
+.tab-badge.alm{background:var(--al-bg);color:var(--al-tx);border:1px solid var(--al-bd)}
+.mb{flex:1;overflow-y:auto;padding:12px 18px 40px}
+.mb::-webkit-scrollbar{width:5px}
+.mb::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.eq-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eq-hdr-icon{width:36px;height:36px;border-radius:var(--r);background:var(--blue-soft);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.eq-hdr-name{font-size:16px;font-weight:700;letter-spacing:-.3px;font-family:var(--font)}
+.eq-hdr-sub{font-size:11px;color:var(--t3);margin-top:1px;font-family:var(--font)}
+
+/* SECTION CARD */
+.sc{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.05);transition:background .2s,border-color .2s}
+.sch{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1.5px solid var(--line2);background:var(--surface2);min-height:0}
+.sch-ico{font-size:12px}.sch-lbl{font-size:12.5px;font-weight:700;color:var(--t1);flex:1;font-family:var(--font)}
+.sc-st{font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:10px;border:1px solid;white-space:nowrap}
+.sc-st.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.sc-st.warn{background:var(--wn-bg);border-color:var(--wn-bd);color:var(--wn-tx)}
+.sc-st.alm{background:var(--al-bg);border-color:var(--al-bd);color:var(--al-tx)}
+.sc-st.empty{background:transparent;border-color:var(--line);color:var(--t3);font-size:10px}
+
+/* UNIT TOGGLES */
+.unit-toggles{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:11px 14px;border-bottom:1.5px solid var(--line2);background:var(--surface2)}
+.utog-lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--t3);text-transform:uppercase;font-family:var(--font);margin-right:4px;flex-shrink:0}
+.utog{display:flex;align-items:center;gap:10px;cursor:default;font-size:12.5px;font-weight:500;font-family:var(--font);color:var(--t2)}
+.utog.run .utog-name{color:var(--t1)}
+.utog.stop .utog-name{color:var(--t3)}
+
+/* FIELD ROWS */
+.fl{padding:2px 14px 6px}
+.fr{display:grid;grid-template-columns:1fr 94px 46px 52px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line2)}
+.fr:last-child{border-bottom:none}
+.fr.stopped,.fr2.stopped{opacity:.3;pointer-events:none}
+.flbl{font-size:13px;color:var(--t2);font-family:var(--font)}
+.finp{padding:4px 7px;border:1.5px solid var(--inp-bd);border-radius:var(--rsm);background:var(--inp-bg);color:var(--t1);font-size:13px;font-family:var(--mono);text-align:right;outline:none;width:100%;transition:all .12s;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.finp::placeholder{color:var(--t4)}
+.finp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-mid)}
+.finp.ok{border-color:var(--ok);color:var(--ok-tx);background:var(--ok-bg)}
+.finp.warn{border-color:var(--warn);color:var(--wn-tx);background:var(--wn-bg)}
+.finp.alm{border-color:var(--alm);color:var(--al-tx);background:var(--al-bg)}
+.funit{font-size:11px;color:var(--t2);font-family:var(--font);font-weight:500}
+
+/* DUAL ROW (suction/discharge) */
+.fr2{display:grid;grid-template-columns:1fr 88px 42px 88px 42px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.fr2:last-child{border-bottom:none}
+
+/* CYLINDER TABLE */
+.cyl-sc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);transition:background .2s}
+.cyl-h{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface2);border-bottom:1.5px solid var(--line2)}
+.cyl-hw{overflow-x:auto}
+.ctbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.ctbl th{background:var(--surface2);padding:6px 8px;font-size:10px;font-weight:700;color:var(--t3);border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;font-family:var(--font)}
+.ctbl th.plbl{text-align:left;padding-left:14px;min-width:130px}
+.ctbl tr{border-bottom:1px solid var(--line)}
+.ctbl tr:last-child{border-bottom:none}
+.ctbl tr:hover td{background:var(--hover)}
+.ctbl td{padding:4px 5px;text-align:center;vertical-align:middle;font-size:12px}
+.ctbl td.pname{text-align:left;padding-left:14px;font-size:13px;color:var(--t2);font-family:var(--font)}
+.ctbl td.uname{font-size:9.5px;color:var(--t3);font-family:var(--mono)}
+.ci{width:54px;padding:4px 4px;border:1px solid var(--inp-bd);border-radius:5px;background:var(--inp-bg);color:var(--t1);font-size:11px;font-family:var(--mono);text-align:center;outline:none;transition:all .12s}
+.ci:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-mid)}
+.ci.ok{border-color:var(--ok);color:var(--ok-tx);background:var(--ok-bg)}
+.ci.warn{border-color:var(--warn);color:var(--wn-tx);background:var(--wn-bg)}
+.ci.alm{border-color:var(--alm);color:var(--al-tx);background:var(--al-bg)}
+.avg-c{font-family:var(--mono);font-size:11px;color:var(--t3)}
+.avg-c.warn{color:var(--wn-tx);font-weight:600}.avg-c.alm{color:var(--al-tx);font-weight:600}
+.dev-insight{margin:5px 14px 10px;padding:8px 10px;border-radius:var(--rsm);border:1px solid var(--line);background:var(--surface2);font-size:11px;color:var(--t2);display:flex;align-items:center;gap:8px}
+.dev-insight.warn{background:var(--wn-bg);border-color:var(--wn-bd);color:var(--wn-tx)}
+
+/* AI HINT */
+.ai-hint{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;background:var(--blue-soft);border:1.5px solid var(--blue-mid);border-radius:var(--r);margin-bottom:12px;font-size:12px;color:var(--blue);font-family:var(--font)}
+.ai-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px;opacity:.7;font-family:var(--font)}
+
+/* SAVE ROW */
+.save-row{display:flex;justify-content:flex-end;gap:8px;padding:12px 0 2px}
+.btn-ghost{padding:8px 20px;border-radius:var(--rsm);border:1.5px solid var(--line2);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2);font-family:var(--font);transition:all .1s}
+.btn-ghost:hover{background:var(--hover);color:var(--t1)}
+.btn-primary{padding:8px 24px;border-radius:var(--rsm);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s;box-shadow:0 2px 8px rgba(18,100,216,.3)}
+.btn-primary:hover{background:var(--blue2)}
+.btn-primary.saved{background:var(--ok-bg);color:var(--ok-tx);border:1px solid var(--ok-bd)}
+
+/* EMPTY STATE */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px;text-align:center;color:var(--t3)}
+.es-ico{font-size:48px;opacity:.2}.es-ttl{font-size:14px;font-weight:600;color:var(--t2)}.es-sub{font-size:12px;line-height:1.5;max-width:280px}
+
+/* RIGHT */
+.right{background:var(--app);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;transition:background .2s}
+.rh{padding:10px 14px 8px;border-bottom:1px solid var(--line);background:var(--surface2);font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--t3);text-transform:uppercase;flex-shrink:0}
+.rs{flex:1;overflow-y:auto;padding:10px}
+.rs::-webkit-scrollbar{width:3px}
+.rs::-webkit-scrollbar-thumb{background:var(--line2)}
+.alm-blk{padding:8px 10px;background:var(--al-bg);border:1px solid var(--al-bd);border-radius:var(--rsm);margin-bottom:8px}
+.alm-ttl{font-size:11px;font-weight:700;color:var(--al-tx);margin-bottom:4px}
+.alm-row{font-size:10.5px;color:var(--al-tx);padding:1px 0}
+.wn-blk{padding:8px 10px;background:var(--wn-bg);border:1px solid var(--wn-bd);border-radius:var(--rsm);margin-bottom:8px}
+.wn-ttl{font-size:11px;font-weight:700;color:var(--wn-tx);margin-bottom:3px}
+.wn-row{font-size:10.5px;color:var(--wn-tx);padding:1px 0}
+.ok-blk{padding:8px 10px;background:var(--ok-bg);border:1px solid var(--ok-bd);border-radius:var(--rsm);margin-bottom:8px;font-size:11px;font-weight:600;color:var(--ok-tx)}
+.floor-card{border:1px solid var(--line);border-radius:var(--rsm);margin-bottom:7px;overflow:hidden}
+.fc-h{display:flex;align-items:center;gap:7px;padding:6px 10px;background:var(--surface2);border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--t1);font-family:var(--font)}
+.fp{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.fp.ok{background:var(--ok)}.fp.warn{background:var(--warn)}.fp.alm{background:var(--alm)}.fp.dim{background:var(--t4)}
+.fc-items{padding:3px 6px 4px}
+.mr{display:flex;align-items:center;padding:4px 5px;border-radius:4px;cursor:pointer;transition:background .1s;gap:5px}
+.mr:hover{background:var(--hover)}
+.mn{font-size:12px;color:var(--t2);font-weight:500;flex:1;font-family:var(--font)}
+.mv{font-size:11px;font-family:var(--mono);color:var(--t3)}
+.mv.warn{color:var(--wn-tx);font-weight:600}.mv.alm{color:var(--al-tx);font-weight:600}
+.md{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.md.ok{background:var(--ok)}.md.warn{background:var(--warn)}.md.alm{background:var(--alm);animation:pa .8s ease infinite}.md.dim{background:var(--t4)}
+@keyframes pa{0%,100%{box-shadow:0 0 0 0 rgba(240,68,56,.4)}50%{box-shadow:0 0 0 4px rgba(240,68,56,0)}}
+
+/* EQUIPMENT STATS STRIP (Area 1) */
+.eq-hdr{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:nowrap}
+.eq-hdr-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.eq-stats-strip{display:flex;gap:8px;flex-shrink:0;align-items:center}
+.eq-stat{display:flex;flex-direction:column;align-items:center;padding:5px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--rsm);min-width:72px;text-align:center}
+.eq-stat-val{font-size:14px;font-weight:700;color:var(--t1);font-family:var(--mono);line-height:1.1}
+.eq-stat-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:600;font-family:var(--font)}
+.eq-stat.ok-stat{border-color:var(--ok-bd);background:var(--ok-bg)}
+.eq-stat.ok-stat .eq-stat-val{color:var(--ok-tx)}
+
+/* PREVIOUS WATCH GHOST (Area 2) */
+.pw-val{font-size:10px;color:var(--t3);font-family:var(--mono);text-align:right;white-space:nowrap;padding-left:4px;min-width:60px}
+.pw-val.up{color:var(--warn)}
+.pw-val.dn{color:var(--blue)}
+.pw-val.alm{color:var(--alm)}
+.pw-hdr{font-size:9.5px;font-weight:700;letter-spacing:.5px;color:var(--t3);text-transform:uppercase;text-align:right;opacity:.7;font-family:var(--font)}
+
+/* WATCH HISTORY TABLE (Area 3) */
+.watch-hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-top:6px;overflow:hidden;box-shadow:var(--shadow)}
+.wh-head{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--surface2);border-bottom:1.5px solid var(--line2)}
+.wh-title{font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font)}
+.wh-meta{font-size:11px;color:var(--t3);font-family:var(--font)}
+.wh-scroll{overflow-x:auto}
+.whtbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.whtbl th{background:var(--surface2);padding:5px 10px;font-size:10px;font-weight:700;color:var(--t3);border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;font-family:var(--font)}
+.whtbl th.pname{text-align:left;padding-left:14px;min-width:160px}
+.whtbl tr{border-bottom:1px solid var(--line)}
+.whtbl tr:last-child{border-bottom:none}
+.whtbl tr:hover td{background:var(--hover)}
+.whtbl td{padding:4px 10px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--t2)}
+.whtbl td.pname{text-align:left;padding-left:14px;font-family:var(--font);color:var(--t2);font-size:12.5px}
+.whtbl td.curr{font-weight:700;color:var(--t1)}
+.whtbl td.curr.ok{color:var(--ok-tx)}.whtbl td.curr.warn{color:var(--wn-tx)}.whtbl td.curr.alm{color:var(--al-tx)}
+.trend-up::after{content:' ↑';color:var(--warn);font-size:9px}
+.trend-dn::after{content:' ↓';color:var(--blue);font-size:9px}
+.trend-ok::after{content:' →';color:var(--t3);font-size:9px}
+.no-hist{padding:20px;text-align:center;color:var(--t3);font-size:11px}
+
+/* EQUIPMENT REMARKS */
+.eq-remarks{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);margin-top:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.eq-rem-head{display:flex;align-items:center;gap:8px;padding:7px 14px;background:var(--surface2);border-bottom:1.5px solid var(--line2)}
+.eq-rem-body{padding:10px 14px 12px}
+
+/* Stronger left-bar accent on active item */
+.eq.active::before{width:3px}
+
+/* Loc pip bigger */
+.loc-pip{width:8px;height:8px}
+
+/* UNIT SELECTOR TABS — for multi-unit equipment */
+.unit-sel{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface2);flex-wrap:wrap}
+.unit-sel-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--t2);text-transform:uppercase;margin-right:6px;white-space:nowrap}
+.usel{display:flex;align-items:center;gap:7px;padding:7px 14px;border:1.5px solid var(--line2);border-radius:var(--rsm);background:var(--surface);cursor:pointer;font-size:12.5px;font-weight:600;font-family:var(--font);transition:all .15s;color:var(--t2)}
+.usel:hover{border-color:var(--blue);color:var(--t1);background:var(--hover)}
+.usel.active{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.usel .ud{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.usel.run-unit .ud{background:var(--ok)}
+.usel.stop-unit .ud{background:var(--t4)}
+.usel.stop-unit{opacity:.65}
+/* Stop/run mini toggle inside unit tab */
+.usel-tog{margin-left:6px;font-size:9.5px;padding:1px 7px;border-radius:10px;border:1px solid;cursor:pointer;font-weight:700;font-family:var(--font);transition:all .15s;flex-shrink:0}
+.usel-tog.run{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.usel-tog.stop{background:var(--surface2);border-color:var(--line);color:var(--t3)}
+/* Fields from stopped unit greyed */
+.unit-fields.stopped-unit{opacity:.3;pointer-events:none}
+.unit-fields{animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+
+/* CLOCK */
+.topbar-clock{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:14px;font-weight:600;color:var(--t1);letter-spacing:1px;min-width:95px;justify-content:center}
+.clock-colon{animation:blink-cl 1s step-start infinite;opacity:1}
+@keyframes blink-cl{50%{opacity:.2}}
+
+
+/* Remarks textarea */
+.fta{width:100%;padding:14px 16px;border-radius:8px;border:1.5px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);font-size:13.5px;font-family:var(--font);resize:vertical;outline:none;min-height:200px;height:200px;line-height:1.7;box-shadow:inset 0 2px 4px rgba(0,0,0,.04);display:block;transition:border-color .15s;resize:vertical}
+.fta:focus{border-color:var(--blue);box-shadow:inset 0 2px 4px rgba(0,0,0,.04),0 0 0 3px var(--blue-mid)}
+/* ── iOS Toggle Switch ── */
+.sw{position:relative;display:inline-flex;align-items:center;cursor:pointer;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw-track{
+  display:block;width:40px;height:22px;border-radius:11px;
+  background:var(--t4);
+  transition:background .2s;
+  position:relative;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.15);
+}
+.sw input:checked+.sw-track{background:var(--blue);}
+.sw input:checked+.sw-track{box-shadow:inset 0 1px 3px rgba(18,100,216,.3),0 0 0 3px rgba(18,100,216,.1);}
+.sw-thumb{
+  position:absolute;
+  top:2px;left:2px;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);
+  transition:transform .2s cubic-bezier(.34,1.2,.64,1);
+}
+.sw input:checked~.sw-track .sw-thumb,
+.sw input:checked+.sw-track .sw-thumb{transform:translateX(18px);}
+/* unit-status label next to toggle */
+.sw-label{font-size:11px;font-weight:600;font-family:var(--font);color:var(--t3);margin-left:4px;min-width:45px}
+.sw input:checked~.sw-label{color:var(--ok-tx)}
+
+/* In usel (unit pill) - smaller toggle */
+.usel .sw-track{width:32px;height:18px;border-radius:9px}
+.usel .sw-thumb{width:14px;height:14px;}
+.usel .sw input:checked~.sw-track .sw-thumb,
+.usel .sw input:checked+.sw-track .sw-thumb{transform:translateX(14px);}
+
+/* ── DASHBOARD ── */
+.dash-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--sidebar-t1);background:transparent}
+.dash-btn:hover{background:var(--sidebar-hover)}
+.dash-btn.active{background:var(--blue);color:#fff;box-shadow:0 3px 12px rgba(18,100,216,.35)}
+.dash-btn .db-ico{font-size:16px;flex-shrink:0;opacity:.75}
+.dash-btn.active .db-ico{opacity:1}
+.dash-divider{height:1px;background:var(--sidebar-line);margin:4px 12px 8px}
+
+/* Dashboard view */
+.dashboard-view{flex:1;overflow-y:auto;padding:20px;background:var(--canvas)}
+
+.dashboard-view::-webkit-scrollbar{width:5px}
+.dashboard-view::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.db-header{margin-bottom:20px}
+.db-title{font-size:22px;font-weight:700;letter-spacing:-.4px;color:var(--t1);font-family:var(--font)}
+.db-sub{font-size:12.5px;color:var(--t3);margin-top:3px;font-family:var(--font)}
+
+/* Summary stat cards */
+.db-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.db-stat{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);padding:16px 18px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.db-stat-icon{font-size:22px;margin-bottom:8px}
+.db-stat-val{font-size:26px;font-weight:700;color:var(--t1);font-family:var(--mono);letter-spacing:-.5px}
+.db-stat-label{font-size:11.5px;color:var(--t3);margin-top:4px;font-family:var(--font);font-weight:500}
+.db-stat.ok-card{border-color:var(--ok-bd);background:var(--ok-bg)}
+.db-stat.ok-card .db-stat-val{color:var(--ok-tx)}
+.db-stat.warn-card{border-color:var(--wn-bd);background:var(--wn-bg)}
+.db-stat.warn-card .db-stat-val{color:var(--wn-tx)}
+.db-stat.alm-card{border-color:var(--al-bd);background:var(--al-bg)}
+.db-stat.alm-card .db-stat-val{color:var(--al-tx)}
+
+/* Deck status grid */
+.db-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.db-deck-card{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.db-deck-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1.5px solid var(--line2);background:var(--surface2)}
+.db-deck-pip{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.db-deck-title{font-size:12.5px;font-weight:700;color:var(--t1);flex:1;font-family:var(--font)}
+.db-deck-count{font-size:10.5px;color:var(--t3);font-family:var(--mono)}
+.db-eq-row{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+.db-eq-row:last-child{border-bottom:none}
+.db-eq-row:hover{background:var(--hover)}
+.db-eq-name{font-size:12.5px;color:var(--t2);flex:1;font-family:var(--font);font-weight:500}
+.db-eq-filled{font-size:11px;color:var(--t3);font-family:var(--mono);margin-right:8px}
+.db-eq-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.db-eq-dot.ok{background:var(--ok)}.db-eq-dot.warn{background:var(--warn)}.db-eq-dot.alm{background:var(--alm)}.db-eq-dot.dim{background:var(--t4)}
+@keyframes pulse-alm2{0%,100%{box-shadow:0 0 0 0 rgba(240,68,56,.5)}50%{box-shadow:0 0 0 5px rgba(240,68,56,0)}}
+.db-eq-dot.alm{animation:pulse-alm2 .9s ease infinite}
+
+/* Watch summary */
+.db-watch-row{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 6px rgba(0,0,0,.06);margin-bottom:12px}
+.db-watch-icon{font-size:28px;flex-shrink:0}
+.db-watch-body{flex:1}
+.db-watch-title{font-size:14px;font-weight:700;color:var(--t1);font-family:var(--font)}
+.db-watch-detail{font-size:12px;color:var(--t2);margin-top:3px;font-family:var(--font)}
+.db-watch-action{padding:7px 18px;border-radius:var(--rsm);border:none;background:var(--blue);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font);box-shadow:0 2px 8px rgba(18,100,216,.25);flex-shrink:0}
+.db-watch-action:hover{background:var(--blue2)}
+.db-progress-bar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}
+.db-progress-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .4s ease}
+.db-progress-fill.ok{background:var(--ok)}
+.db-progress-fill.warn{background:var(--warn)}
+
+
+/* EOM additions */
+.topbar-watch-sel{display:flex;align-items:center;gap:6px;font-size:12px;font-family:var(--font);color:var(--t2)}
+.topbar-watch-sel input,.topbar-watch-sel select{border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none}
+.topbar-watch-sel input:focus,.topbar-watch-sel select:focus{border-color:var(--blue)}
+
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UNIFIED DESIGN SYSTEM — all shared components
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── ACCORDION SIDEBAR ─────────────────────────────────────────────────── */
+.floor-section{margin-bottom:2px}
+.floor-hdr{display:flex;align-items:center;gap:7px;width:100%;padding:7px 12px;
+  border:none;background:transparent;border-radius:8px;cursor:pointer;
+  font-family:var(--font);transition:all .15s;text-align:left}
+.floor-hdr:hover{background:var(--sidebar-hover)}
+.floor-pip{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.floor-label{font-size:10.5px;font-weight:700;letter-spacing:.5px;
+  color:var(--sidebar-t2);text-transform:uppercase;flex:1}
+.floor-chevron{font-size:9px;color:var(--sidebar-t3);transition:transform .2s;flex-shrink:0}
+.floor-equip{padding:2px 6px 4px}
+
+/* ── EQUIPMENT BUTTONS ──────────────────────────────────────────────────── */
+.eq{display:flex;align-items:center;gap:8px;width:100%;
+  padding:6px 10px;border:none;background:transparent;border-radius:8px;
+  cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s;margin-bottom:1px}
+.eq:hover{background:var(--sidebar-hover)}
+.eq.active{background:var(--blue);box-shadow:0 2px 10px rgba(18,100,216,.3)}
+.eq.active .eq-name{color:#fff;font-weight:700}
+.eq.active .eq-badge{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff}
+.eq-ico{font-size:14px;flex-shrink:0}
+.eq-name{font-size:12px;font-weight:500;color:var(--sidebar-t1);
+  flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-sub{display:none}
+
+/* ── SLIM CARD HEADERS (uniform across ALL cards) ───────────────────────── */
+.sc{background:var(--surface);border:1.5px solid var(--line2);border-radius:var(--r);
+  margin-bottom:8px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sch{display:flex;align-items:center;gap:7px;
+  padding:5px 12px;border-bottom:1px solid var(--line2);
+  background:var(--surface2);min-height:0;height:30px}
+.sch-ico{font-size:11px;flex-shrink:0}
+.sch-lbl{font-size:11px;font-weight:700;color:var(--t1);flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-st{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;
+  border:1px solid;flex-shrink:0}
+
+/* ── UNIT GROUP SELECTOR (iOS-style RUN/STOP toggle) ────────────────────── */
+.unit-sel{display:flex;align-items:center;gap:6px;
+  padding:6px 12px;background:var(--surface2);border-bottom:1px solid var(--line2);
+  flex-wrap:wrap}
+.unit-sel-lbl{font-size:10px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.6px;margin-right:4px;flex-shrink:0}
+.usel{display:flex;align-items:center;gap:7px;
+  padding:5px 12px;border:1.5px solid var(--line2);border-radius:20px;
+  background:var(--surface);cursor:pointer;font-size:12px;font-weight:600;
+  font-family:var(--font);transition:all .15s;color:var(--t2);
+  user-select:none}
+.usel:hover{border-color:var(--blue-soft);color:var(--t1)}
+.usel.active{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.usel .ud{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.usel.run-unit .ud{background:var(--ok)}
+.usel.stop-unit .ud{background:var(--t3)}
+.usel.stop-unit{opacity:.6}
+
+/* iOS-style RUN/STOP pill inside usel */
+.usel-tog{
+  display:inline-flex;align-items:center;padding:2px 8px;
+  border-radius:12px;font-size:9px;font-weight:800;font-family:var(--font);
+  cursor:pointer;border:none;transition:all .2s;letter-spacing:.5px;
+  pointer-events:auto}
+.usel-tog.run{
+  background:#22c55e;color:#fff;
+  box-shadow:0 1px 4px rgba(34,197,94,.4)}
+.usel-tog.stop{
+  background:var(--surface2);color:var(--t3);
+  border:1px solid var(--line);box-shadow:none}
+
+/* Stopped state dims the readings block */
+.fl.stopped,.fr.stopped,.fr2.stopped{opacity:.3;pointer-events:none}
+
+/* ── DASHBOARD NAV BUTTONS ──────────────────────────────────────────────── */
+.dash-btn{display:flex;align-items:center;gap:8px;width:100%;
+  padding:7px 12px;border:none;background:transparent;border-radius:8px;
+  cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;
+  color:var(--sidebar-t2);transition:all .15s;text-align:left;margin-bottom:2px}
+.dash-btn:hover{background:var(--sidebar-hover);color:var(--sidebar-t1)}
+.dash-btn.active{background:rgba(59,130,246,.12);color:var(--blue)}
+.dash-divider{height:1px;background:var(--sidebar-line);margin:6px 10px}
+.db-ico{font-size:14px;flex-shrink:0}
+
+/* ── THEME TOGGLE (top-right) ───────────────────────────────────────────── */
+.theme-toggle{display:flex;align-items:center;gap:1px;background:var(--surface2);
+  border:1px solid var(--line);border-radius:20px;padding:2px}
+.tt{width:26px;height:20px;border-radius:12px;border:none;background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:12px;transition:all .2s;opacity:.5}
+.tt:hover{opacity:.85}
+.tt.on{background:var(--blue);opacity:1;box-shadow:0 1px 4px rgba(59,130,246,.4)}
+
+/* ── OBSERVATIONS CHECKBOXES ────────────────────────────────────────────── */
+.obs-row{display:flex;align-items:center;gap:10px;
+  padding:7px 0;border-bottom:1px solid var(--line2)}
+.obs-row:last-child{border-bottom:none}
+.obs-label{font-size:12.5px;color:var(--t2);flex:1}
+.obs-yn{display:flex;gap:5px;flex-shrink:0}
+.obs-btn{padding:3px 12px;border-radius:20px;border:1.5px solid var(--line2);
+  background:transparent;font-size:10px;font-weight:700;cursor:pointer;
+  font-family:var(--font);transition:all .15s;color:var(--t3);min-width:44px}
+.obs-btn.yes-sel{background:var(--al-bg);border-color:var(--al-bd);color:var(--al-tx)}
+.obs-btn.no-sel{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.obs-comment{width:100%;margin-top:5px;padding:6px 10px;
+  border:1.5px solid var(--al-bd);border-radius:6px;
+  background:var(--al-bg);color:var(--t1);
+  font-family:var(--font);font-size:12px;resize:none;outline:none}
+
+/* ── DASHBOARD CHARTS ───────────────────────────────────────────────────── */
+.db-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.db-chart-card{background:var(--surface);border:1.5px solid var(--line2);
+  border-radius:var(--r);overflow:hidden}
+.db-chart-head{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;border-bottom:1px solid var(--line2);background:var(--surface2);
+  cursor:pointer}
+.db-chart-title{font-size:11px;font-weight:700;color:var(--t1)}
+.db-chart-sub{font-size:10px;color:var(--t3)}
+</style>
+</head>
+<body>
+<!-- TOPBAR — single FORCAP logo, no duplicate -->
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">FC</div>
+    <div class="brand-txt">FORCAP</div>
+  </div>
+  <div class="vessel-chip"><div class="run-dot"></div><span id="vessel-chip-txt">Loading…</span></div>
+  <div class="topbar-mid">
+    <div class="g-status neutral" id="gst"><div class="gsd"></div><span id="gst-txt">No readings entered yet</span></div>
+  </div>
+  <div class="topbar-clock" id="tb-clock">--:--:--</div>
+  <div class="topbar-right">
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2)">
+      <input type="date" id="log_date" onchange="loadWatch()"
+        style="border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none"/>
+    </label>
+    <!-- Watch selector removed — UMS vessel, one log per day -->
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2)">D/E:
+      <select id="de_select"
+        style="border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none;max-width:180px">
+        <option value="">— Select —</option>
+      </select>
+    </label>
+    <span id="save-state" style="font-size:11px;color:var(--t3)">● Saved</span>
+    <div class="theme-toggle">
+      <button class="tt on" id="tt-l" onclick="setTheme('light')">☀️</button>
+      <button class="tt" id="tt-d" onclick="setTheme('dark')">🌙</button>
+    </div>
+    <a href="/inventory.html" style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none">📊 Inventory</a>
+    <a href="/upload.html" style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none">📂 Import</a>
+    <button style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="EOM.logout()">Sign out</button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR — no duplicate logo, accordion collapse -->
+  <div class="left">
+    <div class="left-head" style="padding:10px 12px 6px;border-bottom:1px solid var(--sidebar-line)">
+      <div class="left-head-txt">Navigation</div>
+    </div>
+    <div style="padding:6px 10px 4px">
+      <button class="dash-btn active" id="dash-nav-btn" onclick="showDashboard()">
+        <span class="db-ico">🏠</span>Dashboard
+      </button>
+      <a href="/analytics.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">📈</span>ER Log Analytics
+      </a>
+      <a href="/inventory.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">📊</span>Inventory Analytics
+      </a>
+      <a href="/upload.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">📂</span>Import Data
+      </a>
+      <a href="/admin.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">⚙️</span>Admin
+      </a>
+      <a href="/defects.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">🔧</span>Defect Register
+      </a>
+      <div class="dash-divider"></div>
+    </div>
+    <div class="ls" id="ls"></div>
+    <div class="left-foot">
+      <div class="prog-row"><span>Progress</span><span id="prog-lbl">—</span></div>
+      <div class="prog-track"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      <button class="btn-submit" onclick="submitLog()">📋 Submit Daily Log</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+ 
+
+<script>
+// ── EOM API LAYER ─────────────────────────────────────────────────────────────
+var OBS_STATE = {};
+var EQ_REMARKS_V = {};
+const WATCH_STATE = {
+  vesselId: null, vesselName: '', watchId: null,
+  watchDate: '', watchNumber: 1, locked: false
+};
+let _saveTimer = null;
+
+function scheduleApiSave(){ clearTimeout(_saveTimer); _saveTimer = setTimeout(doApiSave, 1500); }
+
+async function doApiSave(){
+  if(!WATCH_STATE.watchId || WATCH_STATE.locked) return;
+  setSaveState('saving');
+  try {
+    const readings = [];
+    FLOORS.forEach(fl => fl.equip.forEach(eq => eq.tabs.forEach(tab => {
+      const section = eq.name, eqLoc = eq.id+'.'+tab.id;
+      (tab.fields||[]).forEach(f => {
+        if((V[f.id]??'') !== '') readings.push({
+          location_path: eqLoc+'.'+f.id, section, equipment: tab.label,
+          parameter: f.lbl, unit_label: f.unit,
+          value: parseFloat(V[f.id]),
+          is_alarm: gs(V[f.id],f)==='alm', is_warning: gs(V[f.id],f)==='warn'
+        });
+      });
+      (tab.duoFields||[]).forEach(f => {
+        if((V[f.id]??'')!=='') readings.push({location_path:eqLoc+'.'+f.id,section,equipment:tab.label,parameter:f.lbl+' Suct',unit_label:f.unit,value:parseFloat(V[f.id]),is_alarm:false,is_warning:false});
+        if((V[f.id2]??'')!=='') readings.push({location_path:eqLoc+'.'+f.id2,section,equipment:tab.label,parameter:f.lbl+' Disc',unit_label:f.unit2||f.unit,value:parseFloat(V[f.id2]),is_alarm:false,is_warning:false});
+      });
+      (tab.unitGroups||[]).forEach(ug => ug.fields.forEach(f => {
+        if((V[f.id]??'')!=='') readings.push({location_path:eqLoc+'.'+ug.unitId+'.'+f.id,section,equipment:ug.label,parameter:f.lbl,unit_label:f.unit,value:parseFloat(V[f.id]),is_alarm:gs(V[f.id],f)==='alm',is_warning:gs(V[f.id],f)==='warn'});
+      }));
+      if(tab.cylinders) tab.cylinders.params.forEach(p => {
+        for(let c=1;c<=tab.cylinders.count;c++){
+          const k=eq.id+'_'+tab.id+'_'+p.id+'_'+c;
+          if((CYL[k]??'')!=='') readings.push({location_path:k,section,equipment:'Cylinders',parameter:p.lbl+' C'+c,unit_label:p.unit,value:parseFloat(CYL[k]),is_alarm:gs(CYL[k],p)==='alm',is_warning:gs(CYL[k],p)==='warn'});
+        }
+      });
+    })));
+    if(readings.length) await EOM.post('/watches/'+WATCH_STATE.watchId+'/readings',{readings});
+    const remarks=Object.entries(EQ_REMARKS_V).filter(([k,v])=>v?.trim()).map(([k,v])=>({section:k,remark:v}));
+    await EOM.post('/watches/'+WATCH_STATE.watchId+'/remarks',{remarks});
+    setSaveState('saved');
+  } catch(e){ setSaveState('error'); console.error('Save error:',e); }
+}
+
+function setSaveState(state){
+  const el=document.getElementById('save-state');if(!el)return;
+  el.textContent=state==='saving'?'● Saving…':state==='error'?'✗ Save failed':'● Saved';
+  el.style.color=state==='saving'?'var(--wn-tx)':state==='error'?'var(--alm)':'var(--ok-tx)';
+}
+
+async function loadWatch(){
+  const date=document.getElementById('log_date').value;
+  WATCH_STATE.watchDate=date; WATCH_STATE.watchNumber=1;
+  const wn = 1;
+  try {
+    const[cur,prev]=await Promise.all([
+      EOM.get('/watches/current?vessel_id='+WATCH_STATE.vesselId+'&date='+date+'&watch_number=1'),
+      EOM.get('/watches/previous?vessel_id='+WATCH_STATE.vesselId+'&date='+date+'&watch_number=1')
+    ]);
+    WATCH_STATE.watchId=cur.watch.id;
+    WATCH_STATE.locked=['submitted','locked'].includes(cur.watch.status);
+    // Clear then hydrate V
+    Object.keys(V).forEach(k=>delete V[k]);
+    cur.readings.forEach(r=>{
+      if(r.value!=null){
+        const fid=r.location_path.split('.').pop();
+        V[fid]=String(r.value);
+      }
+    });
+    Object.keys(EQ_REMARKS_V).forEach(k=>delete EQ_REMARKS_V[k]);
+    cur.remarks.forEach(r=>{ if(r.section) EQ_REMARKS_V[r.section]=r.remark; });
+    // Hydrate PREV_V
+    Object.keys(PREV_V).forEach(k=>delete PREV_V[k]);
+    if(prev.watch) prev.readings.forEach(r=>{
+      if(r.value!=null){ const fid=r.location_path.split('.').pop(); PREV_V[fid]=[null,null,r.value]; }
+    });
+    if(cur.watch.duty_engineer){
+      const di=document.getElementById('duty_eng_inp');if(di)di.value=cur.watch.duty_engineer;
+    }
+    if(WATCH_STATE.locked){
+      const bs=document.querySelector('.btn-submit');
+      if(bs){bs.textContent='🔒 Submitted';bs.disabled=true;bs.style.background='var(--t3)';}
+    }
+    buildLeft();buildRight();showDashboard();setSaveState('saved');
+  }catch(e){console.error('loadWatch:',e);setSaveState('error');}
+}
+
+let toastTimer;
+function showToast(msg,type='info'){
+  let t=document.getElementById('_eom_toast');
+  if(!t){t=document.createElement('div');t.id='_eom_toast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1.5px solid var(--line2);border-radius:10px;padding:10px 20px;font-size:13px;font-family:var(--font);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:opacity .3s';
+    document.body.appendChild(t);}
+  t.textContent=msg;
+  t.style.borderColor=type==='error'?'var(--al-bd)':type==='success'?'var(--ok-bd)':type==='warn'?'var(--wn-bd)':'var(--line2)';
+  t.style.opacity='1';clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.style.opacity='0';},3500);
+}
+
+async function loadDutyEngineers(){
+  try{
+    const users = await EOM.get('/vessels/'+WATCH_STATE.vesselId+'/duty-engineers');
+    const sel = document.getElementById('de_select');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— Select Duty Engineer —</option>';
+    (users||[]).forEach(u=>{
+      const opt = document.createElement('option');
+      opt.value = u.display_name || u.username;
+      opt.textContent = (u.display_name||u.username) + (u.designation?' ('+u.designation+')':'');
+      sel.appendChild(opt);
+    });
+  }catch(e){ console.warn('Could not load duty engineers:', e); }
+}
+
+var DEFECT_STATS = null;
+var CYCLONE_STATUS = null;
+
+async function loadDefectStats(){
+  try{ DEFECT_STATS = await EOM.get('/defects/stats/summary?vessel_id='+WATCH_STATE.vesselId); }catch(e){}
+}
+async function loadCycloneStatus(){
+  try{ CYCLONE_STATUS = await EOM.get('/watches/cyclone?vessel_id='+WATCH_STATE.vesselId); }catch(e){}
+}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(typeof EOM==='undefined'){showDashboard();return;}
+  if(!EOM.requireAuth())return;
+  showDashboard();
+  const d=document.getElementById('log_date');
+  if(d) d.value=new Date().toISOString().slice(0,10);
+  try{
+    const vessels=await EOM.get('/vessels');
+    if(!vessels.length){showToast('No vessels assigned','error');return;}
+    const v=vessels[0];WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
+    const vc=document.getElementById('vessel-chip-txt');
+    if(vc)vc.textContent=v.name+(v.imo?' · IMO '+v.imo:'');
+    // Auto-expand first floor
+    EXPANDED_FLOOR.current = 'floor';
+    await Promise.all([loadWatch(), loadDutyEngineers(), loadDefectStats(), loadCycloneStatus()]);
+  }catch(e){showToast('Load error: '+e.message,'error');console.error(e);}
+  setInterval(()=>{if(WATCH_STATE.watchId&&!WATCH_STATE.locked)doApiSave();},60000);
+});
+// ── END API LAYER ─────────────────────────────────────────────────────────────
+
+
+// ── WATCH HISTORY (previous watches from API) ─────────────────────────────────
+var WATCH_LABELS = ['00:00 Prev','08:00 Prev','16:00 Prev'];
+var PREV_V = {};
+
+
+// Date/watch init moved to DOMContentLoaded
+
+
+
+
+
+// ── WATCH HISTORY (simulated previous watches) ──────────────────────────────
+// In production this comes from the DB. For demo, we generate realistic mock data.
+// (declared above)
+
+// (declared above)
+   // PREV_V[fieldId] = [w-3, w-2, w-1] values
+// (declared above)
+  // EQ_REMARKS_V[eqId] = remark string
+
+// Seed some realistic mock previous-watch data
+
+// ── Unit group helpers ─────────────────────────────────────────────────────
+function ugTabSt(tab){
+  // Status of a tab that has unitGroups
+  let w='e';
+  (tab.unitGroups||[]).forEach(ug=>{
+    (ug.fields||[]).forEach(f=>{
+      const v=V[f.id]??'';if(!v)return;
+      const s=gs(v,f);
+      if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';
+    });
+  });
+  return w;
+}
+
+function selUnitGroup(tabId, unitId){
+  ACTIVE_UNIT[tabId]=unitId;
+  // Re-render unit group section only
+  const eq=EQ_MAP[aEq];
+  const tab=eq?.tabs.find(t=>t.id===tabId);
+  if(!tab||!tab.unitGroups) return;
+  renderUnitGroupSection(eq,tab);
+  buildTabs(eq);
+}
+
+function togUnitGroup(unitId, tabId, e){
+  e.stopPropagation();
+  UNITS[unitId]=UNITS[unitId]==='run'?'stop':'run';
+  const eq=EQ_MAP[aEq];
+  const tab=eq?.tabs.find(t=>t.id===tabId);
+  if(!tab) return;
+  // Update just this unit's button in the selector bar (avoid full re-render flash)
+  const uselBtn = document.querySelector(`.usel[data-uid="${unitId}"]`);
+  if(uselBtn){
+    const running = UNITS[unitId]==='run';
+    uselBtn.classList.toggle('run-unit', running);
+    uselBtn.classList.toggle('stop-unit', !running);
+    const tog = uselBtn.querySelector('.usel-tog');
+    if(tog){ tog.className=`usel-tog ${running?'run':'stop'}`; tog.textContent=running?'RUN':'STOP'; }
+    const dot = uselBtn.querySelector('.ud');
+    if(dot){ dot.style.background = running ? 'var(--ok)' : 'var(--t4)'; }
+  }
+  renderUnitGroupSection(eq,tab);
+  buildLeft();
+  updateGSt();
+}
+
+function renderUnitGroupSection(eq,tab){
+  const container=document.getElementById(`ugc_${tab.id}`);
+  if(!container)return;
+  const activeUnitId=ACTIVE_UNIT[tab.id]||(tab.unitGroups[0]?.unitId);
+  ACTIVE_UNIT[tab.id]=activeUnitId;
+  const ug=tab.unitGroups.find(u=>u.unitId===activeUnitId)||tab.unitGroups[0];
+  if(!ug)return;
+  const stopped=UNITS[ug.unitId]==='stop';
+  const ts_=ug.fields.reduce((w,f)=>{
+    const v=V[f.id]??'';if(!v)return w;
+    const s=gs(v,f);
+    return s==='alm'?'alm':(s==='warn'&&w!=='alm'?'warn':(w==='e'?'ok':w));
+  },'e');
+  const stLbl=ts_==='alm'?'Alarm':ts_==='warn'?'Warning':ts_==='ok'?'All normal':'Not entered';
+  const stCls=ts_==='e'?'empty':ts_;
+
+  let h=`<div class="sc" style="border-top:none;border-radius:0 0 var(--r) var(--r)">
+    <div class="sch">
+      <span class="sch-ico">${stopped?'⏹️':'▶️'}</span>
+      <span class="sch-lbl">${ug.label}</span>
+      <span style="font-size:10px;font-weight:700;color:${stopped?'var(--t3)':'var(--ok-tx)'};margin-right:4px">${stopped?'STOPPED':'RUNNING'}</span>
+      <span class="sc-st ${stCls}">${stLbl}</span>
+    </div>`;
+
+  if(stopped){
+    h+=`<div style="padding:12px 14px;color:var(--t3);font-size:12.5px;font-family:var(--font)">
+      ${ug.label} is stopped — toggle to RUNNING to enter readings.
+    </div>`;
+  } else {
+    h+=`<div class="fl">`;
+    ug.fields.forEach(f=>{
+      const v=V[f.id]??'',s=gs(v,f);
+      const lp=lastPrev(f.id);
+      const pwTxt=lp!==null?lp.toFixed(1):'—';
+      const pwCls=lp!==null&&v!==''&&Math.abs(parseFloat(v)-lp)>0.5?(parseFloat(v)>lp?'up':'dn'):'';
+      h+=`<div class="fr"><span class="flbl">${f.lbl}</span>
+        <input class="finp ${s==='e'?'':s}" id="fi_${f.id}" type="number" step="any" value="${v}" placeholder="—"
+          data-fid="${f.id}" data-f='${sj(f)}' oninput="onF(this)">
+        <span class="funit">${f.unit}</span>
+        <span class="pw-val ${pwCls}">${pwTxt}</span>
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+  container.innerHTML=h;
+}
+
+function buildUnitGroupBlock(eq, tab){
+  const activeUnitId=ACTIVE_UNIT[tab.id]||(tab.unitGroups[0]?.unitId);
+  ACTIVE_UNIT[tab.id]=activeUnitId;
+  // Unit tab bar
+  let h=`<div class="sc" style="margin-bottom:10px">`;
+  h+=`<div class="unit-sel">
+    <span class="unit-sel-lbl">Select unit:</span>`;
+  tab.unitGroups.forEach(ug=>{
+    const isA=ug.unitId===activeUnitId;
+    const running=UNITS[ug.unitId]!=='stop';
+    h+=`<div class="usel ${isA?'active':''} ${running?'run-unit':'stop-unit'}" data-uid="${ug.unitId}" onclick="selUnitGroup('${tab.id}','${ug.unitId}')">
+      <div class="ud" style="background:${running?'var(--ok)':'var(--t4)'}"></div>
+      <span>${ug.label}</span>
+      <button class="usel-tog ${running?'run':'stop'}" onclick="togUnitGroup('${ug.unitId}','${tab.id}',event)">${running?'RUN':'STOP'}</button>
+    </div>`;
+  });
+  h+=`</div>`;
+  h+=`<div id="ugc_${tab.id}"></div>`;
+  h+=`</div>`;
+  return h;
+}
+function seedPrevData(){
+  // Main engine key params
+  const seeds = {
+    fo_p:   [8.1,8.0,8.2],  fo_t:   [138,141,140],
+    mlo_p:  [4.8,4.7,4.9],  mlo_t:  [60,61,61],
+    jcw_ip: [4.5,4.6,4.5],  jcw_it: [83,85,86],
+    sa_p:   [1.8,1.9,1.8],  sa_t:   [38,39,40],
+    tc_rpm: [11800,11750,11900], tc_ei: [380,385,388],
+    tc_eo:  [310,312,315],  tc_lp:  [2.2,2.1,2.2],
+    blr_s:  [6.5,6.8,7.0],  g1_fp: [7.2,7.1,7.3],
+    g1_lp:  [4.2,4.1,4.2],  g2_fp: [7.1,7.2,7.0],
+    g2_lp:  [4.1,4.2,4.1],
+  };
+  Object.assign(PREV_V, seeds);
+}
+seedPrevData();
+
+function prevVal(fid){ return PREV_V[fid] || null; }
+function lastPrev(fid){ const p=prevVal(fid); return p?p[p.length-1]:null; }
+function trendClass(curr, fid){
+  const p = lastPrev(fid);
+  if(p===null || curr===''|| isNaN(parseFloat(curr))) return '';
+  const diff = parseFloat(curr) - p;
+  if(Math.abs(diff) < 0.5) return 'trend-ok';
+  return diff > 0 ? 'trend-up' : 'trend-dn';
+}
+
+// Safe JSON for HTML data attributes
+function sj(obj){ return JSON.stringify(obj).replace(/&/g,'__AMP__'); }
+function pj(s){ return JSON.parse(s.replace(/__AMP__/g,'&')); }
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('tt-l').classList.toggle('on',t==='light');document.getElementById('tt-d').classList.toggle('on',t==='dark');localStorage.setItem('fc-theme',t);}
+const st_=localStorage.getItem('fc-theme');if(st_)setTheme(st_);
+
+
+
+const FLOORS=[
+// ─── ER FLOOR ─────────────────────────────────────────────────────────────
+{id:'floor',label:'ER Floor',sub:'Tank Top · Main Engine',color:'#1570EF',freq:'daily',equip:[
+  {id:'me',name:'Main Engine',sub:'7S40ME-B9.5 · 6000kW · 136.9rpm',icon:'⚙️',tabs:[
+    {id:'me_cyls',label:'Cylinders',icon:'🔩',cylinders:{count:7,params:[
+      {id:'exh',lbl:'Exh Gas Out Temp',unit:'°C',hw:430,ha:470},
+      {id:'dev',lbl:'Exh Gas Deviation',unit:'°C',hw:40,ha:60},
+      {id:'jcw',lbl:'JCW Out Temp',unit:'°C',hw:90,ha:95},
+      {id:'scv',lbl:'Scav Air Temp',unit:'°C',hw:55,ha:65},
+      {id:'pco',lbl:'PCO Out Temp',unit:'°C',hw:65,ha:75},
+      {id:'brg',lbl:'Bearing Temp',unit:'°C',hw:75,ha:85},
+      {id:'pmx',lbl:'Pmax',unit:'Bar',hw:175,ha:185,lw:130},
+      {id:'pcp',lbl:'Pcomp',unit:'Bar',hw:160,ha:170,lw:110},
+    ]}},
+    {id:'me_fl',label:'Fuel & LO',icon:'🛢️',fields:[
+      {id:'me_rpm',lbl:'ME Speed',unit:'rpm'},
+      {id:'me_rct',lbl:'RPM Counter',unit:'rev'},
+      {id:'fo_p',lbl:'FO Inlet Pressure',unit:'Bar',lw:3.0,la:2.0},
+      {id:'fo_t',lbl:'FO Inlet Temperature',unit:'°C',hw:150,ha:170},
+      {id:'mlo_p',lbl:'Main LO Inlet Pressure',unit:'Bar',lw:3.5,la:2.5},
+      {id:'mlo_t',lbl:'Main LO Inlet Temp',unit:'°C',hw:65,ha:75},
+      {id:'clo_t',lbl:'Main Cyl LO Temp',unit:'°C',hw:60},
+      {id:'me_fi',lbl:'Fuel Index',unit:'%'},
+      {id:'me_pw',lbl:'Main Engine Power',unit:'kW'},
+      {id:'me_tq',lbl:'Main Engine Torque',unit:'kNm'},
+      {id:'me_rh',lbl:'ME Running Hours',unit:'hrs'},
+    ]},
+    {id:'me_cw',label:'Cooling Water',icon:'💧',fields:[
+      {id:'jcw_op',lbl:'JCW Outlet Pressure',unit:'Bar',hw:5.0},
+      {id:'jcw_ip',lbl:'JCW Inlet Pressure',unit:'Bar',hw:5.0},
+      {id:'jcw_it',lbl:'JCW Inlet Temperature',unit:'°C',hw:90,ha:95},
+      {id:'ac_ip',lbl:'AC CW Inlet Pressure',unit:'Bar',hw:4.0},
+      {id:'ac_ot',lbl:'AC CW Outlet Temp',unit:'°C',hw:55},
+      {id:'ac_it',lbl:'Air CW Inlet Temp',unit:'°C',hw:50},
+      {id:'sa_b4',lbl:'Scav Air Before Air Cooler',unit:'°C',hw:55,ha:65},
+      {id:'sa_af',lbl:'Scav Air After Air Cooler',unit:'°C',hw:45},
+      {id:'cfw_in',lbl:'CFW Air Cooler Inlet',unit:'°C',hw:40},
+      {id:'cfw_out',lbl:'CFW Air Cooler Outlet',unit:'°C',hw:50},
+    ]},
+    {id:'me_ae',label:'Air & Exhaust',icon:'💨',fields:[
+      {id:'sa_p',lbl:'Scavenge Air Pressure',unit:'Bar',lw:0.5},
+      {id:'sa_t',lbl:'Scavenge Air Temperature',unit:'°C',hw:55,ha:65},
+      {id:'sta_p',lbl:'Starting Air Pressure',unit:'Bar',lw:15,la:10},
+      {id:'evsp',lbl:'Exh Valve Spring Pressure',unit:'Bar'},
+      {id:'ctl_p',lbl:'Control Air Pressure',unit:'Bar',lw:5.5},
+      {id:'tc_rpm',lbl:'Turbocharger Speed',unit:'RPM',hw:16000},
+      {id:'tc_ei',lbl:'TC Exh Gas Temp In',unit:'°C',hw:450,ha:500},
+      {id:'tc_eo',lbl:'TC Exh Gas Temp Out',unit:'°C',hw:370,ha:410},
+      {id:'tc_lo',lbl:'TC LO Temp Out',unit:'°C',hw:90,ha:100},
+      {id:'tc_li',lbl:'TC LO Temp In',unit:'°C',hw:70},
+      {id:'tc_lp',lbl:'TC LO Pressure',unit:'Bar',lw:1.0,la:0.7},
+    ]},
+    {id:'me_br',label:'Bearings',icon:'⚙️',fields:[
+      {id:'cam_b',lbl:'Camshaft Bearing Temp',unit:'°C',hw:70,ha:80},
+      {id:'thr_b',lbl:'Thrust Bearing Temp',unit:'°C',hw:70,ha:80},
+      {id:'int_b',lbl:'Intermediate Shaft Brg',unit:'°C',hw:70,ha:80},
+      {id:'sf_1',lbl:'Stern Tube FWD (1)',unit:'°C',hw:65,ha:75},
+      {id:'sf_2',lbl:'Stern Tube FWD (2)',unit:'°C',hw:65,ha:75},
+      {id:'sa_1',lbl:'Stern Tube AFT (1)',unit:'°C',hw:65,ha:75},
+      {id:'sa_2',lbl:'Stern Tube AFT (2)',unit:'°C',hw:65,ha:75},
+      {id:'pco_act',lbl:'PCO/CLO/MLO w ACT Press',unit:'Bar'},
+    ]},
+  ]},
+  {id:'aux',name:'Auxiliaries',sub:'Pumps · S-T LO · Cooling FW',icon:'🔧',tabs:[
+    {id:'aux_csw',label:'Sea Water',icon:'🌊',
+     units:[{id:'csw1',label:'CSW Pump 1'},{id:'csw2',label:'CSW Pump 2'},{id:'csw3',label:'CSW Pump 3'}],
+     duoFields:[
+       {id:'csw1_s',id2:'csw1_d',lbl:'CSW Pump No.1',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'csw1'},
+       {id:'csw2_s',id2:'csw2_d',lbl:'CSW Pump No.2',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'csw2'},
+       {id:'csw3_s',id2:'csw3_d',lbl:'CSW Pump No.3',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'csw3'},
+     ],
+     fields:[
+       {id:'swt',lbl:'Sea Water Temperature',unit:'°C'},
+       {id:'ert',lbl:'Engine Room Temperature',unit:'°C',hw:45},
+     ]
+    },
+    {id:'aux_fw',label:'Fresh Water',icon:'💧',
+     units:[{id:'htcfw1',label:'HT CFW Pump 1'},{id:'htcfw2',label:'HT CFW Pump 2'},{id:'ltcfw1',label:'LT CFW Pump 1'},{id:'ltcfw2',label:'LT CFW Pump 2'},{id:'ltcfw3',label:'LT CFW Pump 3'},{id:'fwpp1',label:'FW Feed Pump 1'},{id:'fwpp2',label:'FW Feed Pump 2'}],
+     duoFields:[
+       {id:'ht1_s',id2:'ht1_d',lbl:'HT CFW Pump No.1',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'htcfw1'},
+       {id:'ht2_s',id2:'ht2_d',lbl:'HT CFW Pump No.2',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'htcfw2'},
+       {id:'lt1_s',id2:'lt1_d',lbl:'LT CFW Pump No.1',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'ltcfw1'},
+       {id:'lt2_s',id2:'lt2_d',lbl:'LT CFW Pump No.2',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'ltcfw2'},
+       {id:'lt3_s',id2:'lt3_d',lbl:'LT CFW Pump No.3',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'ltcfw3'},
+       {id:'fw1_s',id2:'fw1_d',lbl:'Feed Water Pump No.1',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'fwpp1'},
+       {id:'fw2_s',id2:'fw2_d',lbl:'Feed Water Pump No.2',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'fwpp2'},
+     ],
+     fields:[
+       {id:'cad_p',lbl:'Control Air Drier',unit:'Bar'},
+       {id:'fsal',lbl:'Feed Salinity',unit:'ppm',hw:2},
+       {id:'fwt',lbl:'Feed Water Temperature',unit:'°C'},
+     ]
+    },
+    {id:'aux_sto',label:'Stern Tube LO',icon:'⚙️',
+     units:[{id:'stlop1',label:'S-T LO Pump 1'},{id:'stlop2',label:'S-T LO Pump 2'}],
+     duoFields:[
+       {id:'st1_s',id2:'st1_d',lbl:'S-T LO Pump No.1',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'stlop1'},
+       {id:'st2_s',id2:'st2_d',lbl:'S-T LO Pump No.2',unit:'Bar',unit2:'Bar',sub:'Suct',sub2:'Disc',unitKey:'stlop2'},
+     ],
+     fields:[
+       {id:'st_dt',lbl:'S-T LO Discharge Temp',unit:'°C',hw:60,ha:70},
+       {id:'st_htl',lbl:'S-T Header Tank Level',unit:'%',lw:30},
+       {id:'st_fsl',lbl:'S-T FWD Seal Tank Level',unit:'%',lw:30},
+       {id:'st_fl',lbl:'S-T LO Flow Rate',unit:'L/hr'},
+       {id:'st_afl',lbl:'S-T Air Flow Line A+B',unit:''},
+     ]
+    },
+    {id:'aux_mlo',label:'Main LO Pumps',icon:'🛢️',
+     units:[{id:'mlop1',label:'Main LO Pump 1'},{id:'mlop2',label:'Main LO Pump 2'}],
+     fields:[
+       {id:'mlo1_d',lbl:'Main LO Pump 1 Discharge',unit:'Bar',lw:3.5,la:2.5},
+       {id:'mlo2_d',lbl:'Main LO Pump 2 Discharge',unit:'Bar',lw:3.5,la:2.5},
+     ]
+    },
+  ]},
+  {id:'mgps',name:'MGPS & ICCP',sub:'Marine Growth Prevention · Impressed Current',icon:'⚡',tabs:[{
+    id:'mgps_m',label:'Parameters',icon:'📊',fields:[
+      {id:'mgps_curr',lbl:'MGPS Current Output',unit:'A'},
+      {id:'mgps_volt',lbl:'MGPS Voltage',unit:'V'},
+      {id:'iccp_curr',lbl:'ICCP Current Output',unit:'A'},
+      {id:'iccp_volt',lbl:'ICCP Voltage',unit:'V'},
+      {id:'iccp_pot',lbl:'Hull Potential',unit:'mV'},
+    ]}]},
+]},
+// ─── 3RD DECK ─────────────────────────────────────────────────────────────
+{id:'deck3',label:'3rd Deck',sub:'Purifier Room · Generator Flat',color:'#6366F1',freq:'daily',equip:[
+  {id:'purifiers',name:'Purifiers',sub:'HFO × 2 · Main LO × 2',icon:'🔄',tabs:[
+    {id:'pur_hfo',label:'HFO Purifiers',icon:'🛢️',
+     unitGroups:[
+       {unitId:'hfop1',label:'HFO Purifier 1',fields:[
+         {id:'hp1_fp',lbl:'Feed Pump Pressure',unit:'Bar'},
+         {id:'hp1_tp',lbl:'Purifier Temperature',unit:'°C',hw:98,ha:102},
+         {id:'hp1_fl',lbl:'Feed Flow Rate',unit:'L/hr'},
+       ]},
+       {unitId:'hfop2',label:'HFO Purifier 2',fields:[
+         {id:'hp2_fp',lbl:'Feed Pump Pressure',unit:'Bar'},
+         {id:'hp2_tp',lbl:'Purifier Temperature',unit:'°C',hw:98,ha:102},
+         {id:'hp2_fl',lbl:'Feed Flow Rate',unit:'L/hr'},
+       ]},
+     ]},
+    {id:'pur_lo',label:'LO Purifiers',icon:'⚙️',
+     unitGroups:[
+       {unitId:'lop1',label:'LO Purifier 1',fields:[
+         {id:'lp1_fp',lbl:'Feed Pump Pressure',unit:'Bar'},
+         {id:'lp1_tp',lbl:'Purifier Temperature',unit:'°C',hw:80,ha:85},
+         {id:'lp1_fl',lbl:'Feed Flow Rate',unit:'L/hr'},
+       ]},
+       {unitId:'lop2',label:'LO Purifier 2',fields:[
+         {id:'lp2_fp',lbl:'Feed Pump Pressure',unit:'Bar'},
+         {id:'lp2_tp',lbl:'Purifier Temperature',unit:'°C',hw:80,ha:85},
+         {id:'lp2_fl',lbl:'Feed Flow Rate',unit:'L/hr'},
+       ]},
+     ]},
+  ]},
+  {id:'ae1',name:'D/G No.1',sub:'Himsen 7H21/32 · 1500kW · 900rpm',icon:'🔋',tabs:[
+    {id:'a1fl',label:'Fuel & LO',icon:'🛢️',fields:[
+      {id:'g1_fp',lbl:'FO Inlet Pressure',unit:'Bar',lw:5.0,la:3.0},
+      {id:'g1_ft',lbl:'FO Inlet Temperature',unit:'°C',hw:150},
+      {id:'g1_fdp',lbl:'FO Filter Inlet DPAH',unit:'Bar'},
+      {id:'g1_lp',lbl:'LO Inlet Pressure',unit:'Bar',lw:3.5,la:2.5},
+      {id:'g1_lt',lbl:'LO Inlet Temperature',unit:'°C',hw:75,ha:85},
+      {id:'g1_ldp',lbl:'LO Filter Inlet DPAH',unit:'Bar'},
+      {id:'g1_lsl',lbl:'LO Sump Level (dipstick)',unit:'mm'},
+      {id:'g1_rh',lbl:'Running Hours',unit:'hrs'},
+    ]},
+    {id:'a1cw',label:'Cooling Water',icon:'💧',fields:[
+      {id:'g1_hip',lbl:'HT Water Inlet Pressure',unit:'Bar',hw:2.5},
+      {id:'g1_hit',lbl:'HT Water Inlet Temp',unit:'°C',hw:85,ha:95},
+      {id:'g1_hot',lbl:'HT Water Outlet Temp',unit:'°C',hw:100,ha:110},
+      {id:'g1_lip',lbl:'LT Water Inlet Pressure',unit:'Bar'},
+      {id:'g1_lit',lbl:'LT Water Inlet Temp',unit:'°C',hw:50},
+      {id:'g1_lot',lbl:'LT Water Outlet Temp',unit:'°C',hw:55},
+      {id:'g1_cap',lbl:'Charge Air Pressure',unit:'Bar',lw:0.3},
+      {id:'g1_cat',lbl:'Charge Air Temperature',unit:'°C',hw:55,ha:65},
+      {id:'g1_sap',lbl:'Starting Air Pressure',unit:'Bar',lw:15,la:10},
+    ]},
+    {id:'a1ex',label:'Exhaust & TC',icon:'💨',fields:[
+      {id:'g1_te',lbl:'TC Exh Gas Outlet Temp',unit:'°C',hw:380,ha:420},
+      {id:'g1_tia',lbl:'TC Exh Gas Inlet Temp A',unit:'°C',hw:380,ha:420},
+      {id:'g1_tib',lbl:'TC Exh Gas Inlet Temp B',unit:'°C',hw:380,ha:420},
+      {id:'g1_tlp',lbl:'TC LO Pressure',unit:'Bar',lw:1.0},
+      {id:'g1_tsp',lbl:'TC Speed (×10)',unit:'RPM×10'},
+      {id:'g1_c1',lbl:'Cyl 1 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c2',lbl:'Cyl 2 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c3',lbl:'Cyl 3 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c4',lbl:'Cyl 4 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c5',lbl:'Cyl 5 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c6',lbl:'Cyl 6 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g1_c7',lbl:'Cyl 7 Exh Temp',unit:'°C',hw:530,ha:580},
+    ]},
+    {id:'a1el',label:'Electrical',icon:'⚡',fields:[
+      {id:'g1_wr',lbl:'Winding R Temp',unit:'°C',hw:120,ha:135},
+      {id:'g1_ws',lbl:'Winding S Temp',unit:'°C',hw:120,ha:135},
+      {id:'g1_wt',lbl:'Winding T Temp',unit:'°C',hw:120,ha:135},
+      {id:'g1_brg',lbl:'Bearing Temp',unit:'°C',hw:75,ha:85},
+      {id:'g1_clt',lbl:'Coolant Air Temp',unit:'°C',hw:60},
+      {id:'g1_kw',lbl:'Generator Load (kW)',unit:'kW'},
+      {id:'g1_pct',lbl:'Generator Load (%)',unit:'%'},
+      {id:'g1_kvar',lbl:'Generator Load (kVAR)',unit:'kVAR'},
+      {id:'g1_pf',lbl:'Power Factor',unit:'cosΦ'},
+      {id:'g1_hz',lbl:'Frequency',unit:'Hz'},
+      {id:'g1_v',lbl:'Voltage',unit:'V'},
+      {id:'g1_a',lbl:'Current',unit:'A'},
+    ]},
+  ]},
+  {id:'ae2',name:'D/G No.2',sub:'Himsen 7H21/32 · 1500kW · 900rpm',icon:'🔋',tabs:[
+    {id:'a2fl',label:'Fuel & LO',icon:'🛢️',fields:[
+      {id:'g2_fp',lbl:'FO Inlet Pressure',unit:'Bar',lw:5.0,la:3.0},
+      {id:'g2_ft',lbl:'FO Inlet Temperature',unit:'°C',hw:150},
+      {id:'g2_fdp',lbl:'FO Filter Inlet DPAH',unit:'Bar'},
+      {id:'g2_lp',lbl:'LO Inlet Pressure',unit:'Bar',lw:3.5,la:2.5},
+      {id:'g2_lt',lbl:'LO Inlet Temperature',unit:'°C',hw:75,ha:85},
+      {id:'g2_ldp',lbl:'LO Filter Inlet DPAH',unit:'Bar'},
+      {id:'g2_lsl',lbl:'LO Sump Level',unit:'mm'},
+      {id:'g2_rh',lbl:'Running Hours',unit:'hrs'},
+    ]},
+    {id:'a2cw',label:'Cooling Water',icon:'💧',fields:[
+      {id:'g2_hit',lbl:'HT Water Inlet Temp',unit:'°C',hw:85,ha:95},
+      {id:'g2_hot',lbl:'HT Water Outlet Temp',unit:'°C',hw:100,ha:110},
+      {id:'g2_lit',lbl:'LT Water Inlet Temp',unit:'°C',hw:50},
+      {id:'g2_cat',lbl:'Charge Air Temperature',unit:'°C',hw:55,ha:65},
+      {id:'g2_sap',lbl:'Starting Air Pressure',unit:'Bar',lw:15,la:10},
+    ]},
+    {id:'a2ex',label:'Exhaust & TC',icon:'💨',fields:[
+      {id:'g2_te',lbl:'TC Exh Gas Outlet',unit:'°C',hw:380,ha:420},
+      {id:'g2_tia',lbl:'TC Exh Gas Inlet A',unit:'°C',hw:380,ha:420},
+      {id:'g2_tib',lbl:'TC Exh Gas Inlet B',unit:'°C',hw:380,ha:420},
+      {id:'g2_c1',lbl:'Cyl 1 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c2',lbl:'Cyl 2 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c3',lbl:'Cyl 3 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c4',lbl:'Cyl 4 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c5',lbl:'Cyl 5 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c6',lbl:'Cyl 6 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g2_c7',lbl:'Cyl 7 Exh Temp',unit:'°C',hw:530,ha:580},
+    ]},
+    {id:'a2el',label:'Electrical',icon:'⚡',fields:[
+      {id:'g2_wr',lbl:'Winding R Temp',unit:'°C',hw:120,ha:135},
+      {id:'g2_ws',lbl:'Winding S Temp',unit:'°C',hw:120,ha:135},
+      {id:'g2_wt',lbl:'Winding T Temp',unit:'°C',hw:120,ha:135},
+      {id:'g2_brg',lbl:'Bearing Temp',unit:'°C',hw:75,ha:85},
+      {id:'g2_kw',lbl:'Generator Load',unit:'kW'},
+      {id:'g2_pct',lbl:'Generator Load',unit:'%'},
+      {id:'g2_pf',lbl:'Power Factor',unit:'cosΦ'},
+      {id:'g2_hz',lbl:'Frequency',unit:'Hz'},
+      {id:'g2_v',lbl:'Voltage',unit:'V'},
+      {id:'g2_a',lbl:'Current',unit:'A'},
+    ]},
+  ]},
+  {id:'ae3',name:'D/G No.3',sub:'Himsen 7H21/32 · 1500kW · 900rpm',icon:'🔋',tabs:[
+    {id:'a3fl',label:'Fuel & LO',icon:'🛢️',fields:[
+      {id:'g3_fp',lbl:'FO Inlet Pressure',unit:'Bar',lw:5.0,la:3.0},
+      {id:'g3_ft',lbl:'FO Inlet Temperature',unit:'°C',hw:150},
+      {id:'g3_lp',lbl:'LO Inlet Pressure',unit:'Bar',lw:3.5,la:2.5},
+      {id:'g3_lt',lbl:'LO Inlet Temperature',unit:'°C',hw:75,ha:85},
+      {id:'g3_lsl',lbl:'LO Sump Level',unit:'mm'},
+      {id:'g3_rh',lbl:'Running Hours',unit:'hrs'},
+    ]},
+    {id:'a3ex',label:'Exhaust & TC',icon:'💨',fields:[
+      {id:'g3_te',lbl:'TC Exh Gas Outlet',unit:'°C',hw:380,ha:420},
+      {id:'g3_cat',lbl:'Charge Air Temperature',unit:'°C',hw:55,ha:65},
+      {id:'g3_c1',lbl:'Cyl 1 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c2',lbl:'Cyl 2 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c3',lbl:'Cyl 3 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c4',lbl:'Cyl 4 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c5',lbl:'Cyl 5 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c6',lbl:'Cyl 6 Exh Temp',unit:'°C',hw:530,ha:580},
+      {id:'g3_c7',lbl:'Cyl 7 Exh Temp',unit:'°C',hw:530,ha:580},
+    ]},
+    {id:'a3el',label:'Electrical',icon:'⚡',fields:[
+      {id:'g3_wr',lbl:'Winding R Temp',unit:'°C',hw:120,ha:135},
+      {id:'g3_ws',lbl:'Winding S Temp',unit:'°C',hw:120,ha:135},
+      {id:'g3_wt',lbl:'Winding T Temp',unit:'°C',hw:120,ha:135},
+      {id:'g3_brg',lbl:'Bearing Temp',unit:'°C',hw:75,ha:85},
+      {id:'g3_kw',lbl:'Generator Load',unit:'kW'},
+      {id:'g3_pf',lbl:'Power Factor',unit:'cosΦ'},
+      {id:'g3_hz',lbl:'Frequency',unit:'Hz'},
+      {id:'g3_v',lbl:'Voltage',unit:'V'},
+      {id:'g3_a',lbl:'Current',unit:'A'},
+    ]},
+  ]},
+  {id:'sewage',name:'Sewage Treatment Plant',sub:'Type: BIOMASTER',icon:'♻️',tabs:[{
+    id:'sew_m',label:'Parameters',icon:'📊',fields:[
+      {id:'sew_op',lbl:'Operating Pressure',unit:'Bar'},
+      {id:'sew_level',lbl:'Tank Level',unit:'%'},
+      {id:'sew_rh',lbl:'Running Hours',unit:'hrs'},
+    ]}]},
+]},
+// ─── 2ND DECK ─────────────────────────────────────────────────────────────
+{id:'deck2',label:'2nd Deck',sub:'ECR · AC Plant · Fridge',color:'#0BA5EC',freq:'daily',equip:[
+  {id:'aircmp',name:'Air Compressors',sub:'Sauer WP65L × 2 · Donghwa × 2',icon:'💨',tabs:[{
+    id:'ac_mp',label:'Parameters',icon:'📊',
+    unitGroups:[
+      {unitId:'mcp1',label:'Main Air Comp 1',fields:[
+        {id:'mc1_dp',lbl:'Discharge Pressure',unit:'Bar',hw:31,ha:32},
+        {id:'mc1_dt',lbl:'Discharge Temperature',unit:'°C',hw:160,ha:180},
+        {id:'mc1_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+      {unitId:'mcp2',label:'Main Air Comp 2',fields:[
+        {id:'mc2_dp',lbl:'Discharge Pressure',unit:'Bar',hw:31,ha:32},
+        {id:'mc2_dt',lbl:'Discharge Temperature',unit:'°C',hw:160,ha:180},
+        {id:'mc2_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+      {unitId:'cap',label:'Ctrl Air Comp',fields:[
+        {id:'cap_dp',lbl:'Discharge Pressure',unit:'Bar',hw:8,ha:9},
+        {id:'cap_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+      {unitId:'gasc',label:'GS Air Comp',fields:[
+        {id:'gas_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+    ]
+  }]},
+  {id:'acplant',name:'A/C Plant',sub:'Hi Air Korea · R-407C · 2 units',icon:'❄️',tabs:[{
+    id:'acp',label:'Parameters',icon:'❄️',
+    unitGroups:[
+      {unitId:'acu1',label:'A/C Unit 1',fields:[
+        {id:'ac1_hp',lbl:'HP Pressure',unit:'Bar',hw:20},
+        {id:'ac1_ht',lbl:'HP Temperature',unit:'°C',hw:80},
+        {id:'ac1_lp',lbl:'LP Pressure',unit:'Bar',lw:2.0},
+        {id:'ac1_lt',lbl:'LP Temperature',unit:'°C'},
+        {id:'ac1_sh',lbl:'Superheat',unit:'K'},
+        {id:'ac1_cfp',lbl:'Cooling FW Pressure',unit:'Bar'},
+        {id:'ac1_cfi',lbl:'Cooling FW In Temp',unit:'°C'},
+        {id:'ac1_cfo',lbl:'Cooling FW Out Temp',unit:'°C'},
+        {id:'ac1_rl',lbl:'Receiver Level',unit:'%',lw:20},
+        {id:'ac1_ol',lbl:'Oil Level',unit:'%',lw:20},
+        {id:'ac1_mc',lbl:'Motor Current',unit:'A'},
+        {id:'ac1_cap',lbl:'Capacity',unit:'%'},
+        {id:'ac1_fa',lbl:'Fresh Air Temp',unit:'°C'},
+        {id:'ac1_sa',lbl:'Supply Air Temp',unit:'°C'},
+        {id:'ac1_eev1',lbl:'EEV-1 Opening',unit:'%'},
+        {id:'ac1_eev2',lbl:'EEV-2 Opening',unit:'%'},
+        {id:'ac1_cp',lbl:'CP Pressure',unit:'Bar'},
+        {id:'ac1_ct',lbl:'CP Temperature',unit:'°C'},
+        {id:'ac1_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+      {unitId:'acu2',label:'A/C Unit 2',fields:[
+        {id:'ac2_hp',lbl:'HP Pressure',unit:'Bar',hw:20},
+        {id:'ac2_ht',lbl:'HP Temperature',unit:'°C',hw:80},
+        {id:'ac2_lp',lbl:'LP Pressure',unit:'Bar',lw:2.0},
+        {id:'ac2_lt',lbl:'LP Temperature',unit:'°C'},
+        {id:'ac2_sh',lbl:'Superheat',unit:'K'},
+        {id:'ac2_cfp',lbl:'Cooling FW Pressure',unit:'Bar'},
+        {id:'ac2_cfi',lbl:'Cooling FW In Temp',unit:'°C'},
+        {id:'ac2_cfo',lbl:'Cooling FW Out Temp',unit:'°C'},
+        {id:'ac2_rl',lbl:'Receiver Level',unit:'%',lw:20},
+        {id:'ac2_ol',lbl:'Oil Level',unit:'%',lw:20},
+        {id:'ac2_mc',lbl:'Motor Current',unit:'A'},
+        {id:'ac2_cap',lbl:'Capacity',unit:'%'},
+        {id:'ac2_fa',lbl:'Fresh Air Temp',unit:'°C'},
+        {id:'ac2_sa',lbl:'Supply Air Temp',unit:'°C'},
+        {id:'ac2_eev1',lbl:'EEV-1 Opening',unit:'%'},
+        {id:'ac2_eev2',lbl:'EEV-2 Opening',unit:'%'},
+        {id:'ac2_cp',lbl:'CP Pressure',unit:'Bar'},
+        {id:'ac2_ct',lbl:'CP Temperature',unit:'°C'},
+        {id:'ac2_rh',lbl:'Running Hours',unit:'hrs'},
+      ]},
+    ]
+  }]},
+  {id:'fridge',name:'Fridge & Cold Rooms',sub:'Hi Air Korea · R-407C',icon:'🧊',tabs:[
+    {id:'fr_rm',label:'Room Temps',icon:'🌡️',fields:[
+      {id:'rm_mt',lbl:'Meat Room',unit:'°C',hw:-10,lw:-25},
+      {id:'rm_ft',lbl:'Fish Room',unit:'°C',hw:-10,lw:-25},
+      {id:'rm_vt',lbl:'Vegetable Room',unit:'°C',hw:8,lw:2},
+      {id:'rm_dt',lbl:'Dairy Room',unit:'°C',hw:6,lw:1},
+    ]},
+    {id:'fr_pl',label:'Plant',icon:'❄️',
+     unitGroups:[
+       {unitId:'fru1',label:'Fridge Unit 1',fields:[
+         {id:'fr1_dp',lbl:'Discharge Pressure',unit:'Bar',hw:18},
+         {id:'fr1_sp',lbl:'Suction Pressure',unit:'Bar',lw:1.5},
+         {id:'fr1_cp',lbl:'CFW Pressure',unit:'Bar'},
+         {id:'fr1_ci',lbl:'CFW Temp In',unit:'°C'},
+         {id:'fr1_co',lbl:'CFW Temp Out',unit:'°C'},
+         {id:'fr1_mc',lbl:'Motor Current',unit:'A'},
+         {id:'fr1_ol',lbl:'Oil Level',unit:'%'},
+         {id:'fr1_cl',lbl:'Condenser Level',unit:'%'},
+         {id:'fr1_rh',lbl:'Running Hours',unit:'hrs'},
+       ]},
+       {unitId:'fru2',label:'Fridge Unit 2',fields:[
+         {id:'fr2_dp',lbl:'Discharge Pressure',unit:'Bar',hw:18},
+         {id:'fr2_sp',lbl:'Suction Pressure',unit:'Bar',lw:1.5},
+         {id:'fr2_cp',lbl:'CFW Pressure',unit:'Bar'},
+         {id:'fr2_mc',lbl:'Motor Current',unit:'A'},
+         {id:'fr2_ol',lbl:'Oil Level',unit:'%'},
+         {id:'fr2_rh',lbl:'Running Hours',unit:'hrs'},
+       ]},
+     ]},
+  ]},
+  {id:'steering',name:'Steering Gear',sub:'2 × hydraulic rams',icon:'🚢',tabs:[{
+    id:'steer_m',label:'Parameters',icon:'📊',fields:[
+      {id:'sg1_op',lbl:'No.1 Steering Gear Pressure',unit:'Bar'},
+      {id:'sg2_op',lbl:'No.2 Steering Gear Pressure',unit:'Bar'},
+      {id:'sg1_ot',lbl:'No.1 Hydraulic Oil Temp',unit:'°C',hw:70},
+      {id:'sg2_ot',lbl:'No.2 Hydraulic Oil Temp',unit:'°C',hw:70},
+      {id:'sg_level',lbl:'Hydraulic Oil Level',unit:'%'},
+    ]}]},
+]},
+// ─── UPPER DECK ───────────────────────────────────────────────────────────
+{id:'upper',label:'Upper Deck',sub:'A Deck · Boiler · SCR · Fans',color:'#F79009',freq:'daily',equip:[
+  {id:'boiler',name:'Composite Boiler',sub:'7 kg/cm² · HFO/MGO fired',icon:'🔥',tabs:[{
+    id:'blr',label:'Parameters',icon:'🔥',fields:[
+      {id:'blr_s',lbl:'Steam Pressure',unit:'Bar',lw:5.0,la:4.0,hw:9.0,ha:10.0},
+      {id:'blr_l',lbl:'Drum Level',unit:'mm'},
+      {id:'blr_fp',lbl:'Fuel Pressure',unit:'Bar',lw:2.0},
+      {id:'blr_ft',lbl:'Fuel Inlet Temperature',unit:'°C',hw:120},
+      {id:'blr_fg',lbl:'Flue Gas Temperature',unit:'°C',hw:350},
+      {id:'blr_fw',lbl:'Feed Water Temperature',unit:'°C'},
+      {id:'blr_sl',lbl:'Feed Water Salinity',unit:'ppm',hw:2},
+    ]
+  }]},
+  {id:'scr',name:'G/E SCR System',sub:'3 × SCR · Urea dosing',icon:'🔬',tabs:[{
+    id:'scr_m',label:'Parameters',icon:'🔬',fields:[
+      {id:'scr_nox',lbl:'NOx After SCR',unit:'ppm',hw:200},
+      {id:'scr_t',lbl:'SCR Inlet Temperature',unit:'°C',lw:280,la:260},
+      {id:'scr_uf',lbl:'Urea Flow Rate',unit:'L/hr'},
+      {id:'scr_ul',lbl:'Urea Tank Level',unit:'%',lw:10,la:5},
+    ]
+  }]},
+  {id:'er_fans',name:'E/R Fans',sub:'4 × ventilation fans',icon:'🌀',tabs:[{
+    id:'fan',label:'Status & Temps',icon:'🌀',
+    units:[{id:'fan1',label:'Fan 1'},{id:'fan2',label:'Fan 2'},{id:'fan3',label:'Fan 3'},{id:'fan4',label:'Fan 4'}],
+    fields:[
+      {id:'fan1_t',lbl:'Fan 1 Suction Temperature',unit:'°C'},
+      {id:'fan2_t',lbl:'Fan 2 Suction Temperature',unit:'°C'},
+      {id:'fan3_t',lbl:'Fan 3 Suction Temperature',unit:'°C'},
+      {id:'fan4_t',lbl:'Fan 4 Suction Temperature',unit:'°C'},
+      {id:'er_tmp',lbl:'Engine Room Temperature',unit:'°C',hw:45},
+    ]
+  }]},
+]},
+// ─── TANKS ────────────────────────────────────────────────────────────────
+{id:'tanks',label:'Tanks',sub:'FO · LO · Bilge · FW',color:'#344054',freq:'daily',equip:[
+  {id:'fo_tanks',name:'Fuel Oil Tanks',sub:'HFO · MGO · soundings',icon:'🛢️',tabs:[{
+    id:'fot',label:'Soundings',icon:'🛢️',fields:[
+      {id:'hfo1p',lbl:'No.1 HFO Tank (P)',unit:'m'},{id:'hfo1s',lbl:'No.1 HFO Tank (S)',unit:'m'},
+      {id:'hfo2p',lbl:'No.2 HFO Tank (P)',unit:'m'},{id:'hfo2c',lbl:'No.2 HFO Tank (C)',unit:'m'},
+      {id:'hfost',lbl:'HFO Settling Tank',unit:'m'},{id:'hfosv',lbl:'HFO Service Tank',unit:'m'},
+      {id:'hfoov',lbl:'HFO Overflow Tank',unit:'m³'},
+      {id:'mgo1',lbl:'MGO Storage No.1',unit:'m'},{id:'mgo2',lbl:'MGO Storage No.2',unit:'m'},
+      {id:'mgosv',lbl:'MGO Service Tank',unit:'m'},
+    ]
+  }]},
+  {id:'lo_tanks',name:'Lube Oil Tanks',sub:'ME LO · Cylinder · Stern tube',icon:'⚙️',tabs:[{
+    id:'lot',label:'Soundings',icon:'⚙️',fields:[
+      {id:'me_lsmp',lbl:'M/E LO Sump Tank',unit:'m'},
+      {id:'cyl1m',lbl:'Cyl LO Msr Tank No.1',unit:'m'},{id:'cyl2m',lbl:'Cyl LO Msr Tank No.2',unit:'m'},
+      {id:'cyl1s',lbl:'Cyl LO Stor Tank No.1',unit:'m'},{id:'cyl2s',lbl:'Cyl LO Stor Tank No.2',unit:'m'},
+      {id:'st_smp',lbl:'S-T LO Sump Tank',unit:'m'},{id:'st_stk',lbl:'S-T LO Storage Tank',unit:'m'},
+      {id:'st_fsl2',lbl:'S-T FWD Seal Tank',unit:'%'},
+    ]
+  }]},
+  {id:'er_tanks',name:'ER Misc Tanks',sub:'Bilge · EGR · FW',icon:'🪣',tabs:[{
+    id:'ert',label:'Levels',icon:'🪣',fields:[
+      {id:'bilge_h',lbl:'Bilge Holding Tank',unit:'m'},{id:'oily_b',lbl:'Oily Bilge Tank',unit:'m'},
+      {id:'inc_wo',lbl:'Incinerator WO Tank',unit:'m'},
+      {id:'egr_sl',lbl:'EGR Sludge Tank',unit:'m'},{id:'egr_dr',lbl:'EGR Drain Tank',unit:'m'},
+      {id:'naoh',lbl:'NaOH Tank',unit:'m'},{id:'urea',lbl:'Urea Tank',unit:'m³'},
+      {id:'tsw',lbl:'Treated Sewage Tank',unit:'m'},{id:'gw',lbl:'Grey Water Tank',unit:'m'},
+      {id:'exp_tk',lbl:'Expansion Tank',unit:'m'},{id:'pur_sl',lbl:'Purifier Sludge',unit:'m'},
+      {id:'fw_gctr',lbl:'FW Generator CTR',unit:'m³'},
+      {id:'fw_stbd',lbl:'FW Tank Stbd',unit:'m'},{id:'fw_port',lbl:'FW Tank Port',unit:'m'},
+    ]
+  }]},
+]},
+// ─── RUNNING HOURS ────────────────────────────────────────────────────────
+{id:'rh',label:'Running Hours',sub:'All 141 equipment items',color:'#7F56D9',freq:'monthly',equip:[
+  {id:'rh_prop',name:'Propulsion & ME',sub:'Main Engine · Aux Blowers · Hydraulics',icon:'⚙️',tabs:[{
+    id:'rh_prop_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_17',lbl:'MAIN ENGINE',unit:'hrs'},
+      {id:'rh_18',lbl:'NO.1 ME HYDRAULIC OIL PUMP',unit:'hrs'},
+      {id:'rh_19',lbl:'NO.2 ME HYDRAULIC OIL PUMP',unit:'hrs'},
+      {id:'rh_20',lbl:'NO.1 ME AUXILIARY BLOWER',unit:'hrs'},
+      {id:'rh_21',lbl:'NO.2 ME AUXILIARY BLOWER',unit:'hrs'},
+      {id:'rh_53',lbl:'MAIN ENGINE TURNING GEAR',unit:'hrs'},
+      {id:'rh_54',lbl:'NO.1 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
+      {id:'rh_55',lbl:'NO.2 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_dg',name:'Diesel Generators',sub:'DG1/2/3 · Emergency DG · Prelube',icon:'🔋',tabs:[{
+    id:'rh_dg_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_22',lbl:'NO.1 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_23',lbl:'NO.2 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_24',lbl:'NO.3 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_62',lbl:'EMERGENCY DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_59',lbl:'NO.1 GE PRELUBE PUMP',unit:'hrs'},
+      {id:'rh_60',lbl:'NO.2 GE PRELUBE PUMP',unit:'hrs'},
+      {id:'rh_61',lbl:'NO.3 GE PRELUBE PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_air',name:'Compressed Air',sub:'Main · Control · GS · Emergency',icon:'💨',tabs:[{
+    id:'rh_air_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_112',lbl:'NO.1 MAIN AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_113',lbl:'NO.2 MAIN AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_114',lbl:'EMERGENCY AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_115',lbl:'GS AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_116',lbl:'CONTROL AIR COMPRESSOR',unit:'hrs'},
+    ]}]},
+  {id:'rh_cool',name:'Cooling & FW',sub:'HT/LT CFW · Boiler Feed · FWG',icon:'💧',tabs:[{
+    id:'rh_cool_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_83',lbl:'NO.1 HT CFW PUMP',unit:'hrs'},
+      {id:'rh_84',lbl:'NO.2 HT CFW PUMP',unit:'hrs'},
+      {id:'rh_80',lbl:'NO.1 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_81',lbl:'NO.2 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_82',lbl:'NO.3 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_71',lbl:'FWG EJECTOR PUMP',unit:'hrs'},
+      {id:'rh_78',lbl:'NO.1 BOILER FEED WATER PUMP',unit:'hrs'},
+      {id:'rh_79',lbl:'NO.2 BOILER FEED WATER PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_lo',name:'Lube Oil System',sub:'Main LO · Purifiers · Stern Tube',icon:'🛢️',tabs:[{
+    id:'rh_lo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_86',lbl:'NO.1 MAIN LO PUMP',unit:'hrs'},
+      {id:'rh_87',lbl:'NO.2 MAIN LO PUMP',unit:'hrs'},
+      {id:'rh_88',lbl:'NO.1 LO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_89',lbl:'NO.2 LO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_90',lbl:'NO.1 STERN TUBE LO PUMP',unit:'hrs'},
+      {id:'rh_91',lbl:'NO.2 STERN TUBE LO PUMP',unit:'hrs'},
+      {id:'rh_135',lbl:'NO.1 HFO PURIFIER',unit:'hrs'},
+      {id:'rh_136',lbl:'NO.2 HFO PURIFIER',unit:'hrs'},
+      {id:'rh_137',lbl:'NO.1 LO PURIFIER',unit:'hrs'},
+      {id:'rh_138',lbl:'NO.2 LO PURIFIER',unit:'hrs'},
+    ]}]},
+  {id:'rh_fo',name:'Fuel Oil System',sub:'Supply · Circ · Boiler FO · Transfer',icon:'⛽',tabs:[{
+    id:'rh_fo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_92',lbl:'NO.1 FO SUPPLY PUMP',unit:'hrs'},
+      {id:'rh_93',lbl:'NO.2 FO SUPPLY PUMP',unit:'hrs'},
+      {id:'rh_94',lbl:'NO.1 FO CIRC PUMP',unit:'hrs'},
+      {id:'rh_95',lbl:'NO.2 FO CIRC PUMP',unit:'hrs'},
+      {id:'rh_96',lbl:'NO.1 HFO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_97',lbl:'NO.2 HFO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_98',lbl:'NO.1 BOILER FO PUMP',unit:'hrs'},
+      {id:'rh_99',lbl:'NO.2 BOILER FO PUMP',unit:'hrs'},
+      {id:'rh_100',lbl:'NO.1 FWD HFO TRANSFER PUMP',unit:'hrs'},
+      {id:'rh_101',lbl:'NO.2 FWD HFO TRANSFER PUMP',unit:'hrs'},
+      {id:'rh_102',lbl:'NO.1 MGO FLUSHING PUMP',unit:'hrs'},
+      {id:'rh_103',lbl:'NO.2 MGO FLUSHING PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_fbgs',name:'Fire, Bilge & GS',sub:'Fire · Bilge · Ballast · Spray',icon:'🚒',tabs:[{
+    id:'rh_fbgs_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_63',lbl:'NO.1 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_64',lbl:'NO.2 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_65',lbl:'NO.3 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_69',lbl:'NO.1 FIRE, BILGE & GS PUMP',unit:'hrs'},
+      {id:'rh_70',lbl:'NO.2 FIRE, BILGE & GS PUMP',unit:'hrs'},
+      {id:'rh_72',lbl:'NO.1 BALLAST PUMP',unit:'hrs'},
+      {id:'rh_73',lbl:'NO.2 BALLAST PUMP',unit:'hrs'},
+      {id:'rh_74',lbl:'ANTI PIRACY PUMP',unit:'hrs'},
+      {id:'rh_75',lbl:'FIRE JOCKEY PUMP',unit:'hrs'},
+      {id:'rh_76',lbl:'EMERGENCY FIRE PUMP',unit:'hrs'},
+      {id:'rh_77',lbl:'WATER SPRAY PUMP',unit:'hrs'},
+      {id:'rh_139',lbl:'INCINERATOR',unit:'hrs'},
+      {id:'rh_140',lbl:'BOILER COMBUSTION',unit:'hrs'},
+      {id:'rh_141',lbl:'HYPERMIST WATER PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_acref',name:'AC & Refrigeration',sub:'AC Comp · Fridge · Package Units',icon:'❄️',tabs:[{
+    id:'rh_acref_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_117',lbl:'NO.1 AC COMPRESSOR',unit:'hrs'},
+      {id:'rh_118',lbl:'NO.2 AC COMPRESSOR',unit:'hrs'},
+      {id:'rh_119',lbl:'NO.1 FRIDGE COMPRESSOR',unit:'hrs'},
+      {id:'rh_120',lbl:'NO.2 FRIDGE COMPRESSOR',unit:'hrs'},
+      {id:'rh_121',lbl:'NO.1 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_122',lbl:'NO.1 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_123',lbl:'NO.2 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_124',lbl:'NO.2 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_125',lbl:'NO.1 MCC PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_126',lbl:'NO.1 MCC PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_129',lbl:'CCR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_130',lbl:'CCR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_131',lbl:'WHEELHOUSE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_132',lbl:'WHEELHOUSE UNIT COOLER COMPRESSOR',unit:'hrs'},
+    ]}]},
+  {id:'rh_vent',name:'Ventilation',sub:'4 × ER supply fans',icon:'🌀',tabs:[{
+    id:'rh_vent_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_107',lbl:'NO.1 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_108',lbl:'NO.2 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_109',lbl:'NO.3 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_110',lbl:'NO.4 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_111',lbl:'BOILER FD FAN',unit:'hrs'},
+    ]}]},
+  {id:'rh_cargo',name:'Cargo System',sub:'Deep well · Booster · Reliq · IGG',icon:'🚢',tabs:[{
+    id:'rh_cargo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_5',lbl:'CARGO TANK 1 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_6',lbl:'CARGO TANK 1 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_7',lbl:'CARGO TANK 2 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_8',lbl:'CARGO TANK 2 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_9',lbl:'CARGO TANK 3 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_10',lbl:'CARGO TANK 3 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_11',lbl:'NO.1 CARGO BOOSTER PUMP',unit:'hrs'},
+      {id:'rh_12',lbl:'NO.2 CARGO BOOSTER PUMP',unit:'hrs'},
+      {id:'rh_13',lbl:'NO.1 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_14',lbl:'NO.2 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_15',lbl:'NO.3 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_25',lbl:'NO.1 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_26',lbl:'NO.2 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_27',lbl:'NO.3 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_39',lbl:'NO.1 IGG BLOWER A',unit:'hrs'},
+      {id:'rh_40',lbl:'NO.2 IGG BLOWER B',unit:'hrs'},
+      {id:'rh_41',lbl:'IGG WET GAS BLOWER',unit:'hrs'},
+      {id:'rh_42',lbl:'IGG SYSTEM',unit:'hrs'},
+      {id:'rh_133',lbl:'IGG COMPRESSOR',unit:'hrs'},
+      {id:'rh_3',lbl:'NO.1 GAS FREEING FAN',unit:'hrs'},
+      {id:'rh_4',lbl:'NO.2 GAS FREEING FAN',unit:'hrs'},
+      {id:'rh_16',lbl:'BOW THRUSTER',unit:'hrs'},
+      {id:'rh_51',lbl:'NO.1 STEERING GEAR',unit:'hrs'},
+      {id:'rh_52',lbl:'NO.2 STEERING GEAR',unit:'hrs'},
+    ]}]},
+]},
+// ─── WEEKLY TESTS ─────────────────────────────────────────────────────────
+{id:'weekly',label:'Weekly Tests',sub:'Lube Oil · Boiler Water',color:'#0EA5E9',freq:'weekly',equip:[
+  {id:'lo_tests',name:'Lube Oil Tests',sub:'DG1/2/3 · ME · Stern Tube TBN/Water/Viscosity',icon:'🧪',tabs:[
+    {id:'lo_dg',label:'Diesel Generators',icon:'🔋',fields:[
+      {id:'lo_tbn_g1',lbl:'TBN D/G No.1',unit:'mgKOH/g',lw:10,la:7},
+      {id:'lo_w_g1',lbl:'Water in Oil D/G No.1',unit:'%',hw:0.1,ha:0.2},
+      {id:'lo_vis_g1',lbl:'Viscosity D/G No.1',unit:'cSt'},
+      {id:'lo_tbn_g2',lbl:'TBN D/G No.2',unit:'mgKOH/g',lw:10,la:7},
+      {id:'lo_w_g2',lbl:'Water in Oil D/G No.2',unit:'%',hw:0.1,ha:0.2},
+      {id:'lo_vis_g2',lbl:'Viscosity D/G No.2',unit:'cSt'},
+      {id:'lo_tbn_g3',lbl:'TBN D/G No.3',unit:'mgKOH/g',lw:10,la:7},
+      {id:'lo_w_g3',lbl:'Water in Oil D/G No.3',unit:'%',hw:0.1,ha:0.2},
+      {id:'lo_vis_g3',lbl:'Viscosity D/G No.3',unit:'cSt'},
+      {id:'lo_tbn_edg',lbl:'TBN Emergency D/G',unit:'mgKOH/g',lw:10},
+      {id:'lo_w_edg',lbl:'Water in Oil Emerg D/G',unit:'%',hw:0.1},
+    ]},
+    {id:'lo_me',label:'Main Engine',icon:'⚙️',fields:[
+      {id:'lo_tbn_me',lbl:'TBN Main Engine',unit:'mgKOH/g',lw:12,la:8},
+      {id:'lo_w_me',lbl:'Water in Oil ME',unit:'%',hw:0.1,ha:0.2},
+      {id:'lo_vis_me',lbl:'Viscosity ME',unit:'cSt'},
+      {id:'lo_w_st',lbl:'Water in Oil Stern Tube',unit:'%',hw:0.1,ha:0.2},
+      {id:'lo_tbn_st',lbl:'TBN Stern Tube',unit:'mgKOH/g',lw:10},
+    ]},
+  ]},
+]},
+// ─── MONTHLY LOGS ─────────────────────────────────────────────────────────
+{id:'monthly',label:'Monthly Logs',sub:'Scavenge · Performance · Inventory',color:'#10B981',freq:'monthly',equip:[
+  {id:'scavenge',name:'Scavenge Inspection',sub:'Monthly per cylinder',icon:'🔍',tabs:[{
+    id:'scav_t',label:'Inspection',icon:'🔍',cylinders:{count:7,params:[
+      {id:'piston_crown',lbl:'Piston Crown',unit:''},
+      {id:'top_land',lbl:'Top Land Deposit',unit:''},
+      {id:'ring_land1',lbl:'Ring Land 1',unit:''},
+      {id:'ring_land2',lbl:'Ring Land 2',unit:''},
+      {id:'piston_skirt',lbl:'Piston Skirt',unit:''},
+      {id:'ring1_cond',lbl:'Ring 1 Condition',unit:''},
+      {id:'lub_cond',lbl:'Lubrication Condition',unit:''},
+    ]}}]},
+  {id:'me_perf',name:'ME Performance Test',sub:'Loaded passage performance',icon:'📈',tabs:[{
+    id:'me_perf_t',label:'Performance',icon:'📈',fields:[
+      {id:'perf_rpm',lbl:'Engine Speed',unit:'rpm'},
+      {id:'perf_load',lbl:'Load %',unit:'%'},
+      {id:'perf_kw',lbl:'Power',unit:'kW'},
+      {id:'perf_sfoc',lbl:'SFOC',unit:'g/kWh'},
+      {id:'perf_draft_f',lbl:'Draft FWD',unit:'m'},
+      {id:'perf_draft_a',lbl:'Draft AFT',unit:'m'},
+      {id:'perf_speed',lbl:'Ship Speed',unit:'kts'},
+      {id:'perf_slip',lbl:'Propeller Slip',unit:'%'},
+      {id:'perf_wind',lbl:'Wind Speed',unit:'Bft'},
+    ]}]},
+  {id:'drinking_water',name:'Drinking Water',sub:'Monthly test results',icon:'🚰',tabs:[{
+    id:'dw_m',label:'Test Results',icon:'🧪',fields:[
+      {id:'dw_ph',lbl:'pH',unit:''},
+      {id:'dw_cl',lbl:'Chlorine Residual',unit:'mg/L'},
+      {id:'dw_tc',lbl:'Total Coliform',unit:'cfu/100mL'},
+      {id:'dw_ec',lbl:'E.Coli',unit:'cfu/100mL'},
+      {id:'dw_tur',lbl:'Turbidity',unit:'NTU'},
+      {id:'dw_cond',lbl:'Conductivity',unit:'µS/cm'},
+    ]}]},
+  {id:'chemicals',name:'Chemicals Inventory',sub:'Groups A-E · Monthly stock',icon:'🧪',tabs:[
+    {id:'chem_a',label:'Group A',icon:'💧',fields:[
+      {id:'ch_liquidewt',lbl:'LIQUIDEWT (Cooling Water Treatment)',unit:'L'},
+      {id:'ch_sodium_hypochlorite',lbl:'SODIUM HYPOCHLORITE (Biocide)',unit:'L'}
+    ]},
+    {id:'chem_b',label:'Group B',icon:'🔥',fields:[
+      {id:'ch_drewplex_ox',lbl:'DREWPLEX OX (Boiler Treatment/O2 Scavenger)',unit:'L'}
+    ]},
+    {id:'chem_c',label:'Group C',icon:'⚗️',fields:[
+      {id:'ch_ameriod_dc',lbl:'AMERIOD DC (Separator Disc Cleaner)',unit:'L'},
+      {id:'ch_mono_ethylyn_glycol',lbl:'MONO ETHYLYN GLYCOL (Antifreeze/MEG)',unit:'L'},
+      {id:'ch_osd_lt',lbl:'OSD/LT (Oil Spill Dispersant)',unit:'L'},
+      {id:'ch_saf_acid',lbl:'SAF ACID (Heat Exchanger Cleaner)',unit:'kg'},
+      {id:'ch_descale_it',lbl:'DESCALE-IT (Cleaner)',unit:'L'},
+      {id:'ch_environcare_dlc',lbl:'ENVIRONCARE DLC (Drain Cleaner)',unit:'bottles'},
+      {id:'ch_environcare_vtc_4000',lbl:'ENVIRONCARE VTC 4000 (Vacuum Toilet)',unit:'pkt'},
+      {id:'ch_rust_converter_super',lbl:'RUST CONVERTER SUPER',unit:'L'},
+      {id:'ch_oxalic_acid',lbl:'OXALIC ACID (Rust Cleaning)',unit:'kg'},
+      {id:'ch_ameriod_rsr',lbl:'AMERIOD RSR (Rust Cleaning)',unit:'L'},
+      {id:'ch_x_cell_22_rustclean',lbl:'X-CELL 22 RUSTCLEAN',unit:'L'},
+      {id:'ch_metal_brite_hd',lbl:'METAL BRITE HD (Rust Cleaning)',unit:'L'}
+    ]},
+    {id:'chem_d',label:'Group D',icon:'🧹',fields:[
+      {id:'ch_falcon_floor_strip',lbl:'FALCON FLOOR STRIP',unit:'boxes'},
+      {id:'ch_seacare_osd_2',lbl:'SEACARE OSD-2 (Oil Spill Dispersant)',unit:'L'},
+      {id:'ch_liquid_coagulant',lbl:'LIQUID COAGULANT',unit:'L'},
+      {id:'ch_amergy_xl_plus',lbl:'AMERGY XL PLUS (LSFO Conditioner)',unit:'L'},
+      {id:'ch_amergy_xls',lbl:'AMERGY XLS (LSFO Conditioner)',unit:'L'},
+      {id:'ch_acc_9',lbl:'ACC-9 (Cooler Cleaning)',unit:'L'},
+      {id:'ch_carbon_remover',lbl:'CARBON REMOVER (Cleaner)',unit:'L'},
+      {id:'ch_regain',lbl:'REGAIN (Floor Polish)',unit:'L'},
+      {id:'ch_enviromate_2000',lbl:'ENVIROMATE 2000 (General Cleaning)',unit:'L'},
+      {id:'ch_ameroyal',lbl:'AMEROYAL (FW Generator Treatment)',unit:'L'},
+      {id:'ch_edge',lbl:'EDGE (Heavy Duty Cleaner)',unit:'L'},
+      {id:'ch_sodium_thiosulphate',lbl:'SODIUM THIOSULPHATE (BWTS)',unit:'bags'},
+      {id:'ch_dewplex_at',lbl:'DEWPLEX AT (Boiler Treatment)',unit:'L'},
+      {id:'ch_enviroclean',lbl:'ENVIROCLEAN (General Cleaning)',unit:'L'},
+      {id:'ch_multi_clean',lbl:'MULTI CLEAN (General Cleaning)',unit:'L'}
+    ]},
+    {id:'chem_e',label:'Group E',icon:'♻️',fields:[
+      {id:'ch_envirocare_wte',lbl:'ENVIROCARE WTE (Waste Treatment)',unit:'boxes'},
+      {id:'ch_drew_electric_2000',lbl:'DREW ELECTRIC 2000 (Cleaner)',unit:'L'},
+      {id:'ch_tank_sea_clean',lbl:'TANK SEA CLEAN & OIL DEGREASER',unit:'L'},
+      {id:'ch_snc_2000',lbl:'SNC 2000',unit:'L'},
+      {id:'ch_natrium_hypochlorite',lbl:'NATRIUM HYPOCHLORITE',unit:'L'}
+    ]},
+    {id:'chem_tests',label:'Test Chemicals',icon:'🔬',fields:[
+      {id:'ch_reagent_h2o_paste',lbl:'Reagent H2O Paste Pack (LO Test)',unit:'packs'},
+      {id:'ch_total_hardness_titret',lbl:'Total Hardness Titret (BWT)',unit:'no.'},
+      {id:'ch_cwt_titret',lbl:'CWT Titret (CFW Test)',unit:'no.'},
+      {id:'ch_drew_marine_chloride_kit',lbl:'Drew Marine Chloride Test Kit',unit:'no.'},
+      {id:'ch_drewplex_ox_test_kit',lbl:'Drewplex OX Test Kit (CFW)',unit:'no.'},
+      {id:'ch_boiler_phosphate_kit',lbl:'Boiler Phosphate Test Kit',unit:'no.'},
+      {id:'ch_hardness_test_ampoules',lbl:'Hardness Test Ampoules',unit:'no.'},
+      {id:'ch_phosphate_ampoules',lbl:'Phosphate Ampoules Refill',unit:'no.'},
+      {id:'ch_drewplex_ox_ampoules',lbl:'Drewplex OX Ampoule Refill (CFW)',unit:'no.'},
+      {id:'ch_circles_filter_paper',lbl:'Circles Filter Paper',unit:'packs'},
+      {id:'ch_hydrate_alkalinity_kit',lbl:'Hydrate Alkalinity Test Kit',unit:'no.'},
+      {id:'ch_chloride_lmp_kit',lbl:'Chloride LMP Test Kit',unit:'no.'},
+      {id:'ch_ph_indicator_strips',lbl:'pH Indicator Strips',unit:'packs'},
+      {id:'ch_spectrapak_310',lbl:'Spectrapak 310 (P.Alk, Cl, pH)',unit:'no.'},
+      {id:'ch_phenolphthalein',lbl:'Phenolphthalein Indicator Solution',unit:'bottles'},
+      {id:'ch_sulphuric_acid',lbl:'Sulphuric Acid 0.10N 500ml',unit:'bottles'},
+      {id:'ch_reagent_tbn_pack',lbl:'Reagent TBN Pack (LO Test)',unit:'packs'},
+      {id:'ch_test_solvent_pack',lbl:'Test Solvent Pack 2×500ml (LO)',unit:'packs'},
+      {id:'ch_potable_water_kit',lbl:'Potable Water Test Kit Refill',unit:'no.'},
+      {id:'ch_drew_marine_chloride_ampoule',lbl:'Drew Marine Chloride Ampoule Refill',unit:'no.'},
+      {id:'ch_chlorine_activator',lbl:'Chlorine Activator Solution',unit:'bottles'},
+      {id:'ch_conductivity_meter_kit',lbl:'Boiler Water Conductivity Meter Kit',unit:'no.'},
+      {id:'ch_electro_clean',lbl:'ELECTRO CLEAN FAST DRY',unit:'L'}
+    ]},
+  ]},
+  {id:'gas_inv',name:'Gas Inventory',sub:'R407C · Oxygen · Acetylene',icon:'🔴',tabs:[
+    {id:'gas_freon',label:'Refrigerant R407C',icon:'❄️',fields:[
+      {id:'gas_r407c_b1',lbl:'56kg Bottle 1 — ROB',unit:'kg'},
+      {id:'gas_r407c_b2',lbl:'56kg Bottle 2 — ROB',unit:'kg'},
+      {id:'gas_r407c_b3',lbl:'56kg Bottle 3 — ROB',unit:'kg'},
+      {id:'gas_r407c_b4',lbl:'56kg Bottle 4 — ROB',unit:'kg'},
+      {id:'gas_r407c_b5',lbl:'56kg Bottle 5 — ROB',unit:'kg'},
+      {id:'gas_r407c_b6',lbl:'56kg Bottle 6 — ROB',unit:'kg'},
+      {id:'gas_r407c_b7',lbl:'56kg Bottle 7 — ROB',unit:'kg'},
+      {id:'gas_r407c_b8',lbl:'56kg Bottle 8 — ROB',unit:'kg'},
+      {id:'gas_r407c_b9',lbl:'56kg Bottle 9 — ROB',unit:'kg'},
+      {id:'gas_r407c_b10',lbl:'56kg Bottle 10 — ROB',unit:'kg'},
+      {id:'gas_r407c_b11',lbl:'56kg Bottle 11 — ROB',unit:'kg'},
+      {id:'gas_r407c_b12',lbl:'56kg Bottle 12 — ROB',unit:'kg'},
+      {id:'gas_r407c_b13',lbl:'56kg Bottle 13 — ROB',unit:'kg'},
+      {id:'gas_r407c_12a',lbl:'12kg Bottle 1 — ROB',unit:'kg'},
+      {id:'gas_r407c_12b',lbl:'12kg Bottle 2 — ROB',unit:'kg'},
+      {id:'gas_r407c_12c',lbl:'12kg Bottle 3 — ROB',unit:'kg'},
+      {id:'gas_r407c_12d',lbl:'12kg Bottle 4 — ROB',unit:'kg'},
+      {id:'gas_r407c_12e',lbl:'12kg Bottle 5 — ROB',unit:'kg'},
+      {id:'gas_r407c_12f',lbl:'12kg Bottle 6 — ROB',unit:'kg'},
+      {id:'gas_r407c_12g',lbl:'12kg Bottle 7 — ROB',unit:'kg'},
+      {id:'gas_r407c_12h',lbl:'12kg Bottle 8 — ROB',unit:'kg'},
+      {id:'gas_r407c_12i',lbl:'12kg Bottle 9 — ROB',unit:'kg'},
+      {id:'gas_r407c_12j',lbl:'12kg Bottle 10 — ROB',unit:'kg'},
+      {id:'gas_r407c_total',lbl:'TOTAL ROB (sum)',unit:'kg'},
+    ]},
+    {id:'gas_oxy',label:'Oxygen',icon:'💨',fields:[
+      {id:'gas_oxy_a',lbl:'Oxygen Bottle A — ROB',unit:'kg'},
+      {id:'gas_oxy_b',lbl:'Oxygen Bottle B — ROB',unit:'kg'},
+      {id:'gas_oxy_total',lbl:'Total Oxygen ROB',unit:'kg'},
+    ]},
+    {id:'gas_acet',label:'Acetylene',icon:'🔥',fields:[
+      {id:'gas_acet_a',lbl:'Acetylene Bottle A — ROB',unit:'kg'},
+      {id:'gas_acet_b',lbl:'Acetylene Bottle B — ROB',unit:'kg'},
+      {id:'gas_acet_total',lbl:'Total Acetylene ROB',unit:'kg'},
+    ]},
+  ]},
+  {id:'lo_grease',name:'LO & Grease Inventory',sub:'All 82 products · Monthly ROB',icon:'🛢️',tabs:[
+    {id:'logi_me',label:'Main Engine',icon:'⚙️',fields:[
+      {id:'loi_melina_tank',lbl:'MELINA S30 — ME LO Storage Tank',unit:'L'},
+      {id:'loi_melina_sett',lbl:'MELINA S30 — ME LO Settling Tank',unit:'L'},
+      {id:'loi_alexia70_stor',lbl:'ALEXIA 70 (70BN) — Bulk Storage',unit:'L'},
+      {id:'loi_talusia40',lbl:'TALUSIA LS 40 — Bulk Storage',unit:'L'},
+      {id:'loi_alexia70_msr',lbl:'ALEXIA 70 (70BN) — Measuring Tank',unit:'L'},
+      {id:'loi_alexia40_msr',lbl:'ALEXIA 40 (40BN) — Measuring Tank',unit:'L'},
+      {id:'loi_omala460',lbl:'OMALA S2 GX 460 — ME Turning Gear',unit:'L'},
+      {id:'loi_carter460',lbl:'CARTER EP 460 — ME Turning Gear',unit:'L'},
+      {id:'loi_gadus3_me',lbl:'GADUS S3 V220C 2 (General Purpose Grease)',unit:'kg'},
+      {id:'loi_gadus5',lbl:'GADUS S5 V100 2 — Aux Blower Bearings',unit:'kg'},
+      {id:'loi_gadus2',lbl:'GADUS S2 V1002 — Aux Blower Bearings',unit:'kg'}
+    ]},
+    {id:'logi_dg',label:'Diesel Generators',icon:'🔋',fields:[
+      {id:'loi_aurelia_stor',lbl:'AURELIA TI 4020 — DG LO Storage Tank',unit:'L'},
+      {id:'loi_aurelia_sett',lbl:'AURELIA TI 4020 — DG LO Settling Tank',unit:'L'},
+      {id:'loi_aurelia_drum',lbl:'AURELIA TI 4020 — 205L Drums',unit:'L'},
+      {id:'loi_argina',lbl:'ARGINA S4 40 — DG Governor',unit:'kg'},
+      {id:'loi_tellus68_20',lbl:'TELLUS S2 VX 68 — 20L (DG Sleeve Bearing)',unit:'L'},
+      {id:'loi_tellus68_208',lbl:'TELLUS S2 VX 68 — 208L (DG Sleeve Bearing)',unit:'L'},
+      {id:'loi_rimula',lbl:'RIMULA R4X 15W-40 — Emcy DG',unit:'L'},
+      {id:'loi_rubia',lbl:'RUBIA WORK 1000 — Emcy DG',unit:'L'}
+    ]},
+    {id:'logi_hyd',label:'Hydraulic & Air',icon:'💧',fields:[
+      {id:'loi_tellus32_20',lbl:'TELLUS S2 VX 32 — 20L cans',unit:'L'},
+      {id:'loi_tellus32_208',lbl:'TELLUS S2 VX 32 — 208L drum',unit:'L'},
+      {id:'loi_tellus15_20',lbl:'TELLUS S2 VX 15 — 20L (FV Test Device)',unit:'L'},
+      {id:'loi_tellus15_208',lbl:'TELLUS S2 VX 15 — 208L (FV Test Device)',unit:'L'},
+      {id:'loi_tellus46_20',lbl:'TELLUS S2 VX 46 — 20L',unit:'L'},
+      {id:'loi_tellus46_208',lbl:'TELLUS S2 VX 46 — 208L',unit:'L'},
+      {id:'loi_tellus_se22',lbl:'TELLUS SE MX 22-32 (Manual Hyd Remote)',unit:'L'},
+      {id:'loi_corena100',lbl:'CORENA S2 P100 — Main Air Comp',unit:'L'},
+      {id:'loi_dancis100',lbl:'DANCIS 100 — Main Air Comp',unit:'L'},
+      {id:'loi_corena46',lbl:'CORENA S4 R46 — Service Air Comp',unit:'L'},
+      {id:'loi_turbo_t46_20',lbl:'TURBO T46 — 20L (ER Pumps)',unit:'L'},
+      {id:'loi_turbo_t46_208',lbl:'TURBO T46 — 208L (ER Pumps)',unit:'L'},
+      {id:'loi_turbo_t32',lbl:'TURBO T32 — Accommodation Oiler',unit:'L'},
+      {id:'loi_equivis_zs46',lbl:'EQUIVIS ZS 46',unit:'L'},
+      {id:'loi_equivis_zs32',lbl:'EQUIVIS ZS 32',unit:'L'},
+      {id:'loi_equivis_zs15',lbl:'EQUIVIS ZS 15',unit:'L'},
+      {id:'loi_equivis_zs68',lbl:'EQUIVIS ZS 68',unit:'L'},
+      {id:'loi_preslia46',lbl:'PRESLIA 46',unit:'L'},
+      {id:'loi_presilia32',lbl:'PRESILIA 32',unit:'L'},
+      {id:'loi_azola32',lbl:'AZOLA ZS 32',unit:'L'},
+      {id:'loi_mobil_dte',lbl:'MOBIL DTE',unit:'L'},
+      {id:'loi_fluidmatic',lbl:'FLUIDMATIC DII MV',unit:'L'}
+    ]},
+    {id:'logi_lo_sys',label:'LO System',icon:'🛢️',fields:[
+      {id:'loi_morlina_20',lbl:'MORLINA S4 B220 — 20L (LO Purifier)',unit:'L'},
+      {id:'loi_morlina_200',lbl:'MORLINA S4 B220 — 200L (LO Purifier)',unit:'L'},
+      {id:'loi_omala220',lbl:'OMALA S2 GX 220 — ER Crane/OWS',unit:'L'},
+      {id:'loi_omala_g220',lbl:'OMALA S2 G 220 — ER Crane',unit:'L'},
+      {id:'loi_omala150',lbl:'OMALA S2 GX 150 — Provision Crane',unit:'L'},
+      {id:'loi_omala100',lbl:'OMALA S2 GX 100 — Lifeboat Davit',unit:'L'},
+      {id:'loi_carter_ep150',lbl:'CARTER EP150',unit:'L'},
+      {id:'loi_carter_ep100',lbl:'CARTER EP100',unit:'L'},
+      {id:'loi_carter_ep220',lbl:'CARTER EP220',unit:'L'},
+      {id:'loi_carter_ep460b',lbl:'CARTER EP460 (second)',unit:'L'},
+      {id:'loi_dacnis100',lbl:'DACNIS 100',unit:'L'},
+      {id:'loi_dacnis_sh46',lbl:'DACNIS SH46',unit:'L'},
+      {id:'loi_ceran_xm220',lbl:'CERAN XM 220',unit:'L'},
+      {id:'loi_planetelf150',lbl:'PLANETELF ACD150',unit:'L'},
+      {id:'loi_planetelf32',lbl:'PLANETELF ACD32',unit:'L'}
+    ]},
+    {id:'logi_refrig',label:'Refrigeration',icon:'❄️',fields:[
+      {id:'loi_bitzer170',lbl:'BITZER BSE 170 — A/C Plant',unit:'L'},
+      {id:'loi_resino170',lbl:'RESINO SE 170',unit:'L'},
+      {id:'loi_resino_z',lbl:'RESINO SE Z',unit:'L'},
+      {id:'loi_emerson_poe',lbl:'EMERSON POE 32 — Fridge Plant',unit:'L'},
+      {id:'loi_refrig_s4',lbl:'REFRIGERATION OIL S4 FR-F 32',unit:'L'}
+    ]},
+    {id:'logi_cargo_deck',label:'Cargo & Deck',icon:'🚢',fields:[
+      {id:'loi_gas_comp',lbl:'GAS COMPRESSOR OIL S4 PV 190 — Cargo Comp',unit:'L'},
+      {id:'loi_spiralax_80w',lbl:'SPIRALAX S3 AX 80W-90',unit:'L'},
+      {id:'loi_naturelle_wire',lbl:'NATURELLE S2 WIRE ROPE LUBRICANT',unit:'kg'},
+      {id:'loi_naturelle_gr',lbl:'NATURELLE GREASE S5 V120P 2 — Rudder Stock',unit:'kg'},
+      {id:'loi_naturelle_gear',lbl:'NATURELLE S4 GEAR FLUID 100 — Bowthruster',unit:'L'},
+      {id:'loi_spirax_atf',lbl:'SPIRAX S4 ATF HDX — Lifeboat Gearbox',unit:'L'},
+      {id:'loi_spirax_80w90',lbl:'SPIRAX S3 AX 80W-90 — Rescue Boat',unit:'L'},
+      {id:'loi_aero_4',lbl:'AERO SHELL FLUID 4/4L — Cargo Handling',unit:'L'},
+      {id:'loi_aero_41',lbl:'AERO SHELL FLUID 41/4L — Cargo Handling',unit:'L'},
+      {id:'loi_gadus_a320',lbl:'GADUS S2 A320 2 — ER Crane Wire/Open Gear',unit:'kg'},
+      {id:'loi_retinax',lbl:'RETINAX LX EP2 — IGG Motor Bearings',unit:'kg'},
+      {id:'loi_gadus_bowthr',lbl:'GADUS S2 V220 — Bowthruster Coupling',unit:'kg'},
+      {id:'loi_nautilus',lbl:'NAUTILUS PREMIUM OUTBOARD — Rescue Boat',unit:'L'},
+      {id:'loi_antifreeze',lbl:'ANTI FREEZE Y-50/50',unit:'L'},
+      {id:'loi_ferryl202',lbl:'FERRYL 202',unit:'kg'},
+      {id:'loi_aurelia_4040',lbl:'AURELIA T1 4040',unit:'L'},
+      {id:'loi_multi_ep2',lbl:'MULTI COMPLEX EP2',unit:'kg'},
+      {id:'loi_trans_80w90',lbl:'TRANSMISSION AXLE 80W-90',unit:'L'}
+    ]},
+  ]},
+]},
+];
+
+
+
+const EQ_MAP={},FL_MAP={};
+FLOORS.forEach(f=>{FL_MAP[f.id]=f;f.equip.forEach(e=>{EQ_MAP[e.id]={...e,floorId:f.id}});});
+
+const V={},CYL={},UNITS={};
+const ACTIVE_UNIT={};  // ACTIVE_UNIT[tabId] = unitId of currently shown unit tab
+
+let aEq=null,aTab=null;
+FLOORS.forEach(f=>f.equip.forEach(eq=>eq.tabs.forEach(t=>{
+  (t.units||[]).forEach(u=>{UNITS[u.id]=UNITS[u.id]||'run';});
+  (t.unitGroups||[]).forEach(ug=>{UNITS[ug.unitId]=UNITS[ug.unitId]||'run';});
+})));
+
+function gs(val,f){if(!f)return'e';const n=parseFloat(val);if(isNaN(n)||val==='')return'e';if((f.ha!=null&&n>=f.ha)||(f.la!=null&&n<=f.la))return'alm';if((f.hw!=null&&n>=f.hw)||(f.lw!=null&&n<=f.lw))return'warn';return'ok';}
+function tabSt(eq,tab){
+  if(tab.unitGroups) return ugTabSt(tab);
+  let w='e';const ck=(f,v)=>{if(!v)return;const s=gs(v,f);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';};(tab.fields||[]).forEach(f=>ck(f,V[f.id]??''));(tab.duoFields||[]).forEach(f=>{ck(f,V[f.id]??'');ck(f,V[f.id2]??'');});if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++)ck(p,CYL[`${eq.id}_${tab.id}_${p.id}_${c}`]??'');});return w;}
+function eqSt(eq){let w='e';eq.tabs.forEach(t=>{const s=tabSt(eq,t);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';});return w;}
+function flSt(fl){let w='e';fl.equip.forEach(e=>{const s=eqSt(e);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';});return w;}
+function getProgress(){let t=0,f=0;FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{(tab.fields||[]).forEach(fi=>{t++;if((V[fi.id]??'')!=='')f++;});(tab.duoFields||[]).forEach(fi=>{t+=2;if((V[fi.id]??'')!=='')f++;if((V[fi.id2]??'')!=='')f++;});(tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(fi=>{t++;if((V[fi.id]??'')!=='')f++;}));if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++){t++;if((CYL[`${eq.id}_${tab.id}_${p.id}_${c}`]??'')!=='')f++;}});})));return{t,f};}
+
+// Accordion state: which floor is expanded
+const EXPANDED_FLOOR = {current: null};
+
+function buildLeft(){
+  var sb = document.getElementById("ls");
+  if(!sb) return;
+  var FREQ_COLOR = {daily:"#3b82f6",weekly:"#f59e0b",monthly:"#10b981",rh:"#7c3aed"};
+  var FREQ_LABEL = {daily:"D",weekly:"W",monthly:"M",rh:"M"};
+  var out = "";
+
+  FLOORS.forEach(function(fl){
+    var isExp = EXPANDED_FLOOR.current === fl.id;
+    var fclr  = fl.color || "#3b82f6";
+    var freq  = fl.freq || "daily";
+    var fc    = FREQ_COLOR[freq] || "#64748b";
+    var fl_id = fl.id;
+
+    out += '<div class="floor-section' + (isExp?" expanded":"") + '" id="fs_' + fl_id + '">';
+    out += '<button class="floor-hdr" data-flid="' + fl_id + '" onclick="toggleFloor(this.dataset.flid)">';
+    out += '<div class="floor-pip" style="background:' + fclr + '"></div>';
+    out += '<span class="floor-label">' + fl.label + '</span>';
+    out += '<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;background:' + fc + '22;color:' + fc + ';border:1px solid ' + fc + '44">' + (FREQ_LABEL[freq]||"") + '</span>';
+    out += '<span class="floor-chevron">' + (isExp?"▾":"▸") + '</span>';
+    out += '</button>';
+    out += '<div class="floor-equip" style="display:' + (isExp?"block":"none") + '">';
+
+    fl.equip.forEach(function(eq){
+      var ws  = eqSt(eq);
+      var isA = eq.id === aEq;
+      var bc  = ws==="e"?"dim":ws;
+      var bt  = ws==="alm"?"ALM":ws==="warn"?"WRN":ws==="ok"?"✓":"—";
+      out += '<button class="eq' + (isA?" active":"") + '" data-flid="' + fl_id + '" data-eqid="' + eq.id + '" onclick="selEq(this.dataset.flid,this.dataset.eqid)">';
+      out += '<span class="eq-ico">' + eq.icon + '</span>';
+      out += '<span class="eq-name">' + eq.name + '</span>';
+      out += '<span class="eq-badge ' + bc + '">' + bt + '</span>';
+      out += '</button>';
+    });
+
+    out += '</div></div>';
+  });
+
+  sb.innerHTML = out;
+  var prog = getProgress();
+  var pb = document.getElementById("prog-bar");
+  var pl = document.getElementById("prog-lbl");
+  if(pb) pb.style.width = (prog.t ? Math.round(prog.f/prog.t*100) : 0) + "%";
+  if(pl) pl.textContent = prog.f + "/" + prog.t + " fields";
+  updateGSt();
+}
+
+
+
+function toggleFloor(flId){
+  if(EXPANDED_FLOOR.current === flId){
+    EXPANDED_FLOOR.current = null;
+  } else {
+    EXPANDED_FLOOR.current = flId;
+  }
+  buildLeft();
+}
+
+function updateGSt(){
+  let w='e';FLOORS.forEach(fl=>{const s=flSt(fl);if(s==='alm')w='alm';else if(s==='warn'&&w!=='alm')w='warn';else if(w==='e')w='ok';});
+  const el=document.getElementById('gst'),tx=document.getElementById('gst-txt');
+  el.className=`g-status ${w==='e'?'neutral':w}`;
+  tx.textContent=w==='alm'?'Active alarms':w==='warn'?'Warnings present':w==='ok'?'All parameters normal':'No readings entered yet';
+}
+
+function selEq(flId,eqId){
+  EXPANDED_FLOOR.current = flId;
+  const dv  = document.getElementById('dashboard-view');
+  const mid = document.getElementById('mid');
+  const nb  = document.getElementById('dash-nav-btn');
+  if(dv)  dv.style.display='none';
+  if(mid){ mid.style.display='flex'; mid.style.flex='1'; mid.style.minHeight='0'; }
+  if(nb)  nb.classList.remove('active');
+  const eq = EQ_MAP[eqId];
+  if(!eq){ console.error('Equipment not found:', eqId); return; }
+  aEq=eqId; aTab=eq.tabs[0].id;
+  buildLeft();
+  buildTabs(eq);
+  try{
+    buildForm(eq,eq.tabs[0]);
+  }catch(err){
+    var body=document.getElementById('mid-body');
+    if(body) body.innerHTML='<div style="padding:20px;color:var(--alm);font-family:monospace;font-size:12px"><b>Form Error:</b><br>'+err.message+'<br><pre>'+err.stack+'</pre></div>';
+    console.error('buildForm error:',err);
+  }
+  buildRight();
+}
+
+function buildTabs(eq){
+  var bar = document.getElementById("tabs-bar");
+  if(!bar) return;
+  bar.style.display = "flex";
+  var inner = "";
+  eq.tabs.forEach(function(t){
+    var ws  = tabSt(eq,t);
+    var isA = t.id === aTab;
+    var badge = (ws==="warn"||ws==="alm") ? '<span class="tab-badge ' + ws + '">' + (ws==="alm"?"ALM":"WRN") + "</span>" : "";
+    inner += '<button class="tab' + (isA?" active":"") + '" data-tid="' + t.id + '" onclick="selTab(this.dataset.tid)">'
+           + t.icon + " " + t.label + " " + badge + "</button>";
+  });
+  bar.innerHTML = '<div class="tab-pill-wrap">' + inner + "</div>";
+}
+
+function selTab(tid){aTab=tid;const eq=EQ_MAP[aEq];buildTabs(eq);buildForm(eq,eq.tabs.find(t=>t.id===tid));}
+
+function buildForm(eq,tab){
+  try{
+  const body=document.getElementById('mid-body');
+  const fl=FL_MAP[EQ_MAP[eq.id].floorId];
+  const ts=tabSt(eq,tab);
+  const stLbl=ts==='alm'?'Alarm active':ts==='warn'?'Warning':ts==='ok'?'All normal':'Not entered';
+  const stCls=ts==='e'?'empty':ts;
+
+  // Count filled fields for this equipment
+  let totF=0, filF=0;
+  eq.tabs.forEach(t=>{
+    (t.fields||[]).forEach(f=>{totF++;if((V[f.id]??'')!=='')filF++;});
+    (t.duoFields||[]).forEach(f=>{totF+=2;if((V[f.id]??'')!=='')filF++;if((V[f.id2]??'')!=='')filF++;});
+    if(t.cylinders)t.cylinders.params.forEach(p=>{for(let c=1;c<=t.cylinders.count;c++){totF++;if((CYL[`${eq.id}_${t.id}_${p.id}_${c}`]??'')!=='')filF++;}});
+  });
+  const pct = totF ? Math.round(filF/totF*100) : 0;
+  const rhKey = 'rh_'+eq.id.replace(/\D/g,'');
+  const rhVal = V['me_rh'] && eq.id==='me' ? V['me_rh'] :
+                V['g1_rh'] && eq.id==='ae1' ? V['g1_rh'] :
+                V['g2_rh'] && eq.id==='ae2' ? V['g2_rh'] :
+                V['g3_rh'] && eq.id==='ae3' ? V['g3_rh'] : '—';
+
+  // Area 1: Equipment stats strip
+  const statsStrip = `
+    <div class="eq-stats-strip">
+      <div class="eq-stat">
+        <div class="eq-stat-val">${filF}/${totF}</div>
+        <div class="eq-stat-lbl">Fields</div>
+      </div>
+      <div class="eq-stat ${pct===100?'ok-stat':''}">
+        <div class="eq-stat-val">${pct}%</div>
+        <div class="eq-stat-lbl">Complete</div>
+      </div>
+      <div class="eq-stat">
+        <div class="eq-stat-val">${rhVal!=='—'?rhVal+' h':'—'}</div>
+        <div class="eq-stat-lbl">Run Hrs</div>
+      </div>
+    </div>`;
+
+  let html_=`<div class="eq-hdr">
+    <div class="eq-hdr-left">
+      <div class="eq-hdr-icon">${eq.icon}</div>
+      <div><div class="eq-hdr-name">${eq.name}</div><div class="eq-hdr-sub">${eq.sub} · ${fl.label}</div></div>
+    </div>
+    ${statsStrip}
+  </div>`;
+
+  if(tab.units?.length && !tab.unitGroups){
+    html_+=`<div class="unit-toggles"><div class="utog-lbl">Unit Status — click to toggle</div>`;
+    tab.units.forEach(u=>{const st=UNITS[u.id]||'run';html_+=`<button class="utog ${st}" id="utog_${u.id}" data-lbl="${u.label}" onclick="togUnit('${u.id}')"><div class="u-dot"></div><span>${u.label}</span> — <span class="utog-state">${st==='run'?'RUNNING':'STOPPED'}</span></button>`;});
+    html_+=`</div>`;
+  }
+
+  if(tab.duoFields?.length){
+    html_+=`<div class="sc"><div class="fl" style="padding-top:0">
+    <div class="fr2" style="padding:5px 0 4px;border-bottom:1.5px solid var(--line2)">
+      <span style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.5px;text-transform:uppercase">Pump Parameters</span>
+      <span style="font-size:9px;text-align:center;color:var(--t3);font-weight:700;letter-spacing:.5px">SUCTION</span>
+      <span></span>
+      <span style="font-size:9px;text-align:center;color:var(--t3);font-weight:700;letter-spacing:.5px">DISCHARGE</span>
+      <span></span>
+      <span class="pw-hdr">PREV W3</span>
+    </div>`;
+    tab.duoFields.forEach(f=>{
+      const stopped=f.unitKey&&UNITS[f.unitKey]==='stop';
+      const v1=V[f.id]??'',v2=V[f.id2]??'';
+      const s1=gs(v1,f),s2=gs(v2,f);
+      const lp=lastPrev(f.id);
+      const pwTxt=lp!==null?lp.toFixed(1):'—';
+      const pwCls=lp!==null&&v1!==''&&Math.abs(parseFloat(v1)-lp)>0.5?(parseFloat(v1)>lp?'up':'dn'):'';
+      html_+=`<div class="fr2 ${stopped?'stopped':''}" id="fr2_${f.id}">
+        <span class="flbl">${f.lbl}</span>
+        <input class="finp ${s1==='e'?'':s1}" id="fi_${f.id}" type="number" step="any" value="${v1}" placeholder="${f.sub||'Suct'}" data-fid="${f.id}" data-f='${sj(f)}' oninput="onF(this)">
+        <span class="funit">${f.unit}</span>
+        <input class="finp ${s2==='e'?'':s2}" id="fi_${f.id2}" type="number" step="any" value="${v2}" placeholder="${f.sub2||'Disc'}" data-fid="${f.id2}" data-f='${sj(f)}' oninput="onF(this)">
+        <span class="funit">${f.unit2||f.unit}</span>
+        <span class="pw-val ${pwCls}">${pwTxt}</span>
+      </div>`;
+    });
+    html_+=`</div></div>`;
+  }
+
+  if(tab.unitGroups?.length){
+    html_+=buildUnitGroupBlock(eq,tab);
+  }
+  if(tab.fields?.length){
+    html_+=`<div class="sc"><div class="sch"><span class="sch-ico">${tab.icon||'📊'}</span><span class="sch-lbl">${tab.label}</span><span class="sc-st ${stCls}">${stLbl}</span></div>
+    <div class="fl">`;
+    tab.fields.forEach(f=>{
+      const v=V[f.id]??'',s=gs(v,f);
+      const lp=lastPrev(f.id);
+      const pwTxt=lp!==null?lp.toFixed(1):'—';
+      const pwCls=lp!==null&&v!==''&&Math.abs(parseFloat(v)-lp)>0.5?(parseFloat(v)>lp?'up':'dn'):'';
+      html_+=`<div class="fr" id="fr_${f.id}"><span class="flbl">${f.lbl}</span>
+        <input class="finp ${s==='e'?'':s} ${v!==''?trendClass(v,f.id):''}" id="fi_${f.id}" type="number" step="any" value="${v}" placeholder="—" data-fid="${f.id}" data-f='${sj(f)}' oninput="onF(this)">
+        <span class="funit">${f.unit}</span>
+        <span class="pw-val ${pwCls}">${pwTxt}</span>
+      </div>`;
+    });
+    html_+=`</div></div>`;
+  }
+
+  if(tab.cylinders){
+    const{count,params}=tab.cylinders;
+    const exhP=params.find(p=>p.id==='exh');
+    const exhVals=[];if(exhP)for(let c=1;c<=count;c++){const v=parseFloat(CYL[`${eq.id}_${tab.id}_exh_${c}`]);if(!isNaN(v))exhVals.push(v);}
+    const avg=exhVals.length>=4?exhVals.reduce((a,b)=>a+b)/exhVals.length:null;
+    const mxDev=avg?Math.max(...exhVals.map(v=>Math.abs(v-avg))):0;
+    html_+=`<div class="cyl-sc"><div class="cyl-h"><span class="sch-ico">🔩</span><span class="sch-lbl">${tab.label}</span></div><div class="cyl-hw"><table class="ctbl"><thead><tr><th class="plbl">Parameter</th>`;
+    for(let c=1;c<=count;c++)html_+=`<th>C${c}</th>`;
+    html_+=`<th>Avg</th><th style="min-width:34px;font-size:9px;color:var(--t3)">Unit</th></tr></thead><tbody>`;
+    params.forEach(p=>{
+      html_+=`<tr><td class="pname">${p.lbl}</td>`;
+      for(let c=1;c<=count;c++){const k=`${eq.id}_${tab.id}_${p.id}_${c}`;const v=CYL[k]??'';const s=gs(v,p);html_+=`<td><input class="ci ${s==='e'?'':s}" id="ci_${k}" type="number" step="any" value="${v}" placeholder="—" data-key="${k}" data-eq="${eq.id}" data-tab="${tab.id}" data-pid="${p.id}" data-p='${sj(p)}' oninput="onC(this)"></td>`;}
+      html_+=`<td class="avg-c" id="avg_${eq.id}_${tab.id}_${p.id}">—</td><td class="uname">${p.unit}</td></tr>`;
+    });
+    html_+=`</tbody></table></div>`;
+    if(avg!==null){const cls=mxDev>60?'warn':'';html_+=`<div class="dev-insight ${cls}"><span style="font-size:14px;flex-shrink:0">${mxDev>60?'⚠️':'ℹ️'}</span>${mxDev>60?`Max deviation ${mxDev.toFixed(0)}°C from avg ${avg.toFixed(0)}°C — investigate high cylinder`:`Avg exhaust: ${avg.toFixed(0)}°C · Max deviation: ${mxDev.toFixed(0)}°C`}</div>`;}
+    html_+=`</div>`;
+  }
+
+  // Equipment remarks + observations
+  const _obsHtml = buildObsBlock(eq.id);
+  html_+=`<div class="eq-remarks"><div class="eq-rem-head"><span style="font-size:13px">📝</span><span class="sch-lbl">Watch Remarks &amp; Observations</span></div>
+    <div class="eq-rem-body">
+      <textarea class="fta" id="eq_rem_${eq.id}" rows="6" placeholder="Enter watch remarks — defects observed, jobs completed, abnormal readings, actions taken..."
+        oninput="EQ_REMARKS_V['${eq.id}']=this.value;scheduleApiSave()">${EQ_REMARKS_V[eq.id]||''}</textarea>
+    </div>
+    <div class="eq-rem-obs" id="obs_block_${eq.id}"></div>
+    </div>`;
+
+  // Watch history comparison
+  html_ += buildWatchHistory(eq, tab);
+
+  // AI diagnostic hint
+  html_+=`<div class="ai-hint" style="margin-top:8px"><span style="font-size:15px;flex-shrink:0">🤖</span><div><div class="ai-lbl">FORCAP AI · Coming Soon</div>Trend diagnostics — suction pressure drops, exhaust deviations, bearing temperature rises across consecutive watches.</div></div>`;
+  html_+=`<div class="save-row"><button class="btn-ghost" onclick="clearSec()">Clear</button><button class="btn-primary" id="btn-save" onclick="saveSec()">Save ${eq.name}</button></div>`;
+  body.innerHTML=html_;
+  // Populate obs block after DOM is set
+  try{
+    const _obsEl = document.getElementById('obs_block_'+eq.id);
+    const _eqFloor = FL_MAP[EQ_MAP[eq.id]?.floorId];
+    const _showObs = _eqFloor && ['floor','deck3','deck2','upper','tanks'].includes(_eqFloor.id);
+    if(_obsEl && _showObs) _obsEl.innerHTML = buildObsBlock(eq.id);
+    else if(_obsEl) _obsEl.innerHTML = '';
+  }catch(_e){ console.warn('obs block error:', _e); }
+  // Inject cyclone counter for DG pages
+  if(['ae1','ae2','ae3'].includes(eq.id)){
+    var _dgNum = {'ae1':1,'ae2':2,'ae3':3}[eq.id];
+    setTimeout(function(){ injectCycloneWidget(eq.id, _dgNum); }, 300);
+  }
+  if(tab.unitGroups?.length) renderUnitGroupSection(eq,tab);
+  if(tab.cylinders)tab.cylinders.params.forEach(p=>updAvg(eq.id,tab.id,p.id,tab.cylinders.count,p));
+
+  }catch(err){
+    console.error('buildForm error:', err);
+    var body=document.getElementById('mid-body');
+    if(body) body.innerHTML='<div style="padding:24px;color:var(--al-tx);font-family:var(--mono);font-size:12px"><b>buildForm error:</b><br>'+err.message+'<br><br><pre style=\"white-space:pre-wrap\">'+err.stack+'</pre></div>';
+  }
+}
+
+function buildWatchHistory(eq, tab){
+  // Pick up to 6 key fields that have prev data or are filled
+  const keyFields = (tab.fields||[]).filter(f=>prevVal(f.id)||V[f.id]).slice(0,6);
+  if(!keyFields.length && !(tab.duoFields||[]).length) return '';
+
+  const watches = WATCH_LABELS;
+  let h = `<div class="watch-hist"><div class="wh-head">
+    <span class="wh-title">📊 Watch Comparison</span>
+    <span class="wh-meta">Previous 3 watches vs current</span>
+  </div><div class="wh-scroll"><table class="whtbl">
+  <thead><tr>
+    <th class="pname">Parameter</th>
+    ${watches.map(w=>`<th>${w}</th>`).join('')}
+    <th style="font-weight:800;color:var(--blue)">THIS WATCH</th>
+    <th>Unit</th>
+  </tr></thead><tbody>`;
+
+  keyFields.forEach(f=>{
+    const pv = prevVal(f.id) || [null,null,null];
+    const curr = V[f.id]??'';
+    const cs = gs(curr, f);
+    // trend vs last prev
+    const lp = pv[pv.length-1];
+    let trClass = '';
+    if(curr!==''&&lp!==null){
+      const diff=parseFloat(curr)-lp;
+      if(Math.abs(diff)>0.5) trClass=diff>0?'trend-up':'trend-dn';
+      else trClass='trend-ok';
+    }
+    h += `<tr>
+      <td class="pname">${f.lbl}</td>
+      ${pv.map(v=>`<td>${v!==null?v.toFixed(1):'—'}</td>`).join('')}
+      <td class="curr ${cs==='e'?'':cs} ${trClass}">${curr||'—'}</td>
+      <td style="font-size:10px;color:var(--t3);font-family:var(--mono)">${f.unit}</td>
+    </tr>`;
+  });
+
+  // Also duoFields if any
+  (tab.duoFields||[]).slice(0,3).forEach(f=>{
+    const curr = V[f.id]??'';
+    const cs = gs(curr, f);
+    h += `<tr>
+      <td class="pname">${f.lbl} (Suct)</td>
+      <td>—</td><td>—</td><td>—</td>
+      <td class="curr ${cs==='e'?'':cs}">${curr||'—'}</td>
+      <td style="font-size:10px;color:var(--t3);font-family:var(--mono)">${f.unit}</td>
+    </tr>`;
+  });
+
+  if(!keyFields.length && !(tab.duoFields||[]).length){
+    h += `<tr><td colspan="6" class="no-hist">No previous watch data available for this section</td></tr>`;
+  }
+
+  h += `</tbody></table></div></div>`;
+  return h;
+}
+
+function togUnit(uid){
+  UNITS[uid]=UNITS[uid]==='run'?'stop':'run';
+  // Update all toggle buttons with this uid (could be in any tab)
+  const btn=document.getElementById(`utog_${uid}`);
+  if(btn){btn.className=`utog ${UNITS[uid]}`;const lbl=btn.getAttribute('data-lbl');btn.innerHTML=`<div class="u-dot"></div><span>${lbl}</span> — <span class="utog-state">${UNITS[uid]==='run'?'RUNNING':'STOPPED'}</span>`;}
+  const eq=EQ_MAP[aEq];const tab=eq?.tabs.find(t=>t.id===aTab);
+  // Grey out duoField rows for stopped pumps
+  (tab?.duoFields||[]).forEach(f=>{
+    if(f.unitKey===uid){
+      const row=document.getElementById(`fr2_${f.id}`);
+      if(row)row.classList.toggle('stopped',UNITS[uid]==='stop');
+    }
+  });
+  // Also grey out regular field rows that belong to this unit
+  (tab?.fields||[]).forEach(f=>{
+    if(f.unitKey===uid){
+      const row=document.getElementById(`fr_${f.id}`);
+      if(row)row.classList.toggle('stopped',UNITS[uid]==='stop');
+    }
+  });
+  buildLeft(); updateGSt();
+}
+
+function onF(inp){const f=pj(inp.dataset.f);V[inp.dataset.fid]=inp.value;const s=gs(inp.value,f);inp.className='finp'+(s==='e'?'':' '+s);
+  const eq=aEq?EQ_MAP[aEq]:null;const tab=eq?.tabs.find(t=>t.id===aTab);
+  if(tab?.unitGroups?.length){const cont=document.getElementById(`ugc_${tab.id}`);if(cont)renderUnitGroupSection(eq,tab);}
+  refresh();scheduleApiSave();}
+function onC(inp){const p=pj(inp.dataset.p);CYL[inp.dataset.key]=inp.value;const s=gs(inp.value,p);inp.className='ci'+(s==='e'?'':' '+s);updAvg(inp.dataset.eq,inp.dataset.tab,inp.dataset.pid,7,p);refresh();scheduleApiSave();}
+function updAvg(ei,ti,pi,count,p){const vals=[];for(let c=1;c<=count;c++){const v=parseFloat(CYL[`${ei}_${ti}_${pi}_${c}`]);if(!isNaN(v))vals.push(v);}const el=document.getElementById(`avg_${ei}_${ti}_${pi}`);if(!el)return;if(!vals.length){el.textContent='—';el.className='avg-c';return;}const avg=vals.reduce((a,b)=>a+b)/vals.length;const s=gs(avg.toFixed(1),p);el.textContent=avg.toFixed(1);el.className='avg-c'+(s==='e'||s==='ok'?'':' '+s);}
+
+function refresh(){buildLeft();const eq=aEq?EQ_MAP[aEq]:null;if(eq)buildTabs(eq);buildRight();
+  const dv=document.getElementById('dashboard-view');
+  if(dv&&dv.style.display!=='none')buildDashboard();
+}
+function clearSec(){if(!aEq||!aTab)return;const eq=EQ_MAP[aEq],tab=eq.tabs.find(t=>t.id===aTab);(tab.fields||[]).forEach(f=>delete V[f.id]);(tab.duoFields||[]).forEach(f=>{delete V[f.id];delete V[f.id2];});if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++)delete CYL[`${eq.id}_${tab.id}_${p.id}_${c}`];});buildForm(eq,tab);refresh();}
+function saveSec(){const btn=document.getElementById('btn-save');if(!btn)return;doApiSave().then(()=>{btn.className='btn-primary saved';btn.textContent='✓ Saved';setTimeout(()=>{btn.className='btn-primary';btn.textContent='Save '+(EQ_MAP[aEq]?.name||'');},2500);});refresh();}
+
+function buildRight(){
+  const el=document.getElementById('rs');
+  const alms=[],warns=[];
+  FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{
+    const chk=(f,v,lbl)=>{if(!v)return;const s=gs(v,f);if(s==='alm')alms.push(lbl);if(s==='warn')warns.push(lbl);};
+    (tab.fields||[]).forEach(f=>chk(f,V[f.id]??'',`${eq.name} · ${f.lbl}: ${V[f.id]} ${f.unit}`));
+    (tab.duoFields||[]).forEach(f=>{chk(f,V[f.id]??'',`${eq.name} · ${f.lbl} Suct: ${V[f.id]} ${f.unit}`);chk(f,V[f.id2]??'',`${eq.name} · ${f.lbl} Disc: ${V[f.id2]} ${f.unit2||f.unit}`);});
+    if(tab.cylinders)tab.cylinders.params.forEach(p=>{for(let c=1;c<=tab.cylinders.count;c++){const v=CYL[`${eq.id}_${tab.id}_${p.id}_${c}`]??'';if(!v)continue;chk(p,v,`${eq.name} C${c} ${p.lbl}: ${v} ${p.unit}`);}});
+  })));
+  let html='';
+  if(alms.length)html+=`<div class="alm-blk"><div class="alm-ttl">🚨 Alarms (${alms.length})</div>${alms.map(a=>`<div class="alm-row">· ${a}</div>`).join('')}</div>`;
+  if(warns.length)html+=`<div class="wn-blk"><div class="wn-ttl">⚠ Warnings (${warns.length})</div>${warns.map(w=>`<div class="wn-row">· ${w}</div>`).join('')}</div>`;
+  const{f}=getProgress();if(!alms.length&&!warns.length&&f>0)html+=`<div class="ok-blk">✓ All entered values normal</div>`;
+  html+=FLOORS.map(fl=>{
+    const fs=flSt(fl);const dc=fs==='e'?'dim':fs;
+    const items=fl.equip.map(eq=>{
+      const ws=eqSt(eq);const wc=ws==='e'?'dim':ws;
+      let vl='—';
+      if(ws==='warn'||ws==='alm'){outer:for(const tab of eq.tabs){for(const f of(tab.fields||[])){const v=V[f.id]??'';if(!v)continue;const s=gs(v,f);if(s===ws){vl=`${f.lbl.split(' ').slice(-2).join(' ')}: ${v}`;break outer;}}}}
+      else if(ws==='ok'){let c=0;eq.tabs.forEach(t=>(t.fields||[]).forEach(f=>{if((V[f.id]??'')!=='')c++;}));vl=`${c} values`;}
+      return`<div class="mr" onclick="selEq('${fl.id}','${eq.id}')"><span class="mn">${eq.name}</span><span class="mv ${wc==='warn'?'warn':wc==='alm'?'alm':''}">${vl}</span><div class="md ${wc}"></div></div>`;
+    }).join('');
+    return`<div class="floor-card"><div class="fc-h"><div class="fp ${dc}"></div>${fl.label}<span style="font-size:10px;opacity:.6;margin-left:4px">· ${fl.sub}</span></div><div class="fc-items">${items}</div></div>`;
+  }).join('');
+  el.innerHTML=html;
+}
+
+function submitLog(){
+  const eng=document.getElementById('duty_eng_inp')?document.getElementById('duty_eng_inp').value.trim():'';
+  if(!eng){showToast('Enter Duty Engineer name','warn');return;}
+  const{f,t}=getProgress();
+  if(f<t*.4&&!confirm('Only '+f+'/'+t+' fields completed. Submit anyway?'))return;
+  if(!confirm('Submit Watch '+WATCH_STATE.watchNumber+' — '+WATCH_STATE.watchDate+'?\n\nDuty Engineer: '+eng))return;
+  const btn=document.querySelector('.btn-submit');
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  doApiSave().then(()=>EOM.post('/watches/'+WATCH_STATE.watchId+'/submit',{duty_engineer:eng}))
+  .then(()=>{WATCH_STATE.locked=true;showToast('Watch log submitted ✓','success');if(btn){btn.textContent='✓ Submitted';btn.style.background='var(--ok)';btn.style.color='var(--ok-tx)';btn.disabled=true;}})
+  .catch(e=>{showToast(e.message,'error');if(btn){btn.disabled=false;btn.textContent='📋 Submit Daily Log';}});
+}
+
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const f=document.activeElement;if(!f?.matches('input[type=number]'))return;e.preventDefault();const all=[...document.getElementById('mid-body').querySelectorAll('input[type=number]')];const next=all[all.indexOf(f)+1];if(next){next.focus();next.select?.();}});
+
+
+// ── DASHBOARD ──────────────────────────────────────────────────────
+function showDashboard(){
+  const dv  = document.getElementById('dashboard-view');
+  const mid = document.getElementById('mid');
+  const nb  = document.getElementById('dash-nav-btn');
+  const tb  = document.getElementById('tabs-bar');
+  if(dv) { dv.style.cssText='display:block;flex:1;overflow-y:auto;padding:20px;background:var(--canvas)'; }
+  if(mid){ mid.style.display='none'; }
+  if(tb) { tb.style.display='none'; }
+  if(nb) { nb.classList.add('active'); }
+  document.querySelectorAll('.eq').forEach(function(b){ b.classList.remove('active'); });
+  aEq=null; aTab=null;
+  buildDashboard();
+}
+
+function showEquipment_nav(flId, eqId){
+  document.getElementById('dashboard-view').style.display='none';
+  document.getElementById('mid').style.display='flex';
+  document.getElementById('dash-nav-btn').classList.remove('active');
+  selEq(flId, eqId);
+}
+
+function eqFilledCount(eq){
+  let ef=0,et=0;
+  eq.tabs.forEach(function(tab){
+    (tab.fields||[]).forEach(function(fi){et++;if((V[fi.id]||'')!=='')ef++;});
+    (tab.unitGroups||[]).forEach(function(ug){ug.fields.forEach(function(fi){et++;if((V[fi.id]||'')!=='')ef++;});});
+    (tab.duoFields||[]).forEach(function(fi){et+=2;if((V[fi.id]||'')!=='')ef++;if((V[fi.id2]||'')!=='')ef++;});
+    if(tab.cylinders){tab.cylinders.params.forEach(function(p){
+      for(var c=1;c<=tab.cylinders.count;c++){
+        et++;
+        var k=eq.id+'_'+tab.id+'_'+p.id+'_'+c;
+        if((CYL[k]||'')!=='')ef++;
+      }
+    });}
+  });
+  return {ef:ef,et:et};
+}
+
+function setWatchEngineerFocus(){var el=document.getElementById('duty_eng');if(el)el.focus();}
+
+function buildDashboard(){
+  try{
+  const el=document.getElementById('dashboard-view');
+  if(!el)return;
+
+  const prog=getProgress();
+  const pct=prog.t?Math.round(prog.f/prog.t*100):0;
+  let alms=0,warns=0;
+  FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{
+    (tab.fields||[]).forEach(f=>{if(!V[f.id])return;const s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;});
+    (tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(f=>{if(!V[f.id])return;const s=gs(V[f.id],f);if(s==='alm')alms++;else if(s==='warn')warns++;}));
+  })));
+
+  // Frequency completion
+  const freqC={daily:{t:0,f:0},weekly:{t:0,f:0},monthly:{t:0,f:0},rh:{t:0,f:0}};
+  FLOORS.forEach(fl=>{
+    // Running Hours floor gets its own 'rh' bucket
+    const freq = fl.id==='rh' ? 'rh' : (fl.freq||'daily');
+    const fc=freqC[freq]||(freqC[freq]={t:0,f:0});
+    fl.equip.forEach(eq=>eq.tabs.forEach(tab=>{
+      (tab.fields||[]).forEach(fi=>{fc.t++;if((V[fi.id]||'')!=='')fc.f++;});
+      (tab.unitGroups||[]).forEach(ug=>ug.fields.forEach(fi=>{fc.t++;if((V[fi.id]||'')!=='')fc.f++;}));
+    }));
+  });
+
+  const pctOf=(fc)=>fc.t?Math.round(fc.f/fc.t*100):0;
+  const today=document.getElementById('log_date')?.value||(new Date().toISOString().slice(0,10));
+  const de=document.getElementById('de_select');
+  const deName=de&&de.value?de.options[de.selectedIndex]?.text:'Not selected';
+
+  let h='';
+  h+=`<div class="db-header">
+    <div class="db-title">Engine Room Daily Log</div>
+    <div class="db-sub">${WATCH_STATE.vesselName||'Alfred Temile'} &nbsp;·&nbsp; ${today} &nbsp;·&nbsp; D/E: ${deName}</div>
+  </div>`;
+
+  // Watch engineer + overall progress
+  h+=`<div class="db-watch-row" style="margin-bottom:16px">
+    <div class="db-watch-icon">👷</div>
+    <div class="db-watch-body">
+      <div class="db-watch-title">Duty Engineer: ${deName}</div>
+      <div class="db-watch-detail">${prog.f} of ${prog.t} fields entered across all sections</div>
+      <div class="db-progress-bar"><div class="db-progress-fill ${pct===100?'ok':''}" style="width:${pct}%"></div></div>
+    </div>
+    <button class="db-watch-action" onclick="setDEFocus()">Change D/E</button>
+  </div>`;
+
+  // 4 frequency cards
+  const FREQ=[
+    {key:'daily',  label:'Daily Logs',     icon:'📅', color:'var(--blue)',  sub:'ER Rounds · MGPS · Stern Tube'},
+    {key:'weekly', label:'Weekly Tests',   icon:'📊', color:'var(--warn)',  sub:'Lube Oil · Boiler Water'},
+    {key:'monthly',label:'Monthly Logs',   icon:'📆', color:'var(--ok-tx)', sub:'Scavenge · Performance · Inventory'},
+    {key:'rh',     label:'Running Hours',  icon:'⏱️', color:'#7c3aed',     sub:'141 equipment items'},
+  ];
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">`;
+  FREQ.forEach(fc=>{
+    const c=freqC[fc.key]||{t:0,f:0};
+    const p=pctOf(c);
+    h+=`<div class="db-chart-card" style="cursor:pointer" onclick="jumpToFreq('${fc.key}')">
+      <div class="db-chart-head">
+        <span class="db-chart-title">${fc.icon} ${fc.label}</span>
+        <span class="db-chart-sub">${c.f}/${c.t}</span>
+      </div>
+      <div style="padding:14px;text-align:center">
+        <div style="font-size:30px;font-weight:700;font-family:var(--mono);color:${fc.color}">${p}%</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">${fc.sub}</div>
+        <div style="height:4px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden">
+          <div style="height:100%;background:${fc.color};width:${p}%;border-radius:2px;transition:width .4s"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // Summary stats
+  const openDefects = DEFECT_STATS ? (parseInt(DEFECT_STATS.open||0)+parseInt(DEFECT_STATS.in_progress||0)) : 0;
+  const critDefects = DEFECT_STATS ? parseInt(DEFECT_STATS.critical||0) : 0;
+  const overdueDefects = DEFECT_STATS ? parseInt(DEFECT_STATS.overdue||0) : 0;
+  // Cyclone alerts
+  const cycloneAlerts = CYCLONE_STATUS ? [1,2,3].filter(n=>CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning)).length : 0;
+
+  h+=`<div class="db-stats" style="margin-bottom:16px">
+    <div class="db-stat ${pct===100?'ok-card':''}">
+      <div class="db-stat-icon">✅</div><div class="db-stat-val">${pct}%</div>
+      <div class="db-stat-label">Today Complete</div>
+    </div>
+    <div class="db-stat ${alms>0?'alm-card':''}">
+      <div class="db-stat-icon">🚨</div><div class="db-stat-val">${alms}</div>
+      <div class="db-stat-label">Active Alarms</div>
+    </div>
+    <div class="db-stat ${openDefects>0?'alm-card':''}">
+      <div class="db-stat-icon">🔧</div>
+      <div class="db-stat-val" style="color:${critDefects>0?'var(--al-tx)':openDefects>0?'var(--warn)':'var(--ok-tx)'}">${openDefects}</div>
+      <div class="db-stat-label">Open Defects${critDefects>0?' ('+critDefects+' critical)':''}</div>
+    </div>
+    <div class="db-stat ${overdueDefects>0?'alm-card':''}">
+      <div class="db-stat-icon">⏰</div>
+      <div class="db-stat-val" style="color:${overdueDefects>0?'var(--al-tx)':'var(--t2)'}">${overdueDefects}</div>
+      <div class="db-stat-label">Overdue Close-outs</div>
+    </div>
+  </div>`;
+
+  // Cyclone filter alerts
+  if(CYCLONE_STATUS && cycloneAlerts > 0){
+    var cyc_dglist = [1,2,3].filter(function(n){return CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning);}).map(function(n){
+      var c=CYCLONE_STATUS[n];
+      var hrs = c.hours_since_change!==null ? Math.round(c.hours_since_change) : '?';
+      return 'D/G No.'+n+': '+hrs+' hrs '+(c.alert?'🚨':'⚠️');
+    }).join(' &nbsp;·&nbsp; ');
+    h += '<div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">';
+    h += '<span style="font-size:20px">⚠️</span>';
+    h += '<div><div style="font-size:13px;font-weight:700;color:#fca5a5">Cyclone Filter Alert</div>';
+    h += '<div style="font-size:12px;color:var(--t2);margin-top:2px">'+cyc_dglist+' — filter change overdue</div></div>';
+    h += '<a href="/defects.html" style="margin-left:auto;padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.2);color:#fca5a5;text-decoration:none;font-size:11px;font-weight:700">View Defects →</a>';
+    h += '</div>';
+  }
+
+  // Daily sections deck overview
+  h+=`<div class="db-grid">`;
+  FLOORS.filter(fl=>fl.freq==='daily').forEach(fl=>{
+    const items=fl.equip.map(eq=>{
+      const ws=eqSt(eq);const wc=ws==='e'?'dim':ws;
+      let ef=0,et=0;
+      eq.tabs.forEach(t=>{(t.fields||[]).forEach(f=>{et++;if((V[f.id]||'')!=='')ef++;});(t.unitGroups||[]).forEach(ug=>ug.fields.forEach(f=>{et++;if((V[f.id]||'')!=='')ef++;}));});
+      return`<div class="db-eq-row" onclick="showEquipment_nav('${fl.id}','${eq.id}')">
+        <span style="font-size:13px">${eq.icon}</span>
+        <span class="db-eq-name">${eq.name}</span>
+        <span class="db-eq-filled">${ef}/${et}</span>
+        <div class="db-eq-dot ${wc}"></div>
+      </div>`;
+    }).join('');
+    h+=`<div class="db-deck-card">
+      <div class="db-deck-head">
+        <div class="db-deck-pip" style="background:${fl.color}"></div>
+        <span class="db-deck-title">${fl.label}</span>
+        <span class="db-deck-count">${fl.sub}</span>
+      </div>${items}
+    </div>`;
+  });
+  h+=`</div>`;
+  el.innerHTML=h;
+  }catch(err){
+    const el2=document.getElementById('dashboard-view');
+    if(el2)el2.innerHTML='<div style="padding:20px;color:red;font-size:13px;font-family:monospace"><b>Dashboard Error:</b><br>'+err.message+'<br><pre>'+err.stack+'</pre></div>';
+  }
+}
+
+/* ── INIT ── */
+buildLeft();
+buildRight();
+buildDashboard();
+updateClock();
+setInterval(updateClock, 1000);
+
+
+
+// ── OBSERVATIONS CHECKBOXES ──────────────────────────────────────────────────
+
+
+function buildObsBlock(eqId){
+  var obs = OBS_STATE[eqId] || {};
+  var checks = [
+    {key:'noise', label:'Noise observed?'},
+    {key:'leaks', label:'Leaks observed?'},
+    {key:'fault', label:'Running with fault?'},
+  ];
+  var h = '<div style="border-top:1px solid var(--line2);padding:10px 14px 12px">';
+  h += '<div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-bottom:10px">Observations</div>';
+  checks.forEach(function(c){
+    var val = obs[c.key];
+    var isYes = val === 'yes';
+    var isNo  = val === 'no';
+    var comment = obs[c.key+'_comment'] || '';
+    var yStyle = 'padding:3px 12px;border-radius:20px;border:1.5px solid ' + (isYes?'var(--alm)':'var(--line2)') + ';background:' + (isYes?'var(--al-bg)':'transparent') + ';color:' + (isYes?'var(--al-tx)':'var(--t3)') + ';font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)';
+    var nStyle = 'padding:3px 12px;border-radius:20px;border:1.5px solid ' + (isNo?'var(--ok-bd)':'var(--line2)') + ';background:' + (isNo?'var(--ok-bg)':'transparent') + ';color:' + (isNo?'var(--ok-tx)':'var(--t3)') + ';font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)';
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line2)">';
+    h += '<span style="font-size:13px;color:var(--t2);flex:1">' + c.label + '</span>';
+    h += '<div style="display:flex;gap:5px">';
+    h += '<button style="' + yStyle + '" data-eqid="' + eqId + '" data-key="' + c.key + '" data-val="yes" onclick="setObs(this.dataset.eqid,this.dataset.key,this.dataset.val)">YES</button>';
+    h += '<button style="' + nStyle + '" data-eqid="' + eqId + '" data-key="' + c.key + '" data-val="no"  onclick="setObs(this.dataset.eqid,this.dataset.key,this.dataset.val)">NO</button>';
+    h += '</div></div>';
+    if(isYes){
+      h += '<textarea style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid var(--al-bd);border-radius:6px;background:var(--al-bg);color:var(--t1);font-family:var(--font);font-size:12px;resize:vertical;min-height:52px"';
+      h += ' placeholder="Describe observation..." data-eqid="' + eqId + '" data-key="' + c.key + '"';
+      h += ' oninput="setObsComment(this.dataset.eqid,this.dataset.key,this.value)">' + comment + '</textarea>';
+    }
+  });
+  h += '</div>';
+  return h;
+}
+
+function setObs(eqId, key, val){
+  if(!OBS_STATE[eqId]) OBS_STATE[eqId] = {};
+  OBS_STATE[eqId][key] = val;
+  const el = document.getElementById('obs_block_'+eqId);
+  if(el) el.innerHTML = buildObsBlock(eqId);
+  scheduleApiSave();
+  // Flag in sidebar if any YES selected
+  buildLeft();
+}
+
+function setObsComment(eqId, key, val){
+  if(!OBS_STATE[eqId]) OBS_STATE[eqId] = {};
+  OBS_STATE[eqId][key+'_comment'] = val;
+  scheduleApiSave();
+}
+
+// Inject obs block after remarks in buildForm
+const _origBuildForm = buildForm;
+buildForm = function(eq, tab){
+  _origBuildForm(eq, tab);
+  // Insert obs block before watch history
+  const wh = document.querySelector('.watch-hist');
+  if(wh){
+    const obsDiv = document.createElement('div');
+    obsDiv.id = 'obs_block_'+eq.id;
+    obsDiv.innerHTML = buildObsBlock(eq.id);
+    wh.parentNode.insertBefore(obsDiv, wh);
+  }
+};
+
+// Dashboard built directly in buildDashboard()
+
+
+function injectCycloneWidget(eqId, dgNum){
+  // Show widget even if no history yet
+  var c = (CYCLONE_STATUS && CYCLONE_STATUS[dgNum]) ? CYCLONE_STATUS[dgNum] : {
+    hours_since_change: null, alert: false, warning: false, last_reset: null, current_hours: null
+  };
+  var hrs = c.hours_since_change !== null ? Math.round(c.hours_since_change) : null;
+  var isAlert   = c.alert;
+  var isWarning = c.warning;
+  var color = isAlert ? 'var(--red)' : isWarning ? 'var(--amber)' : 'var(--green)';
+  var bgColor = isAlert ? 'rgba(239,68,68,.08)' : isWarning ? 'rgba(245,158,11,.08)' : 'rgba(34,197,94,.06)';
+  var bdColor = isAlert ? 'rgba(239,68,68,.3)' : isWarning ? 'rgba(245,158,11,.3)' : 'rgba(34,197,94,.2)';
+  var msg = hrs !== null ? hrs+' hrs since last change' : 'No filter change recorded';
+  var statusTxt = isAlert ? '🚨 CHANGE REQUIRED' : isWarning ? '⚠️ CHANGE SOON' : '✅ OK';
+
+  var existing = document.getElementById('cyclone_widget_'+eqId);
+  if(existing) return; // already injected
+
+  var widget = document.createElement('div');
+  widget.id = 'cyclone_widget_'+eqId;
+  widget.style.cssText = 'background:'+bgColor+';border:1.5px solid '+bdColor+';border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px';
+  widget.innerHTML = '<div style="font-size:24px">🔄</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-size:12px;font-weight:700;color:'+color+'">Cyclone Filter — ' + statusTxt + '</div>'
+    + '<div style="font-size:11px;color:var(--t2);margin-top:3px">'+msg
+    + (c.last_reset ? ' &nbsp;·&nbsp; Last changed: '+String(c.last_reset).slice(0,10) : '')
+    + '</div>'
+    + (hrs !== null ? '<div style="margin-top:8px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;background:'+color+';width:'+Math.min(100,Math.round(hrs/120*100))+'%"></div></div>' : '')
+    + '</div>'
+    + '<button onclick="resetCycloneFilter('+dgNum+')" style="padding:6px 14px;border-radius:8px;border:1px solid '+bdColor+';background:transparent;color:'+color+';font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">Record Change</button>';
+
+  // Insert before the obs block
+  var body = document.getElementById('mid-body');
+  var obsBlock = document.getElementById('obs_block_'+eqId);
+  if(body && obsBlock){
+    body.insertBefore(widget, obsBlock);
+  } else if(body){
+    body.insertBefore(widget, body.firstChild);
+  }
+}
+
+async function resetCycloneFilter(dgNum){
+  if(!WATCH_STATE.vesselId){ alert('No vessel loaded'); return; }
+  var by = document.getElementById('de_select')?.value || '';
+  if(!by) by = prompt('Who changed the filter?');
+  if(!by) return;
+  var hrs = prompt('Current D/G running hours (from hour counter):', '');
+  try{
+    await EOM.post('/watches/cyclone/reset', {
+      vessel_id: WATCH_STATE.vesselId,
+      dg_number: dgNum,
+      reset_by: by,
+      hours_at_reset: hrs ? parseFloat(hrs) : null,
+      notes: 'Cyclone filter changed'
+    });
+    showToast('Filter change recorded for D/G No.'+dgNum, 'ok');
+    await loadCycloneStatus();
+    // Re-inject widget
+    var eqId = ['ae1','ae2','ae3'][dgNum-1];
+    var existing = document.getElementById('cyclone_widget_'+eqId);
+    if(existing) existing.remove();
+    injectCycloneWidget(eqId, dgNum);
+    buildLeft();   // refresh sidebar badges
+    buildDashboard();
+  }catch(e){ showToast('Error: '+e.message, 'error'); }
+}
+
+function jumpToFreq(freq){
+  const target = freq==='rh'?'rh':FLOORS.find(fl=>fl.freq===freq)?.id;
+  if(!target) return;
+  EXPANDED_FLOOR.current = target;
+  document.getElementById('dashboard-view').style.display='none';
+  document.getElementById('mid').style.display='flex';
+  document.getElementById('dash-nav-btn').classList.remove('active');
+  const fl = FLOORS.find(f=>f.id===target);
+  if(fl && fl.equip.length) selEq(fl.id, fl.equip[0].id);
+  buildLeft();
+}
+function setDEFocus(){
+  const sel=document.getElementById('de_select');if(sel)sel.focus();
+}
+function jumpToFreq(freq){
+  const target = freq==='rh'?'rh':FLOORS.find(fl=>fl.freq===freq)?.id;
+  if(!target) return;
+  EXPANDED_FLOOR.current = target;
+  document.getElementById('dashboard-view').style.display='none';
+  document.getElementById('mid').style.display='flex';
+  document.getElementById('dash-nav-btn').classList.remove('active');
+  const fl = FLOORS.find(f=>f.id===target);
+  if(fl && fl.equip.length) selEq(fl.id, fl.equip[0].id);
+  buildLeft();
+}
+function setDEFocus(){
+  const sel=document.getElementById('de_select');if(sel)sel.focus();
+}
+</script>
+</body>
+</html>

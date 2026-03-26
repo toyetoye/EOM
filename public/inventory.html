@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP — Inventory Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="/eom-api.js"></script>
+<style>
+:root{--bg:#070d1a;--sf:#0f172a;--sf2:#1e293b;--bd:rgba(255,255,255,.08);--t1:#f1f5f9;--t2:#94a3b8;--t3:#475569;--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;flex-direction:column}
+/* Header */
+.hdr{height:56px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.hdr-title{font-size:14px;font-weight:700}
+.hdr-vessel{font-size:12px;color:var(--t2);margin-left:4px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+.hbtn:hover{background:var(--sf2);color:var(--t1)}
+/* Tab bar */
+.tab-bar{background:var(--sf);border-bottom:1px solid var(--bd);display:flex;padding:0 20px;gap:4px;flex-shrink:0}
+.tab{padding:12px 16px;font-size:12px;font-weight:600;color:var(--t3);border:none;background:transparent;cursor:pointer;font-family:var(--font);border-bottom:2px solid transparent;transition:.15s}
+.tab:hover{color:var(--t2)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* Filter bar */
+.filter-bar{background:var(--sf2);border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.filter-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
+.filter-sel{background:var(--sf);border:1px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;outline:none}
+.filter-sel:focus{border-color:var(--blue)}
+.search-inp{background:var(--sf);border:1px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:12px;padding:5px 10px;border-radius:8px;outline:none;width:200px}
+.search-inp:focus{border-color:var(--blue)}
+.filter-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+/* Main content */
+.content{flex:1;overflow:auto;padding:20px}
+/* Summary cards */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sum-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px}
+.sum-ico{font-size:20px;margin-bottom:8px}
+.sum-val{font-size:26px;font-weight:700;font-family:var(--mono)}
+.sum-lbl{font-size:11px;color:var(--t2);margin-top:3px}
+.sum-card.red .sum-val{color:var(--red)}
+.sum-card.amber .sum-val{color:var(--amber)}
+.sum-card.green .sum-val{color:var(--green)}
+/* Trend chart */
+.chart-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.chart-head{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.chart-title{font-size:13px;font-weight:700}
+.chart-sub{font-size:11px;color:var(--t3);flex:1}
+.chart-body{padding:16px;position:relative}
+/* Table */
+.tbl-wrap{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.tbl-head{padding:10px 16px;border-bottom:1px solid var(--bd);background:var(--sf2);display:flex;align-items:center;justify-content:space-between}
+.tbl-title{font-size:12px;font-weight:700}
+.tbl-meta{font-size:11px;color:var(--t3)}
+.data-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.data-tbl th{background:var(--sf2);padding:7px 12px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--bd);white-space:nowrap;text-align:right}
+.data-tbl th:first-child{text-align:left}
+.data-tbl td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.03);text-align:right;font-family:var(--mono);font-size:11px}
+.data-tbl td:first-child{text-align:left;font-family:var(--font);font-size:12px;font-weight:500;color:var(--t1)}
+.data-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.cell-pos{color:var(--green)}
+.cell-neg{color:var(--red)}
+.cell-zero{color:var(--t3)}
+.cell-rob{font-weight:600;color:var(--t1)}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.pill-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.pill-amber{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.pill-green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+/* Loading */
+.loading{text-align:center;padding:60px;color:var(--t3);font-size:13px}
+.spinner{width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-ico{font-size:40px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;color:var(--t2);margin-bottom:6px}
+.empty-sub{font-size:12px}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">FC</div>
+  <span class="hdr-title">Inventory Analytics</span>
+  <span class="hdr-vessel" id="vessel-lbl"></span>
+  <div class="hdr-right">
+    <a class="hbtn" href="/upload.html">📂 Import Data</a>
+    <a class="hbtn" href="/analytics.html">📈 ER Analytics</a><a class="hbtn" href="/logbook.html">← Logbook</a>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="setTab('trends')">📈 Trends</button>
+  <button class="tab" onclick="setTab('comparison')">🔀 Month Comparison</button>
+  <button class="tab" onclick="setTab('consumption')">📊 Consumption</button>
+  <button class="tab" onclick="setTab('alerts')">⚠️ Stock Alerts</button>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Category</span>
+  <select class="filter-sel" id="cat-sel" onchange="loadData()">
+    <option value="loi_">LO & Grease</option>
+    <option value="ch_">Chemicals</option>
+    <option value="gas_">Gas Inventory</option>
+    <option value="loi_,ch_,gas_">All Inventory</option>
+  </select>
+  <span class="filter-label">Months</span>
+  <select class="filter-sel" id="month-range">
+    <option value="6">Last 6 months</option>
+    <option value="12">Last 12 months</option>
+    <option value="24">Last 24 months</option>
+    <option value="0">All time</option>
+  </select>
+  <input class="search-inp" id="search-inp" placeholder="🔍 Filter products…" oninput="renderTab()"/>
+  <span class="filter-badge" id="product-count">—</span>
+</div>
+
+<div class="content" id="content">
+  <div class="loading"><div class="spinner"></div>Loading inventory data…</div>
+</div>
+
+<script>
+var allData = null;
+var currentTab = 'trends';
+var vesselId = null;
+const CHART_COLORS = ['#3b82f6','#a855f7','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316','#8b5cf6'];
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async function(){
+  if(typeof EOM === 'undefined'){ showError('Not connected to server. Open from Railway URL.'); return; }
+  if(!EOM.requireAuth()) return;
+  try {
+    const vessels = await EOM.get('/vessels');
+    if(!vessels.length){ showError('No vessels assigned.'); return; }
+    vesselId = vessels[0].id;
+    document.getElementById('vessel-lbl').textContent = '· ' + vessels[0].name;
+    loadData();
+  } catch(e){ showError(e.message); }
+});
+
+async function loadData(){
+  if(!vesselId) return;
+  document.getElementById('content').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  const prefix = document.getElementById('cat-sel').value;
+  try {
+    allData = await EOM.get('/watches/inventory?vessel_id=' + vesselId + '&prefix=' + encodeURIComponent(prefix));
+    renderTab();
+  } catch(e){ showError(e.message); }
+}
+
+function setTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  event.target.classList.add('active');
+  renderTab();
+}
+
+function getFilteredMonths(){
+  const range = parseInt(document.getElementById('month-range').value);
+  if(!allData || !allData.months.length) return [];
+  if(range === 0) return allData.months;
+  return allData.months.slice(-range);
+}
+
+function getFilteredProducts(){
+  if(!allData) return [];
+  const q = document.getElementById('search-inp').value.toLowerCase();
+  return allData.products.filter(function(p){
+    return !q || p.product.toLowerCase().includes(q) || p.fid.toLowerCase().includes(q);
+  });
+}
+
+function renderTab(){
+  if(!allData){ return; }
+  const months = getFilteredMonths();
+  const products = getFilteredProducts();
+  document.getElementById('product-count').textContent = products.length + ' products';
+
+  if(currentTab === 'trends') renderTrends(products, months);
+  else if(currentTab === 'comparison') renderComparison(products, months);
+  else if(currentTab === 'consumption') renderConsumption(products, months);
+  else if(currentTab === 'alerts') renderAlerts(products, months);
+}
+
+// ── TRENDS ────────────────────────────────────────────────────────────────────
+function renderTrends(products, months){
+  if(!products.length || !months.length){
+    document.getElementById('content').innerHTML = emptyState('No data yet','Upload historical logs to see trends');
+    return;
+  }
+
+  // Compute summary stats
+  const latestMonth = months[months.length - 1];
+  const prevMonth   = months[months.length - 2];
+  let totalProducts = products.length;
+  let declining = 0, lowStock = 0;
+
+  products.forEach(function(p){
+    const cur = p.months[latestMonth];
+    const prv = p.months[prevMonth];
+    if(cur !== undefined && prv !== undefined && cur < prv) declining++;
+    if(cur !== undefined && cur === 0) lowStock++;
+  });
+
+  var h = '<div class="summary-grid">';
+  h += sumCard('📦', totalProducts, 'Products Tracked', '');
+  h += sumCard('📅', months.length, 'Months of Data', '');
+  h += sumCard('📉', declining, 'Declining Stock', declining > 5 ? 'amber' : '');
+  h += sumCard('🚨', lowStock, 'Zero Stock', lowStock > 0 ? 'red' : 'green');
+  h += '</div>';
+
+  // Top consumption products (biggest drops)
+  var consumptionRanked = products.map(function(p){
+    var vals = months.map(function(m){ return p.months[m]; }).filter(function(v){ return v !== undefined; });
+    var total_consumed = 0;
+    for(var i=1; i<vals.length; i++){
+      var delta = vals[i-1] - vals[i];
+      if(delta > 0) total_consumed += delta;
+    }
+    return { p:p, consumed: total_consumed, latest: p.months[latestMonth] };
+  }).sort(function(a,b){ return b.consumed - a.consumed }).slice(0, 10);
+
+  // Render trend charts for top 10 consumed products
+  h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">';
+  consumptionRanked.forEach(function(item, idx){
+    var p = item.p;
+    var vals = months.map(function(m){ return p.months[m] !== undefined ? p.months[m] : null; });
+    var chartId = 'chart_trend_' + idx;
+    h += '<div class="chart-card"><div class="chart-head"><div><div class="chart-title">' + escHtml(p.product) + '</div><div class="chart-sub">' + escHtml(p.equipment||p.section) + ' · ' + (p.unit||'') + '</div></div>';
+    if(item.latest !== undefined) h += '<span class="pill ' + stockPill(item.latest) + '">' + item.latest + ' ' + (p.unit||'') + '</span>';
+    h += '</div><div class="chart-body" style="height:140px"><canvas id="' + chartId + '"></canvas></div></div>';
+  });
+  h += '</div>';
+
+  document.getElementById('content').innerHTML = h;
+
+  // Draw charts after DOM is set
+  consumptionRanked.forEach(function(item, idx){
+    var p = item.p;
+    var vals = months.map(function(m){ return p.months[m] !== undefined ? p.months[m] : null; });
+    var color = CHART_COLORS[idx % CHART_COLORS.length];
+    var ctx = document.getElementById('chart_trend_' + idx);
+    if(!ctx) return;
+    new Chart(ctx, {
+      type:'line',
+      data:{
+        labels: months.map(shortMonth),
+        datasets:[{
+          label: p.product,
+          data: vals,
+          borderColor: color,
+          backgroundColor: color + '18',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: color,
+          tension: 0.3,
+          fill: true,
+          spanGaps: true
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y + ' ' + (p.unit||'');}} }},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10}},beginAtZero:true}
+        }
+      }
+    });
+  });
+}
+
+// ── COMPARISON ────────────────────────────────────────────────────────────────
+function renderComparison(products, months){
+  if(!products.length){ document.getElementById('content').innerHTML = emptyState('No data','Upload logs first'); return; }
+
+  const showMonths = months.slice(-6); // show last 6 for readability
+
+  var h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Month-on-Month ROB Comparison</span>';
+  h += '<span class="tbl-meta">' + products.length + ' products · ' + showMonths.length + ' months</span></div>';
+  h += '<div style="overflow-x:auto"><table class="data-tbl"><thead><tr>';
+  h += '<th style="min-width:220px">Product</th><th>Unit</th>';
+  showMonths.forEach(function(m){ h += '<th>' + shortMonth(m) + '</th>'; });
+  h += '<th>Δ Last</th><th>Avg/Mo</th></tr></thead><tbody>';
+
+  products.forEach(function(p){
+    var vals = showMonths.map(function(m){ return p.months[m]; });
+    var defined = vals.filter(function(v){ return v !== undefined; });
+    if(!defined.length) return;
+
+    var last = vals[vals.length-1];
+    var prev = vals[vals.length-2];
+    var delta = (last !== undefined && prev !== undefined) ? last - prev : null;
+
+    // Avg monthly consumption
+    var consumed = 0, count = 0;
+    for(var i=1; i<vals.length; i++){
+      if(vals[i]!==undefined && vals[i-1]!==undefined){
+        var d = vals[i-1] - vals[i]; if(d>0){consumed+=d;count++;}
+      }
+    }
+    var avgConsumption = count > 0 ? (consumed/count).toFixed(1) : '—';
+
+    h += '<tr><td>' + escHtml(p.product) + '</td><td style="color:var(--t3)">' + (p.unit||'') + '</td>';
+    vals.forEach(function(v){
+      h += '<td class="cell-rob">' + (v !== undefined ? v : '<span style="color:var(--t3)">—</span>') + '</td>';
+    });
+    var deltaClass = delta===null?'cell-zero':delta>0?'cell-pos':'cell-neg';
+    var deltaStr = delta===null?'—':(delta>0?'+':'')+delta;
+    h += '<td class="' + deltaClass + '">' + deltaStr + '</td>';
+    h += '<td style="color:var(--amber)">' + (avgConsumption!=='—'?'-'+avgConsumption:avgConsumption) + '</td>';
+    h += '</tr>';
+  });
+
+  h += '</tbody></table></div></div>';
+  document.getElementById('content').innerHTML = h;
+}
+
+// ── CONSUMPTION ───────────────────────────────────────────────────────────────
+function renderConsumption(products, months){
+  if(!products.length || months.length < 2){
+    document.getElementById('content').innerHTML = emptyState('Need 2+ months','Upload at least 2 months of data');
+    return;
+  }
+
+  // Calculate consumption per product
+  var consumption = products.map(function(p){
+    var monthly = [];
+    for(var i=1; i<months.length; i++){
+      var cur = p.months[months[i]];
+      var prv = p.months[months[i-1]];
+      if(cur!==undefined && prv!==undefined){
+        monthly.push({month:months[i], used: Math.max(0, prv-cur)});
+      }
+    }
+    var totalUsed = monthly.reduce(function(s,m){return s+m.used;}, 0);
+    var avgPerMonth = monthly.length > 0 ? totalUsed/monthly.length : 0;
+    var annualEst = avgPerMonth * 12;
+    return {p:p, monthly:monthly, totalUsed:totalUsed, avgPerMonth:avgPerMonth, annualEst:annualEst};
+  }).filter(function(c){ return c.totalUsed > 0; })
+    .sort(function(a,b){ return b.totalUsed - a.totalUsed });
+
+  var h = '<div class="summary-grid">';
+  var topProduct = consumption[0];
+  h += sumCard('📊', consumption.length, 'Products with Consumption', '');
+  h += sumCard('🔝', topProduct ? escHtml(topProduct.p.product.split(' ').slice(0,2).join(' ')) : '—', 'Highest Consumption', 'amber');
+  var totalAnnual = consumption.reduce(function(s,c){return s+(isNaN(c.annualEst)?0:c.annualEst);},0);
+  h += sumCard('📅', Math.round(totalAnnual), 'Est. Annual (all units)', '');
+  h += sumCard('📈', consumption.filter(function(c){return c.avgPerMonth>0;}).length, 'Active Products', 'green');
+  h += '</div>';
+
+  // Consumption table
+  h += '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Consumption Analysis</span>';
+  h += '<span class="tbl-meta">Sorted by total consumed · Use for annual order planning</span></div>';
+  h += '<div style="overflow-x:auto"><table class="data-tbl"><thead><tr>';
+  h += '<th style="min-width:220px">Product</th><th>Unit</th>';
+  months.slice(1).slice(-6).forEach(function(m){ h += '<th>' + shortMonth(m) + '</th>'; });
+  h += '<th>Total Used</th><th>Avg/Month</th><th>Annual Est.</th></tr></thead><tbody>';
+
+  consumption.forEach(function(c){
+    h += '<tr><td>' + escHtml(c.p.product) + '</td><td style="color:var(--t3)">' + (c.p.unit||'') + '</td>';
+    months.slice(1).slice(-6).forEach(function(m){
+      var entry = c.monthly.find(function(x){return x.month===m;});
+      var used = entry ? entry.used : undefined;
+      h += '<td class="' + (used>0?'cell-neg':used===0?'cell-zero':'') + '">' + (used!==undefined ? (used>0?'-'+used:'0') : '<span style="color:var(--t3)">—</span>') + '</td>';
+    });
+    h += '<td class="cell-neg" style="font-weight:700">' + c.totalUsed.toFixed(0) + '</td>';
+    h += '<td style="color:var(--amber)">' + c.avgPerMonth.toFixed(1) + '</td>';
+    h += '<td style="color:var(--purple);font-weight:700">' + Math.round(c.annualEst) + '</td>';
+    h += '</tr>';
+  });
+
+  h += '</tbody></table></div></div>';
+
+  // Bar chart — top 10 by annual estimate
+  var top10 = consumption.slice(0, 10);
+  h += '<div class="chart-card"><div class="chart-head"><span class="chart-title">Top 10 — Estimated Annual Consumption</span></div>';
+  h += '<div class="chart-body" style="height:280px"><canvas id="chart_annual"></canvas></div></div>';
+  document.getElementById('content').innerHTML = h;
+
+  var ctx = document.getElementById('chart_annual');
+  if(ctx){
+    new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: top10.map(function(c){ return c.p.product.split(' ').slice(0,3).join(' '); }),
+        datasets:[{
+          label:'Annual Estimate',
+          data: top10.map(function(c){ return Math.round(c.annualEst); }),
+          backgroundColor: CHART_COLORS.slice(0,10).map(function(c){return c+'bb';}),
+          borderRadius: 6
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false, indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){
+          var unit = top10[c.dataIndex].p.unit||'';
+          return c.parsed.x + ' ' + unit + '/year';
+        }}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:10}}},
+          y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}
+        }
+      }
+    });
+  }
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────────────────
+function renderAlerts(products, months){
+  const latest = months[months.length - 1];
+  if(!latest){ document.getElementById('content').innerHTML = emptyState('No data','Upload logs first'); return; }
+
+  // Compute avg monthly consumption for each product
+  var alerts = products.map(function(p){
+    var rob = p.months[latest];
+    var consumed = 0, count = 0;
+    for(var i=1; i<months.length; i++){
+      var cur = p.months[months[i]];
+      var prv = p.months[months[i-1]];
+      if(cur!==undefined && prv!==undefined){var d=prv-cur;if(d>0){consumed+=d;count++;}}
+    }
+    var avgPerMonth = count > 0 ? consumed/count : 0;
+    var monthsLeft = (rob!==undefined && avgPerMonth > 0) ? rob/avgPerMonth : null;
+    var status = rob === 0 ? 'OUT' : (monthsLeft !== null && monthsLeft < 2) ? 'LOW' : (monthsLeft !== null && monthsLeft < 4) ? 'WATCH' : 'OK';
+    return {p:p, rob:rob, avgPerMonth:avgPerMonth, monthsLeft:monthsLeft, status:status};
+  }).filter(function(a){ return a.rob !== undefined; })
+    .sort(function(a,b){
+      var order = {OUT:0,LOW:1,WATCH:2,OK:3};
+      return (order[a.status]||3) - (order[b.status]||3);
+    });
+
+  var out = alerts.filter(function(a){return a.status==='OUT';}).length;
+  var low = alerts.filter(function(a){return a.status==='LOW';}).length;
+  var watch = alerts.filter(function(a){return a.status==='WATCH';}).length;
+  var ok = alerts.filter(function(a){return a.status==='OK';}).length;
+
+  var h = '<div class="summary-grid">';
+  h += sumCard('🚨', out, 'Out of Stock', out>0?'red':'');
+  h += sumCard('⚠️', low, 'Low Stock (<2 months)', low>0?'amber':'');
+  h += sumCard('👁️', watch, 'Watch (<4 months)', '');
+  h += sumCard('✅', ok, 'Adequate Stock', 'green');
+  h += '</div>';
+
+  h += '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Stock Status — ' + shortMonth(latest) + '</span>';
+  h += '<span class="tbl-meta">Based on average monthly consumption from uploaded data</span></div>';
+  h += '<div style="overflow-x:auto"><table class="data-tbl"><thead><tr>';
+  h += '<th style="min-width:220px">Product</th><th>Unit</th><th>Current ROB</th><th>Avg/Month</th><th>Months Left</th><th>Status</th></tr></thead><tbody>';
+
+  alerts.forEach(function(a){
+    var statusMap = {OUT:['pill-red','OUT'],LOW:['pill-red','LOW'],WATCH:['pill-amber','WATCH'],OK:['pill-green','OK']};
+    var sc = statusMap[a.status]||statusMap.OK;
+    h += '<tr>';
+    h += '<td>' + escHtml(a.p.product) + '</td>';
+    h += '<td style="color:var(--t3)">' + (a.p.unit||'') + '</td>';
+    h += '<td class="' + (a.rob===0?'cell-neg':'cell-rob') + '">' + (a.rob!==undefined?a.rob:'—') + '</td>';
+    h += '<td style="color:var(--amber)">' + (a.avgPerMonth>0?a.avgPerMonth.toFixed(1):'—') + '</td>';
+    h += '<td style="color:var(--t2)">' + (a.monthsLeft!==null?a.monthsLeft.toFixed(1):'—') + '</td>';
+    h += '<td><span class="pill ' + sc[0] + '">' + sc[1] + '</span></td>';
+    h += '</tr>';
+  });
+
+  h += '</tbody></table></div></div>';
+  document.getElementById('content').innerHTML = h;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function sumCard(ico, val, lbl, cls){
+  return '<div class="sum-card ' + (cls||'') + '"><div class="sum-ico">' + ico + '</div><div class="sum-val">' + val + '</div><div class="sum-lbl">' + lbl + '</div></div>';
+}
+
+function stockPill(v){
+  if(v===0) return 'pill-red';
+  if(v<10) return 'pill-amber';
+  return 'pill-green';
+}
+
+function shortMonth(ym){
+  if(!ym) return '';
+  var parts = ym.split('-');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[parseInt(parts[1])-1] + ' ' + parts[0].slice(2);
+}
+
+function escHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function emptyState(title, sub){
+  return '<div class="empty"><div class="empty-ico">📭</div><div class="empty-title">' + title + '</div><div class="empty-sub">' + sub + '</div></div>';
+}
+
+function showError(msg){
+  document.getElementById('content').innerHTML = '<div class="empty"><div class="empty-ico">❌</div><div class="empty-title">Error</div><div class="empty-sub">' + escHtml(msg) + '</div></div>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="/eom-api.js"></script>
+<style>
+:root{--bg:#070d1a;--sf:#0f172a;--sf2:#1e293b;--bd:rgba(255,255,255,.08);--t1:#f1f5f9;--t2:#94a3b8;--t3:#475569;--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;flex-direction:column}
+.hdr{height:56px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.hdr-right{margin-left:auto;display:flex;gap:8px}
+a.hbtn,button.hbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+a.hbtn:hover,button.hbtn:hover{background:var(--sf2);color:var(--t1)}
+.hbtn-primary{background:var(--blue)!important;border-color:var(--blue)!important;color:#fff!important}
+.layout{flex:1;display:flex;overflow:hidden}
+.sb{width:200px;background:var(--sf);border-right:1px solid var(--bd);padding:12px 0;flex-shrink:0}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 16px;border:none;background:transparent;color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:.15s;text-align:left}
+.sb-btn:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.sb-btn.active{background:rgba(59,130,246,.1);color:var(--blue);font-weight:700}
+.main{flex:1;overflow-y:auto;padding:24px;min-width:0}
+.page-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--t2);margin-bottom:20px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+.card-title{font-size:12px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:7px 14px;background:var(--sf2);font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+td{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.pill{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid;white-space:nowrap}
+.pill-admin{background:rgba(168,85,247,.15);color:#d8b4fe;border-color:rgba(168,85,247,.3)}
+.pill-super{background:rgba(245,158,11,.15);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.pill-eng{background:rgba(59,130,246,.15);color:#93c5fd;border-color:rgba(59,130,246,.3)}
+.pill-vessel{background:rgba(71,85,105,.15);color:var(--t3);border-color:rgba(71,85,105,.3)}
+.pill-on{background:rgba(34,197,94,.1);color:#86efac;border-color:rgba(34,197,94,.3)}
+.pill-off{background:rgba(239,68,68,.1);color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.act{padding:4px 9px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--t3);font-size:10px;cursor:pointer;font-family:var(--font);transition:.15s;margin-right:3px;white-space:nowrap}
+.act:hover{background:var(--sf2);color:var(--t1)}
+.act.danger:hover{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.3)}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:700}
+.modal-close{background:transparent;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:0 4px}
+.modal-body{padding:18px;display:flex;flex-direction:column;gap:12px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fl{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
+.fi,.fs{background:var(--sf2);border:1px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:13px;padding:7px 11px;border-radius:8px;outline:none;width:100%}
+.fi:focus,.fs:focus{border-color:var(--blue)}
+.vchecks{display:flex;flex-direction:column;gap:5px;max-height:130px;overflow-y:auto;padding:8px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px}
+.vcheck{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);cursor:pointer;padding:2px 0}
+.info-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--t2);line-height:1.6}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">FC</div>
+  <span style="font-size:14px;font-weight:700">FORCAP Admin</span>
+  <span id="me-badge" style="font-size:11px;color:var(--t3)"></span>
+  <div class="hdr-right">
+    <a class="hbtn" href="/logbook.html">← Logbook</a>
+    <button class="hbtn" onclick="EOM&&EOM.logout()">Sign out</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sb">
+    <button class="sb-btn active" id="sb-users"   onclick="showSection('users',this)">👥 Users & Crew</button>
+    <button class="sb-btn"        id="sb-vessels" onclick="showSection('vessels',this)">🚢 Vessels</button>
+    <button class="sb-btn"        id="sb-password"onclick="showSection('password',this)">🔑 Change Password</button>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<!-- User modal -->
+<div class="modal-bg" id="umodal" style="display:none" onclick="if(event.target===this)cm('umodal')">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="um-title">Add Crew Member</span>
+      <button class="modal-close" onclick="cm('umodal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box">The <b>Display Name</b> appears in the Duty Engineer dropdown on the daily log. Use format: <b>Full Name (Rank)</b> e.g. <i>John Okafor (2/E)</i></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Display Name *</label><input class="fi" id="u-dn" placeholder="John Okafor (2/E)"/></div>
+        <div class="fg"><label class="fl">Username *</label><input class="fi" id="u-un" placeholder="jokafor"/></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Password <span id="u-pw-hint" style="text-transform:none;font-weight:400">(leave blank to keep)</span></label><input class="fi" type="password" id="u-pw" placeholder="Min 6 characters"/></div>
+        <div class="fg"><label class="fl">Role</label>
+          <select class="fs" id="u-role">
+            <option value="engineer">Engineer (vessel crew)</option>
+            <option value="superintendent">Superintendent (office)</option>
+            <option value="admin">Admin</option>
+            <option value="vessel">Vessel login (system)</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Email (optional)</label><input class="fi" type="email" id="u-email" placeholder="email@example.com"/></div>
+      <div class="fg"><label class="fl">Assign to Vessels</label><div class="vchecks" id="u-vessels">Loading…</div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="hbtn" onclick="cm('umodal')">Cancel</button>
+      <button class="hbtn hbtn-primary" onclick="saveUser()" id="u-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vessel modal -->
+<div class="modal-bg" id="vmodal" style="display:none" onclick="if(event.target===this)cm('vmodal')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <span class="modal-title" id="vm-title">Add Vessel</span>
+      <button class="modal-close" onclick="cm('vmodal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Vessel Name *</label><input class="fi" id="v-name" placeholder="e.g. Alfred Temile"/></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">IMO Number</label><input class="fi" id="v-imo" placeholder="9859882"/></div>
+        <div class="fg"><label class="fl">Type</label>
+          <select class="fs" id="v-type">
+            <option value="LPG">LPG Carrier</option>
+            <option value="LNG">LNG Carrier</option>
+            <option value="Tanker">Tanker</option>
+            <option value="Bulk">Bulk Carrier</option>
+            <option value="Container">Container</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Status</label>
+        <select class="fs" id="v-active">
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="hbtn" onclick="cm('vmodal')">Cancel</button>
+      <button class="hbtn hbtn-primary" onclick="saveVessel()" id="v-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var vessels=[], users=[], editUserId=null, editVesselId=null;
+var isAdmin=false;
+
+window.addEventListener('DOMContentLoaded', async function(){
+  if(typeof EOM==='undefined'){ showErr('Open from Railway URL'); return; }
+  if(!EOM.requireAuth()) return;
+  try{
+    const me = await EOM.get('/auth/me');
+    if(!me||!['admin','superintendent'].includes(me.role)){
+      document.getElementById('main').innerHTML=`
+      <div style="padding:60px;text-align:center">
+        <div style="font-size:40px;margin-bottom:12px">🔒</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:8px">Admin access required</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:16px">Sign in with the admin account to manage users and vessels.</div>
+        <div style="background:var(--sf2);display:inline-block;padding:12px 20px;border-radius:10px;border:1px solid var(--bd);font-family:var(--mono);font-size:12px">
+          admin / Admin@2025!
+        </div>
+      </div>`;
+      return;
+    }
+    isAdmin = me.role==='admin';
+    document.getElementById('me-badge').textContent = '· '+me.display_name+' ('+me.role+')';
+    await loadAll();
+    showSection('users', document.getElementById('sb-users'));
+  }catch(e){ showErr(e.message); }
+});
+
+async function loadAll(){
+  [vessels,users] = await Promise.all([
+    EOM.get('/admin/vessels').catch(()=>[]),
+    EOM.get('/admin/users').catch(()=>[])
+  ]);
+}
+
+function showSection(sec, btn){
+  document.querySelectorAll('.sb-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  if(sec==='users') renderUsers();
+  else if(sec==='vessels') renderVessels();
+  else renderPassword();
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+function renderUsers(){
+  const RMAP={admin:'pill-admin',superintendent:'pill-super',engineer:'pill-eng',vessel:'pill-vessel'};
+  let h=`<div class="page-title">Users & Crew</div>
+  <div class="page-sub">Each engineer needs their own login. Their display name appears in the Duty Engineer dropdown.</div>
+  <div class="card"><div class="card-head"><span class="card-title">${users.length} users</span>
+  <button class="hbtn hbtn-primary" onclick="openAddUser()">+ Add User</button></div>
+  <table><thead><tr><th>Display Name</th><th>Username</th><th>Role</th><th>Vessels</th><th>Status</th><th style="width:180px">Actions</th></tr></thead><tbody>`;
+
+  users.forEach(function(u){
+    const vnames = Array.isArray(u.vessels) ? u.vessels.filter(Boolean).map(function(v){return typeof v==='object'?v.name:v;}).join(', ') : '—';
+    h+=`<tr>
+      <td><span style="font-weight:600">${esc(u.display_name||u.username)}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">${esc(u.username)}</td>
+      <td><span class="pill ${RMAP[u.role]||'pill-eng'}">${u.role}</span></td>
+      <td style="font-size:11px;color:var(--t2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(vnames||'—')}</td>
+      <td><span class="pill ${u.active?'pill-on':'pill-off'}">${u.active?'Active':'Inactive'}</span></td>
+      <td>
+        <button class="act" onclick="openEditUser(${u.id})">✏️ Edit</button>
+        <button class="act" onclick="resetPw(${u.id},'${esc(u.username)}')">🔑 PW</button>
+        ${u.active?`<button class="act danger" onclick="deactivateUser(${u.id})">Disable</button>`:''}
+      </td></tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  document.getElementById('main').innerHTML=h;
+}
+
+function openAddUser(){
+  editUserId=null;
+  document.getElementById('um-title').textContent='Add Crew Member';
+  document.getElementById('u-dn').value='';
+  document.getElementById('u-un').value='';
+  document.getElementById('u-pw').value='';
+  document.getElementById('u-pw-hint').textContent='*';
+  document.getElementById('u-role').value='engineer';
+  document.getElementById('u-email').value='';
+  buildVesselChecks([]);
+  document.getElementById('umodal').style.display='flex';
+}
+
+function openEditUser(id){
+  const u=users.find(function(x){return x.id===id;});
+  if(!u) return;
+  editUserId=id;
+  document.getElementById('um-title').textContent='Edit — '+esc(u.display_name||u.username);
+  document.getElementById('u-dn').value=u.display_name||'';
+  document.getElementById('u-un').value=u.username;
+  document.getElementById('u-pw').value='';
+  document.getElementById('u-pw-hint').textContent='(leave blank to keep)';
+  document.getElementById('u-role').value=u.role;
+  document.getElementById('u-email').value=u.email||'';
+  const assignedIds = Array.isArray(u.vessels)?u.vessels.filter(Boolean).map(function(v){return typeof v==='object'?v.id:null;}).filter(Boolean):[];
+  buildVesselChecks(assignedIds);
+  document.getElementById('umodal').style.display='flex';
+}
+
+function buildVesselChecks(assignedIds){
+  const wrap=document.getElementById('u-vessels');
+  if(!vessels.filter(function(v){return v.active;}).length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--t3)">No vessels found</div>'; return;
+  }
+  wrap.innerHTML=vessels.filter(function(v){return v.active;}).map(function(v){
+    return`<label class="vcheck"><input type="checkbox" value="${v.id}" ${assignedIds.includes(v.id)?'checked':''}/> ${esc(v.name)} <span style="font-size:10px;color:var(--t3)">(${esc(v.type||'')})</span></label>`;
+  }).join('');
+}
+
+function getCheckedVesselIds(){
+  return [...document.querySelectorAll('#u-vessels input:checked')].map(function(c){return parseInt(c.value);});
+}
+
+async function saveUser(){
+  const btn=document.getElementById('u-save');
+  const display=document.getElementById('u-dn').value.trim();
+  const username=document.getElementById('u-un').value.trim().toLowerCase();
+  const password=document.getElementById('u-pw').value;
+  const role=document.getElementById('u-role').value;
+  const email=document.getElementById('u-email').value.trim();
+  const vids=getCheckedVesselIds();
+  if(!display||!username){alert('Display Name and Username are required');return;}
+  if(!editUserId&&!password){alert('Password is required for new users');return;}
+  if(password&&password.length<6){alert('Password must be at least 6 characters');return;}
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    if(editUserId){
+      const body={role,display_name:display,email:email||null,vessel_ids:vids,active:true};
+      if(password) body.password=password;
+      await EOM.put('/admin/users/'+editUserId,body);
+    }else{
+      await EOM.post('/admin/users',{username,password,role,display_name:display,email:email||null,vessel_ids:vids});
+    }
+    cm('umodal'); await loadAll(); renderUsers();
+  }catch(e){alert('Error: '+e.message);}
+  btn.disabled=false; btn.textContent='Save';
+}
+
+async function resetPw(id,username){
+  const pw=prompt('New password for "'+username+'" (min 6 chars):');
+  if(pw===null) return;
+  if(pw.length<6){alert('Min 6 characters');return;}
+  try{await EOM.put('/admin/users/'+id,{password:pw});alert('✅ Password reset for '+username);}
+  catch(e){alert('Error: '+e.message);}
+}
+
+async function deactivateUser(id){
+  if(!confirm('Disable this user? They will not be able to log in.')) return;
+  try{await EOM.delete('/admin/users/'+id);await loadAll();renderUsers();}
+  catch(e){alert('Error: '+e.message);}
+}
+
+// ── VESSELS ───────────────────────────────────────────────────────────────────
+function renderVessels(){
+  let h=`<div class="page-title">Vessel Registry</div>
+  <div class="page-sub">Add, edit, or deactivate vessels in the fleet.</div>
+  <div class="card"><div class="card-head"><span class="card-title">${vessels.length} vessels</span>
+  ${isAdmin?'<button class="hbtn hbtn-primary" onclick="openAddVessel()">+ Add Vessel</button>':''}
+  </div>
+  <table><thead><tr><th>Vessel Name</th><th>IMO</th><th>Type</th><th>Crew Assigned</th><th>Status</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
+
+  vessels.forEach(function(v){
+    h+=`<tr>
+      <td style="font-weight:600">${esc(v.name)}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">${esc(v.imo||'—')}</td>
+      <td>${esc(v.type||'—')}</td>
+      <td style="text-align:center">${v.crew_count||0}</td>
+      <td><span class="pill ${v.active?'pill-on':'pill-off'}">${v.active?'Active':'Inactive'}</span></td>
+      ${isAdmin?`<td>
+        <button class="act" onclick="openEditVessel(${v.id})">✏️ Edit</button>
+        ${v.active?`<button class="act danger" onclick="deactivateVessel(${v.id})">Deactivate</button>`:''}
+      </td>`:''}
+    </tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  document.getElementById('main').innerHTML=h;
+}
+
+function openAddVessel(){
+  editVesselId=null;
+  document.getElementById('vm-title').textContent='Add Vessel';
+  document.getElementById('v-name').value='';
+  document.getElementById('v-imo').value='';
+  document.getElementById('v-type').value='LPG';
+  document.getElementById('v-active').value='true';
+  document.getElementById('vmodal').style.display='flex';
+}
+
+function openEditVessel(id){
+  const v=vessels.find(function(x){return x.id===id;});
+  if(!v) return;
+  editVesselId=id;
+  document.getElementById('vm-title').textContent='Edit — '+esc(v.name);
+  document.getElementById('v-name').value=v.name||'';
+  document.getElementById('v-imo').value=v.imo||'';
+  document.getElementById('v-type').value=v.type||'LPG';
+  document.getElementById('v-active').value=v.active?'true':'false';
+  document.getElementById('vmodal').style.display='flex';
+}
+
+async function saveVessel(){
+  const btn=document.getElementById('v-save');
+  const name=document.getElementById('v-name').value.trim();
+  const imo=document.getElementById('v-imo').value.trim();
+  const type=document.getElementById('v-type').value;
+  const active=document.getElementById('v-active').value==='true';
+  if(!name){alert('Vessel name is required');return;}
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    if(editVesselId){
+      await EOM.put('/admin/vessels/'+editVesselId,{name,imo,type,active});
+    }else{
+      await EOM.post('/admin/vessels',{name,imo,type});
+    }
+    cm('vmodal'); await loadAll(); renderVessels();
+  }catch(e){alert('Error: '+e.message);}
+  btn.disabled=false; btn.textContent='Save';
+}
+
+async function deactivateVessel(id){
+  const v=vessels.find(function(x){return x.id===id;});
+  if(!confirm('Deactivate '+v.name+'? Users assigned to this vessel will no longer see it.')) return;
+  try{await EOM.delete('/admin/vessels/'+id);await loadAll();renderVessels();}
+  catch(e){alert('Error: '+e.message);}
+}
+
+// ── PASSWORD ──────────────────────────────────────────────────────────────────
+function renderPassword(){
+  document.getElementById('main').innerHTML=`
+  <div class="page-title">Change Password</div>
+  <div class="page-sub">Update your own account password.</div>
+  <div style="max-width:400px" class="card">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      <div class="fg"><label class="fl">Current Password</label><input class="fi" type="password" id="cp-c"/></div>
+      <div class="fg"><label class="fl">New Password</label><input class="fi" type="password" id="cp-n"/></div>
+      <div class="fg"><label class="fl">Confirm New Password</label><input class="fi" type="password" id="cp-x"/></div>
+      <button class="hbtn hbtn-primary" style="width:100%;justify-content:center;padding:9px" onclick="changePw()">Update Password</button>
+      <div id="cp-msg" style="font-size:12px;text-align:center;min-height:16px"></div>
+    </div>
+  </div>`;
+}
+
+async function changePw(){
+  const c=document.getElementById('cp-c').value;
+  const n=document.getElementById('cp-n').value;
+  const x=document.getElementById('cp-x').value;
+  const msg=document.getElementById('cp-msg');
+  if(n!==x){msg.style.color='var(--red)';msg.textContent='Passwords do not match';return;}
+  if(n.length<6){msg.style.color='var(--red)';msg.textContent='Min 6 characters';return;}
+  try{
+    await EOM.post('/auth/change-password',{current_password:c,new_password:n});
+    msg.style.color='var(--green)';msg.textContent='✅ Password updated';
+    document.getElementById('cp-c').value='';
+    document.getElementById('cp-n').value='';
+    document.getElementById('cp-x').value='';
+  }catch(e){msg.style.color='var(--red)';msg.textContent=e.message;}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function cm(id){document.getElementById(id).style.display='none';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showErr(msg){document.getElementById('main').innerHTML='<div style="padding:40px;text-align:center;color:var(--red)">'+esc(msg)+'</div>';}
+
+// Patch EOM with PUT/DELETE if missing
+if(typeof EOM!=='undefined'){
+  if(!EOM.put) EOM.put=async function(path,body){
+    const t=localStorage.getItem('eom_token');
+    const r=await fetch('/api'+path,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(body)});
+    const d=await r.json();if(!r.ok) throw new Error(d.error||'Failed');return d;
+  };
+  if(!EOM.delete) EOM.delete=async function(path){
+    const t=localStorage.getItem('eom_token');
+    const r=await fetch('/api'+path,{method:'DELETE',headers:{'Authorization':'Bearer '+t}});
+    const d=await r.json();if(!r.ok) throw new Error(d.error||'Failed');return d;
+  };
+}
+</script>
+</body>
+</html>
