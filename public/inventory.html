@@ -115,9 +115,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
     <option value="0">All time</option>
     <option value="custom">Custom range…</option>
   </select>
-  <span class="filter-label" id="cmp-date-lbl" style="display:none">From</span>
+  <span class="filter-label" id="cmp-date-lbl" style="display:none">From month</span>
   <input type="month" class="filter-sel" id="cmp-from" style="display:none" onchange="renderTab()" placeholder="YYYY-MM"/>
-  <span class="filter-label" id="cmp-date-lbl2" style="display:none">To</span>
+  <span class="filter-label" id="cmp-date-lbl2" style="display:none">To month</span>
   <input type="month" class="filter-sel" id="cmp-to" style="display:none" onchange="renderTab()" placeholder="YYYY-MM"/>
   <input class="search-inp" id="search-inp" placeholder="🔍 Filter products…" oninput="renderTab()"/>
   <span class="filter-badge" id="product-count">—</span>
@@ -152,17 +152,24 @@ async function loadData(){
   const prefix = document.getElementById('cat-sel').value;
   try {
     allData = await EOM.get('/watches/inventory?vessel_id=' + vesselId + '&prefix=' + encodeURIComponent(prefix));
+    // Set default comparison date range: last 6 months
+    if(allData && allData.months && allData.months.length){
+      var ms = allData.months;
+      var cmpFrom = document.getElementById('cmp-from');
+      var cmpTo   = document.getElementById('cmp-to');
+      if(cmpFrom && !cmpFrom.value) cmpFrom.value = ms.length >= 6 ? ms[ms.length-6] : ms[0];
+      if(cmpTo   && !cmpTo.value)   cmpTo.value   = ms[ms.length-1];
+    }
     renderTab();
   } catch(e){ showError(e.message); }
 }
 
 function onRangeChange(){
   var rangeEl = document.getElementById('month-range');
-  var isCustom = rangeEl && rangeEl.value === 'custom';
   var isComp = currentTab === 'comparison';
   ['cmp-date-lbl','cmp-from','cmp-date-lbl2','cmp-to'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.style.display = (isComp && isCustom) ? '' : 'none';
+    if(el) el.style.display = isComp ? '' : 'none';
   });
   renderTab();
 }
@@ -171,13 +178,11 @@ function setTab(tab){
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   event.target.classList.add('active');
-  // Show custom date pickers only on comparison tab
+  // Always show date pickers on comparison tab
   var isComp = tab === 'comparison';
-  var rangeEl = document.getElementById('month-range');
-  var showCustom = isComp && rangeEl && rangeEl.value === 'custom';
   ['cmp-date-lbl','cmp-from','cmp-date-lbl2','cmp-to'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.style.display = showCustom ? '' : 'none';
+    if(el) el.style.display = isComp ? '' : 'none';
   });
   renderTab();
 }
@@ -314,10 +319,22 @@ function renderTrends(products, months){
 function renderComparison(products, months){
   if(!products.length){ document.getElementById('content').innerHTML = emptyState('No data','Upload logs first'); return; }
 
-  const showMonths = months.slice(-6); // show last 6 for readability
+  // Filter months by the date pickers
+  var fromEl = document.getElementById('cmp-from');
+  var toEl   = document.getElementById('cmp-to');
+  var fromVal = fromEl && fromEl.value ? fromEl.value : null;
+  var toVal   = toEl   && toEl.value   ? toEl.value   : null;
+  var filteredMonths = months.filter(function(m){
+    if(fromVal && m < fromVal) return false;
+    if(toVal   && m > toVal)   return false;
+    return true;
+  });
+  // Default: last 6 months if no pickers set
+  const showMonths = (fromVal || toVal) ? filteredMonths : months.slice(-6);
 
+  var rangeLabel = showMonths.length > 0 ? shortMonth(showMonths[0]) + ' → ' + shortMonth(showMonths[showMonths.length-1]) : 'No data';
   var h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Month-on-Month ROB Comparison</span>';
-  h += '<span class="tbl-meta">' + products.length + ' products · ' + showMonths.length + ' months</span></div>';
+  h += '<span class="tbl-meta">' + products.length + ' products · ' + showMonths.length + ' months · ' + rangeLabel + '</span></div>';
   h += '<div style="overflow-x:auto"><table class="data-tbl"><thead><tr>';
   h += '<th style="min-width:220px">Product</th><th>Unit</th>';
   showMonths.forEach(function(m){ h += '<th>' + shortMonth(m) + '</th>'; });
