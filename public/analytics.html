@@ -74,6 +74,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+/* Accordion sidebar */
+.acc-group{margin-bottom:2px}
+.acc-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:8px;transition:.15s;user-select:none}
+.acc-hdr:hover{background:rgba(255,255,255,.04)}
+.acc-chevron{font-size:8px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.acc-chevron.open{transform:rotate(90deg)}
+.acc-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;flex:1}
+.acc-body{display:none;padding:2px 4px 6px}
+.acc-body.open{display:block}
 </style>
 </head>
 <body>
@@ -167,8 +176,10 @@ function filterParams(){
   renderSidebar(filtered);
 }
 
+// Track which accordion groups are open
+var openGroups = {};
+
 function renderSidebar(items){
-  // Group by section
   var groups = {};
   items.forEach(function(c){
     var grp = c.section || 'Other';
@@ -176,19 +187,45 @@ function renderSidebar(items){
     groups[grp].push(c);
   });
 
+  // Open first group by default
+  var grpKeys = Object.keys(groups).sort();
+  if(grpKeys.length && Object.keys(openGroups).length === 0) {
+    openGroups[grpKeys[0]] = true;
+  }
+
   var h = '';
-  Object.keys(groups).sort().forEach(function(grp){
-    h += '<div class="sb-sect-hdr">'+esc(grp)+'</div>';
+  grpKeys.forEach(function(grp){
+    var isOpen = openGroups[grp];
+    var selCount = groups[grp].filter(function(c){ return selectedFids.includes(c.fid); }).length;
+    var badge = selCount > 0 ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">'+selCount+'</span>' : '';
+
+    h += '<div class="acc-group" id="acc_'+grp.replace(/\s/g,'_')+'">';
+    h += '<div class="acc-hdr" onclick="toggleGroup(''+grp.replace(/'/g,'\\'')+'')">';
+    h += '<span class="acc-chevron '+(isOpen?'open':'')+'">▶</span>';
+    h += '<span class="acc-label">'+esc(grp)+'</span>';
+    h += badge;
+    h += '</div>';
+    h += '<div class="acc-body' + (isOpen?' open':'') + '">';
     groups[grp].forEach(function(c){
       var isSel = selectedFids.includes(c.fid);
-      h += '<button class="param-btn'+(isSel?' selected':'')+'" onclick="toggleParam(\''+c.fid+'\')">'
-         + '<span class="param-name">'+esc(c.parameter)+'</span>'
-         + '<span class="param-unit">'+esc(c.unit||'')+'</span>'
-         + '<span class="param-count">'+c.reading_count+'×</span>'
-         + '</button>';
+      h += '<button class="param-btn'+(isSel?' selected':'')+'" onclick="toggleParam(\''+c.fid+'\')">';
+      h += '<span class="param-name">'+esc(c.parameter)+'</span>';
+      h += '<span class="param-unit">'+esc(c.unit||'')+'</span>';
+      h += '<span class="param-count">'+c.reading_count+'×</span>';
+      h += '</button>';
     });
+    h += '</div></div>';
   });
   document.getElementById('sb-list').innerHTML = h || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
+}
+
+function toggleGroup(grp){
+  openGroups[grp] = !openGroups[grp];
+  // Re-render to reflect state
+  var filtered = document.getElementById('param-search').value
+    ? catalog.filter(function(c){ return c.parameter.toLowerCase().includes(document.getElementById('param-search').value.toLowerCase()) || c.equipment.toLowerCase().includes(document.getElementById('param-search').value.toLowerCase()); })
+    : catalog;
+  renderSidebar(filtered);
 }
 
 function toggleParam(fid){
