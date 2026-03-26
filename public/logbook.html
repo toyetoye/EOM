@@ -575,7 +575,29 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
   </div>
 
   <!-- MAIN -->
- 
+  <div id="mid-container" style="display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0;flex:1">
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:20px;background:var(--canvas)">
+    </div>
+    <!-- EQUIPMENT FORM VIEW -->
+    <div class="mid" id="mid" style="display:none;flex:1;min-height:0">
+      <div class="tabs" id="tabs-bar" style="display:none"></div>
+      <div class="mb" id="mid-body">
+        <div class="empty">
+          <div class="es-ico">⚙️</div>
+          <div class="es-ttl">Select equipment from the sidebar</div>
+          <div class="es-sub">Equipment organised by deck — click a deck to expand, then select the equipment.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="rh">Watch Overview</div>
+    <div class="rs" id="rs"><div style="padding:6px 0;font-size:11px;color:var(--t3)">Enter readings to see live status.</div></div>
+  </div>
+</div>
 
 <script>
 // ── EOM API LAYER ─────────────────────────────────────────────────────────────
