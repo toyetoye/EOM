@@ -518,10 +518,17 @@ router.get('/field-catalog', requireAuth, async (req, res) => {
 // ── EXPORT — fetch readings by date range ────────────────────────────────────
 // GET /api/watches/export?vessel_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&sections=a,b
 router.get('/export', requireAuth, async (req, res) => {
-  const { vessel_id, from, to, fids } = req.query;
+  const { vessel_id, from, to, sections } = req.query;
   if (!vessel_id || !from || !to) return res.status(400).json({ error: 'vessel_id, from, to required' });
   try {
-    const fidList = fids ? fids.split(',').map(f => f.trim()).filter(Boolean) : null;
+    const sectionList = sections ? sections.split(',') : null;
+    const SECTION_MAP = {
+      floor: 'ER Floor', deck3: '3rd Deck', deck2: '2nd Deck',
+      upper: 'Upper Deck', tanks: 'Tanks', weekly: 'Weekly Tests',
+      monthly: 'Monthly Logs', rh: 'Running Hours'
+    };
+    const sectionNames = sectionList ? sectionList.map(s => SECTION_MAP[s] || s) : null;
+
     let query = `
       SELECT
         TO_CHAR(w.watch_date, 'YYYY-MM-DD') AS date,
@@ -542,12 +549,204 @@ router.get('/export', requireAuth, async (req, res) => {
         AND r.value IS NOT NULL
     `;
     const params = [vessel_id, from, to];
-    if (fidList && fidList.length) {
-      query += ` AND r.location_path = ANY($4)`;
-      params.push(fidList);
+    if (sectionNames) {
+      query += ` AND r.section = ANY($4)`;
+      params.push(sectionNames);
     }
     query += ` ORDER BY w.watch_date, r.section, r.equipment, r.parameter`;
+
     const { rows } = await pool.query(query, params);
     res.json({ rows, from, to });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── ANOMALY SCORING ───────────────────────────────────────────────────────────
+// GET /api/watches/anomalies?vessel_id=X&date=YYYY-MM-DD&watch_number=N
+// Scores each reading in the latest watch against its 3-year historical baseline
+router.get('/anomalies', requireAuth, async (req, res) => {
+  const { vessel_id, date, watch_number = 1 } = req.query;
+  if (!vessel_id || !date) return res.status(400).json({ error: 'vessel_id and date required' });
+  try {
+    // Get the watch readings
+    const { rows: watches } = await pool.query(`
+      SELECT w.id, w.status, w.duty_engineer
+      FROM eom_watches w
+      WHERE w.vessel_id=$1 AND w.watch_date=$2::date AND w.watch_number=$3
+      LIMIT 1
+    `, [vessel_id, date, watch_number]);
+
+    if (!watches.length) return res.json({ anomalies: [], watch: null });
+    const watch = watches[0];
+
+    // Get today's readings (deduplicated by location_path, taking latest)
+    const { rows: readings } = await pool.query(`
+      SELECT DISTINCT ON (location_path)
+        location_path, parameter, unit_label, value, section, equipment, is_alarm, is_warning
+      FROM eom_readings
+      WHERE watch_id = $1 AND value IS NOT NULL
+      ORDER BY location_path, id DESC
+    `, [watch.id]);
+
+    if (!readings.length) return res.json({ anomalies: [], watch, total: 0 });
+
+    // For each reading, compute Z-score against historical baseline
+    // Get historical stats in bulk for all location_paths in this watch
+    const fids = readings.map(r => r.location_path);
+    const { rows: stats } = await pool.query(`
+      SELECT
+        r.location_path AS fid,
+        COUNT(r.value)::int                       AS n,
+        AVG(r.value)::numeric(12,4)               AS mean,
+        STDDEV_POP(r.value)::numeric(12,4)        AS stddev,
+        PERCENTILE_CONT(0.1) WITHIN GROUP (ORDER BY r.value)::numeric(12,4) AS p10,
+        PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY r.value)::numeric(12,4) AS p90
+      FROM eom_readings r
+      JOIN eom_watches w ON w.id = r.watch_id
+      WHERE w.vessel_id = $1
+        AND r.location_path = ANY($2)
+        AND r.value IS NOT NULL
+        AND w.watch_date < $3::date          -- only history before today
+      GROUP BY r.location_path
+      HAVING COUNT(r.value) >= 10            -- need enough history
+    `, [vessel_id, fids, date]);
+
+    const statsMap = {};
+    stats.forEach(s => { statsMap[s.fid] = s; });
+
+    // Score each reading
+    const scored = [];
+    readings.forEach(r => {
+      const s = statsMap[r.location_path];
+      const val = parseFloat(r.value);
+      if (!s || parseFloat(s.stddev) === 0) return;
+
+      const mean   = parseFloat(s.mean);
+      const stddev = parseFloat(s.stddev);
+      const z      = Math.abs((val - mean) / stddev);
+      const pct_from_mean = mean !== 0 ? ((val - mean) / Math.abs(mean) * 100) : null;
+
+      // Severity: 0=normal, 1=notable(1.5σ), 2=warning(2σ), 3=critical(3σ)
+      const severity = z >= 3 ? 3 : z >= 2 ? 2 : z >= 1.5 ? 1 : 0;
+      if (severity === 0) return; // skip normal readings
+
+      scored.push({
+        fid:          r.location_path,
+        parameter:    r.parameter,
+        unit:         r.unit_label || '',
+        section:      r.section,
+        equipment:    r.equipment,
+        value:        val,
+        mean:         Math.round(mean * 100) / 100,
+        stddev:       Math.round(stddev * 100) / 100,
+        z_score:      Math.round(z * 100) / 100,
+        pct_from_mean: pct_from_mean !== null ? Math.round(pct_from_mean * 10) / 10 : null,
+        direction:    val > mean ? 'high' : 'low',
+        severity,
+        is_alarm:     r.is_alarm,
+        is_warning:   r.is_warning,
+        n_history:    s.n,
+        p10:          parseFloat(s.p10),
+        p90:          parseFloat(s.p90),
+      });
+    });
+
+    // Sort: severity desc, then z_score desc
+    scored.sort((a, b) => b.severity - a.severity || b.z_score - a.z_score);
+
+    res.json({
+      watch,
+      date,
+      total_readings: readings.length,
+      scored_count:   scored.length,
+      anomalies:      scored.slice(0, 25), // top 25
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── MONTHLY TREND REPORT ──────────────────────────────────────────────────────
+// GET /api/watches/monthly-report?vessel_id=X&year=2026&month=3
+// Returns per-parameter monthly averages for current month vs same month last year
+router.get('/monthly-report', requireAuth, async (req, res) => {
+  const { vessel_id, year, month } = req.query;
+  if (!vessel_id || !year || !month) return res.status(400).json({ error: 'vessel_id, year, month required' });
+  try {
+    const y = parseInt(year), m = parseInt(month);
+
+    // Current month, same month last year, and last 12 months for trend
+    const { rows } = await pool.query(`
+      WITH monthly AS (
+        SELECT
+          DATE_TRUNC('month', w.watch_date)::date   AS month,
+          r.location_path                           AS fid,
+          r.parameter,
+          r.unit_label                              AS unit,
+          r.section,
+          r.equipment,
+          AVG(r.value)::numeric(10,3)               AS avg_val,
+          STDDEV_POP(r.value)::numeric(10,3)        AS stddev_val,
+          COUNT(*)::int                             AS n,
+          MIN(r.value)::numeric(10,3)               AS min_val,
+          MAX(r.value)::numeric(10,3)               AS max_val
+        FROM eom_readings r
+        JOIN eom_watches w ON w.id = r.watch_id
+        WHERE w.vessel_id = $1
+          AND r.value IS NOT NULL
+          AND w.watch_date >= (MAKE_DATE($2::int, $3::int, 1) - INTERVAL '13 months')
+          AND w.watch_date <  (MAKE_DATE($2::int, $3::int, 1) + INTERVAL '1 month')
+        GROUP BY DATE_TRUNC('month', w.watch_date), r.location_path, r.parameter, r.unit_label, r.section, r.equipment
+      )
+      SELECT * FROM monthly ORDER BY section, equipment, parameter, month
+    `, [vessel_id, y, m]);
+
+    // Group into parameter timeseries
+    const paramMap = {};
+    rows.forEach(r => {
+      const key = r.fid;
+      if (!paramMap[key]) paramMap[key] = {
+        fid: r.fid, parameter: r.parameter, unit: r.unit,
+        section: r.section, equipment: r.equipment, months: {}
+      };
+      const monthStr = r.month.toISOString ? r.month.toISOString().slice(0, 7) : String(r.month).slice(0, 7);
+      paramMap[key].months[monthStr] = {
+        avg: parseFloat(r.avg_val),
+        stddev: parseFloat(r.stddev_val) || 0,
+        n: r.n,
+        min: parseFloat(r.min_val),
+        max: parseFloat(r.max_val)
+      };
+    });
+
+    // Compute change: current month vs same month last year
+    const currentMonth = `${y}-${String(m).padStart(2,'0')}`;
+    const prevYear     = `${y-1}-${String(m).padStart(2,'0')}`;
+
+    const params = Object.values(paramMap).map(p => {
+      const curr = p.months[currentMonth];
+      const prev = p.months[prevYear];
+      let yoy_change = null, yoy_pct = null;
+      if (curr && prev && prev.avg !== 0) {
+        yoy_change = Math.round((curr.avg - prev.avg) * 100) / 100;
+        yoy_pct    = Math.round((curr.avg - prev.avg) / Math.abs(prev.avg) * 1000) / 10;
+      }
+      // 12-month sparkline (last 12 months ending in current month)
+      const allMonths = Object.keys(p.months).sort().slice(-13);
+      const sparkline = allMonths.map(mo => ({
+        month: mo, avg: p.months[mo].avg, n: p.months[mo].n
+      }));
+      return { ...p, current: curr || null, prev_year: prev || null, yoy_change, yoy_pct, sparkline };
+    });
+
+    params.sort((a, b) => {
+      if (a.section !== b.section) return a.section.localeCompare(b.section);
+      return a.parameter.localeCompare(b.parameter);
+    });
+
+    res.json({
+      vessel_id, year: y, month: m,
+      current_month: currentMonth,
+      prev_year_month: prevYear,
+      total_params: params.length,
+      params
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
