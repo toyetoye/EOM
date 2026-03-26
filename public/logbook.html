@@ -533,8 +533,6 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
       <button class="tt on" id="tt-l" onclick="setTheme('light')">☀️</button>
       <button class="tt" id="tt-d" onclick="setTheme('dark')">🌙</button>
     </div>
-    <a href="/inventory.html" style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none">📊 Inventory</a>
-    <a href="/upload.html" style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none">📂 Import</a>
     <button style="padding:5px 10px;border-radius:var(--rsm);border:1px solid var(--line2);background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="EOM.logout()">Sign out</button>
   </div>
 </div>
@@ -555,10 +553,13 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
       <a href="/inventory.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
         <span class="db-ico">📊</span>Inventory Analytics
       </a>
-      <a href="/upload.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+      <a href="/upload.html" class="dash-btn nav-super-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
         <span class="db-ico">📂</span>Import Data
       </a>
-      <a href="/admin.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+      <a href="/export.html" class="dash-btn nav-super-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
+        <span class="db-ico">📤</span>Export Logs
+      </a>
+      <a href="/admin.html" class="dash-btn nav-admin-only" style="text-decoration:none;display:flex;align-items:center;gap:7px">
         <span class="db-ico">⚙️</span>Admin
       </a>
       <a href="/defects.html" class="dash-btn" style="text-decoration:none;display:flex;align-items:center;gap:7px">
@@ -1525,8 +1526,8 @@ const FLOORS=[
     ]}]},
 ]},
 // ─── WEEKLY TESTS ─────────────────────────────────────────────────────────
-{id:'weekly',label:'Weekly Tests',sub:'Lube Oil · Boiler Water',color:'#0EA5E9',freq:'weekly',equip:[
-  {id:'lo_tests',name:'Lube Oil Tests',sub:'DG1/2/3 · ME · Stern Tube TBN/Water/Viscosity',icon:'🧪',tabs:[
+{id:'weekly',label:'Weekly Tests',sub:'Lube Oil · Boiler Water · Cooling Water · Drinking Water',color:'#0EA5E9',freq:'weekly',equip:[
+  {id:'lo_tests',name:'Lube Oil Tests',sub:'DG1/2/3 · ME · Stern Tube',icon:'🧪',tabs:[
     {id:'lo_dg',label:'Diesel Generators',icon:'🔋',fields:[
       {id:'lo_tbn_g1',lbl:'TBN D/G No.1',unit:'mgKOH/g',lw:10,la:7},
       {id:'lo_w_g1',lbl:'Water in Oil D/G No.1',unit:'%',hw:0.1,ha:0.2},
@@ -1548,6 +1549,37 @@ const FLOORS=[
       {id:'lo_tbn_st',lbl:'TBN Stern Tube',unit:'mgKOH/g',lw:10},
     ]},
   ]},
+  {id:'boiler_water',name:'Boiler Water Tests',sub:'Daily — Chloride, Phosphate, DEHA',icon:'🔥',tabs:[
+    {id:'bwt_b',label:'Boiler Water',icon:'🔥',fields:[
+      {id:'bwt_chloride',lbl:'Boiler Water Chloride',unit:'ppm',lw:100,hw:300},
+      {id:'bwt_phosphate',lbl:'Boiler Water Phosphate',unit:'ppm',lw:50,hw:100},
+      {id:'bwt_ph',lbl:'Condensate Water pH',unit:'',lw:8.5,hw:9.5},
+      {id:'bwt_hardness',lbl:'Boiler Water Hardness',unit:'ppm',hw:1},
+      {id:'bwt_hydrate',lbl:'Hydrate Alkalinity',unit:'ppm',lw:40,hw:80},
+      {id:'bwt_deha',lbl:'Feed Water DEHA',unit:'ppm',lw:0.3,hw:1.0},
+      {id:'bwt_mu_cl',lbl:'Makeup Water Chloride',unit:'ppm',hw:20},
+      {id:'bwt_mu_ph',lbl:'Makeup Water pH',unit:''},
+      {id:'bwt_mu_hard',lbl:'Makeup Water Hardness',unit:'ppm',hw:1},
+    ]},
+  ]},
+  {id:'cooling_water',name:'Cooling Water Tests',sub:'Weekly — CWT Titret, Chloride, Hardness, pH',icon:'💧',tabs:[
+    {id:'cwt_t',label:'Cooling Water',icon:'💧',fields:[
+      {id:'cwt_titret',lbl:'CWT Titret',unit:'',lw:1.0,hw:2.0},
+      {id:'cwt_free_cl',lbl:'Free Chloride',unit:'ppm',hw:0.5},
+      {id:'cwt_tot_hard',lbl:'Total Hardness',unit:'ppm',hw:1},
+      {id:'cwt_ph',lbl:'pH',unit:'',lw:8.5,hw:9.5},
+      {id:'cwt_tot_cl',lbl:'Total Chloride',unit:'ppm',hw:0.3},
+    ]},
+  ]},
+  {id:'drinking_water',name:'Drinking Water Tests',sub:'Weekly potable water quality',icon:'🚰',tabs:[{
+    id:'dw_m',label:'Test Results',icon:'🧪',fields:[
+      {id:'dw_ph',lbl:'pH',unit:'',lw:6.5,hw:8.5},
+      {id:'dw_cl',lbl:'Chlorine Residual',unit:'mg/L',lw:0.2,hw:1.0},
+      {id:'dw_tc',lbl:'Total Coliform',unit:'cfu/100mL',hw:0},
+      {id:'dw_ec',lbl:'E.Coli',unit:'cfu/100mL',hw:0},
+      {id:'dw_tur',lbl:'Turbidity',unit:'NTU',hw:4},
+      {id:'dw_cond',lbl:'Conductivity',unit:'µS/cm'},
+    ]}]},
 ]},
 // ─── MONTHLY LOGS ─────────────────────────────────────────────────────────
 {id:'monthly',label:'Monthly Logs',sub:'Scavenge · Performance · Inventory',color:'#10B981',freq:'monthly',equip:[
@@ -1573,15 +1605,7 @@ const FLOORS=[
       {id:'perf_slip',lbl:'Propeller Slip',unit:'%'},
       {id:'perf_wind',lbl:'Wind Speed',unit:'Bft'},
     ]}]},
-  {id:'drinking_water',name:'Drinking Water',sub:'Monthly test results',icon:'🚰',tabs:[{
-    id:'dw_m',label:'Test Results',icon:'🧪',fields:[
-      {id:'dw_ph',lbl:'pH',unit:''},
-      {id:'dw_cl',lbl:'Chlorine Residual',unit:'mg/L'},
-      {id:'dw_tc',lbl:'Total Coliform',unit:'cfu/100mL'},
-      {id:'dw_ec',lbl:'E.Coli',unit:'cfu/100mL'},
-      {id:'dw_tur',lbl:'Turbidity',unit:'NTU'},
-      {id:'dw_cond',lbl:'Conductivity',unit:'µS/cm'},
-    ]}]},
+  
   {id:'chemicals',name:'Chemicals Inventory',sub:'Groups A-E · Monthly stock',icon:'🧪',tabs:[
     {id:'chem_a',label:'Group A',icon:'💧',fields:[
       {id:'ch_liquidewt',lbl:'LIQUIDEWT (Cooling Water Treatment)',unit:'L'},
@@ -1814,7 +1838,13 @@ function getProgress(){let t=0,f=0;FLOORS.forEach(fl=>fl.equip.forEach(eq=>eq.ta
 const EXPANDED_FLOOR = {current: null};
 
 function buildLeft(){
-  var sb = document.getElementById("ls");
+  var _u=(typeof EOM!=='undefined')?EOM.user():null;
+  var _role=_u?_u.role:'vessel';
+  var _isAdmin=_role==='admin';
+  var _isSuper=_role==='superintendent'||_role==='admin';
+  document.querySelectorAll('.nav-admin-only').forEach(function(el){el.style.display=_isAdmin?'':'none';});
+  document.querySelectorAll('.nav-super-only').forEach(function(el){el.style.display=_isSuper?'':'none';});
+  var sb=document.getElementById("ls");
   if(!sb) return;
   var FREQ_COLOR = {daily:"#3b82f6",weekly:"#f59e0b",monthly:"#10b981",rh:"#7c3aed"};
   var FREQ_LABEL = {daily:"D",weekly:"W",monthly:"M",rh:"M"};
@@ -2053,7 +2083,7 @@ function buildForm(eq,tab){
   html_ += buildWatchHistory(eq, tab);
 
   // AI diagnostic hint
-  html_+=`<div class="ai-hint" style="margin-top:8px"><span style="font-size:15px;flex-shrink:0">🤖</span><div><div class="ai-lbl">FORCAP AI · Coming Soon</div>Trend diagnostics — suction pressure drops, exhaust deviations, bearing temperature rises across consecutive watches.</div></div>`;
+  
   html_+=`<div class="save-row"><button class="btn-ghost" onclick="clearSec()">Clear</button><button class="btn-primary" id="btn-save" onclick="saveSec()">Save ${eq.name}</button></div>`;
   body.innerHTML=html_;
   // Populate obs block after DOM is set
@@ -2404,12 +2434,13 @@ function buildDashboard(){
   }
 }
 
+function updateClock(){
+  var el=document.getElementById('tb-clock');if(!el)return;
+  var n=new Date();
+  el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+}
 /* ── INIT ── */
-buildLeft();
-buildRight();
-buildDashboard();
-updateClock();
-setInterval(updateClock, 1000);
+buildLeft();buildRight();buildDashboard();updateClock();setInterval(updateClock,1000);
 
 
 
