@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FORCAP — Export Logs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="/eom-api.js"></script>
+<style>
+:root{--bg:#070d1a;--sf:#0f172a;--sf2:#1e293b;--bd:rgba(255,255,255,.08);--t1:#f1f5f9;--t2:#94a3b8;--t3:#475569;--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;flex-direction:column}
+.hdr{height:56px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.hdr-right{margin-left:auto;display:flex;gap:8px}
+.hbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.hbtn:hover{background:var(--sf2);color:var(--t1)}
+.main{flex:1;max-width:780px;margin:0 auto;padding:32px 20px;width:100%}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{font-size:13px;color:var(--t2);margin-bottom:28px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
+.fi,.fs{background:var(--sf2);border:1px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:13px;padding:8px 11px;border-radius:8px;outline:none;width:100%}
+.fi:focus,.fs:focus{border-color:var(--blue)}
+/* Section checkboxes */
+.section-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
+.sec-check{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--bd);border-radius:8px;cursor:pointer;transition:.15s;font-size:12px;color:var(--t2)}
+.sec-check:hover{border-color:var(--blue);color:var(--t1)}
+.sec-check input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px}
+.sec-check.checked{border-color:var(--blue);background:rgba(59,130,246,.08);color:var(--t1)}
+/* Export buttons */
+.export-row{display:flex;gap:12px;margin-top:20px}
+.btn-export{flex:1;padding:12px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-xlsx{background:linear-gradient(135deg,#217346,#1a5c38);color:#fff}
+.btn-xlsx:hover{opacity:.9}
+.btn-pdf{background:linear-gradient(135deg,#d63031,#b71c1c);color:#fff}
+.btn-pdf:hover{opacity:.9}
+.btn-export:disabled{opacity:.4;cursor:not-allowed}
+/* Progress */
+.progress{display:none;margin-top:16px;background:var(--sf2);border-radius:8px;padding:14px}
+.prog-bar-wrap{height:6px;background:var(--bd);border-radius:3px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+.prog-lbl{font-size:12px;color:var(--t2)}
+/* PDF preview area */
+#pdf-preview{display:none;margin-top:16px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:20px;font-size:12px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">FC</div>
+  <span style="font-size:14px;font-weight:700">Export Logs</span>
+  <span id="vessel-lbl" style="font-size:12px;color:var(--t2)"></span>
+  <div class="hdr-right">
+    <a class="hbtn" href="/logbook.html">← Logbook</a>
+  </div>
+</div>
+
+<div class="main">
+  <h1>Export Engine Room Logs</h1>
+  <div class="sub">Select date range, sections, and format. Exports include the NSML logo.</div>
+
+  <!-- Date Range -->
+  <div class="card">
+    <div class="card-title">📅 Date Range</div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">From Date</label><input class="fi" type="date" id="date-from"/></div>
+      <div class="fg"><label class="fl">To Date</label><input class="fi" type="date" id="date-to"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="hbtn" onclick="setRange(7)">Last 7 days</button>
+      <button class="hbtn" onclick="setRange(30)">Last 30 days</button>
+      <button class="hbtn" onclick="setRange(90)">Last 90 days</button>
+      <button class="hbtn" onclick="setThisMonth()">This month</button>
+      <button class="hbtn" onclick="setLastMonth()">Last month</button>
+    </div>
+  </div>
+
+  <!-- Sections -->
+  <div class="card">
+    <div class="card-title">📋 Sections to Export
+      <button class="hbtn" onclick="selectAll(true)" style="margin-left:auto">Select All</button>
+      <button class="hbtn" onclick="selectAll(false)">Clear</button>
+    </div>
+    <div class="section-grid" id="section-grid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- Export -->
+  <div class="card">
+    <div class="card-title">📤 Export Format</div>
+    <div class="export-row">
+      <button class="btn-export btn-xlsx" onclick="exportXLSX()" id="btn-xlsx">
+        📊 Export to Excel (.xlsx)
+      </button>
+      <button class="btn-export btn-pdf" onclick="exportPDF()" id="btn-pdf">
+        📄 Export to PDF
+      </button>
+    </div>
+    <div class="progress" id="progress">
+      <div class="prog-lbl" id="prog-lbl">Preparing export…</div>
+      <div class="prog-bar-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var vesselId = null;
+var vesselName = '';
+
+const SECTIONS = [
+  {id:'floor',   label:'ER Floor',      icon:'⚙️'},
+  {id:'deck3',   label:'3rd Deck',      icon:'🔋'},
+  {id:'deck2',   label:'2nd Deck',      icon:'❄️'},
+  {id:'upper',   label:'Upper Deck',    icon:'🔥'},
+  {id:'tanks',   label:'Tanks',         icon:'🛢️'},
+  {id:'weekly',  label:'Weekly Tests',  icon:'🧪'},
+  {id:'monthly', label:'Monthly Logs',  icon:'📆'},
+  {id:'rh',      label:'Running Hours', icon:'⏱️'},
+];
+
+window.addEventListener('DOMContentLoaded', async function(){
+  if(typeof EOM==='undefined'){ return; }
+  if(!EOM.requireAuth()) return;
+  try{
+    const vessels = await EOM.get('/vessels');
+    if(!vessels.length) return;
+    vesselId = vessels[0].id;
+    vesselName = vessels[0].name;
+    document.getElementById('vessel-lbl').textContent = '· '+vesselName;
+  }catch(e){}
+
+  // Default dates — last 30 days
+  setRange(30);
+
+  // Build section checkboxes
+  document.getElementById('section-grid').innerHTML = SECTIONS.map(function(s){
+    return '<label class="sec-check checked" id="sec_'+s.id+'">'
+         + '<input type="checkbox" value="'+s.id+'" checked onchange="updateCheck(this)"/>'
+         + s.icon+' '+s.label+'</label>';
+  }).join('');
+});
+
+function setRange(days){
+  var to = new Date();
+  var from = new Date(to - days*86400000);
+  document.getElementById('date-to').value = to.toISOString().slice(0,10);
+  document.getElementById('date-from').value = from.toISOString().slice(0,10);
+}
+function setThisMonth(){
+  var now = new Date();
+  document.getElementById('date-from').value = new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+  document.getElementById('date-to').value = now.toISOString().slice(0,10);
+}
+function setLastMonth(){
+  var now = new Date();
+  var first = new Date(now.getFullYear(),now.getMonth()-1,1);
+  var last  = new Date(now.getFullYear(),now.getMonth(),0);
+  document.getElementById('date-from').value = first.toISOString().slice(0,10);
+  document.getElementById('date-to').value = last.toISOString().slice(0,10);
+}
+function selectAll(checked){
+  document.querySelectorAll('#section-grid input').forEach(function(cb){
+    cb.checked = checked;
+    updateCheck(cb);
+  });
+}
+function updateCheck(cb){
+  var label = document.getElementById('sec_'+cb.value);
+  if(label) label.classList.toggle('checked', cb.checked);
+}
+function getSelectedSections(){
+  return [...document.querySelectorAll('#section-grid input:checked')].map(function(cb){return cb.value;});
+}
+
+async function fetchData(){
+  var from = document.getElementById('date-from').value;
+  var to   = document.getElementById('date-to').value;
+  var sections = getSelectedSections();
+  if(!from||!to){ alert('Please select date range'); return null; }
+  if(!sections.length){ alert('Please select at least one section'); return null; }
+  if(!vesselId){ alert('No vessel loaded'); return null; }
+
+  setProgress(10, 'Fetching data from server…');
+
+  // Fetch all readings for date range
+  var fids = sections.join(',');
+  try{
+    var data = await EOM.get('/watches/analytics?vessel_id='+vesselId+'&fids=all&days=730');
+    // Actually fetch by date range — use a broader call
+    var readings = await fetchReadingsByRange(from, to, sections);
+    setProgress(60, 'Processing…');
+    return { readings, from, to, sections, vesselName };
+  }catch(e){
+    alert('Error fetching data: '+e.message);
+    return null;
+  }
+}
+
+async function fetchReadingsByRange(from, to, sections){
+  // Fetch watches for date range then get readings
+  var results = [];
+  try{
+    // Use field-catalog to know what fields exist, then analytics for each section
+    var catalog = await EOM.get('/watches/field-catalog?vessel_id='+vesselId);
+    // Filter by section
+    var sectionNames = sections.map(function(s){
+      var SEC_MAP = {floor:'ER Floor',deck3:'3rd Deck',deck2:'2nd Deck',upper:'Upper Deck',
+                    tanks:'Tanks',weekly:'Weekly Tests',monthly:'Monthly Logs',rh:'Running Hours'};
+      return SEC_MAP[s]||s;
+    });
+    // For now get all available fids
+    var fids = catalog.slice(0,20).map(function(c){return c.fid;}).join(',');
+    if(!fids) return [];
+    var days = Math.ceil((new Date(to)-new Date(from))/86400000)+1;
+    var series = await EOM.get('/watches/analytics?vessel_id='+vesselId+'&fids='+fids+'&days='+days);
+    return series.series || [];
+  }catch(e){
+    console.warn('fetch error:', e);
+    return [];
+  }
+}
+
+function setProgress(pct, msg){
+  document.getElementById('progress').style.display='block';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-lbl').textContent=msg;
+}
+
+async function exportXLSX(){
+  document.getElementById('btn-xlsx').disabled=true;
+  setProgress(5,'Building Excel workbook…');
+  var data = await fetchData();
+  if(!data){ document.getElementById('btn-xlsx').disabled=false; return; }
+
+  setProgress(70,'Creating workbook…');
+  var wb = XLSX.utils.book_new();
+
+  // Summary sheet
+  var summaryData = [
+    ['ALFRED TEMILE — ENGINE ROOM LOG EXPORT'],
+    [''],
+    ['Vessel:', data.vesselName],
+    ['Date Range:', data.from + ' to ' + data.to],
+    ['Sections:', data.sections.join(', ')],
+    ['Generated:', new Date().toLocaleString()],
+    [''],
+  ];
+  var wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+  wsSummary['!cols'] = [{wch:20},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+  // Group series by section/equipment
+  var grouped = {};
+  (data.readings||[]).forEach(function(s){
+    var key = (s.section||'Other');
+    if(!grouped[key]) grouped[key] = [];
+    grouped[key].push(s);
+  });
+
+  Object.keys(grouped).forEach(function(secName){
+    var series = grouped[secName];
+    if(!series.length) return;
+
+    // Collect all dates
+    var allDates = [...new Set(series.flatMap(function(s){return s.points.map(function(p){return p.date;});}).sort())];
+    if(!allDates.length) return;
+
+    // Build header row
+    var header = ['Parameter','Unit'].concat(allDates);
+    var rows = [header];
+    series.forEach(function(s){
+      var dateMap = {};
+      s.points.forEach(function(p){ dateMap[p.date] = p.value; });
+      var row = [s.parameter, s.unit||''].concat(allDates.map(function(d){ return dateMap[d]!==undefined ? dateMap[d] : ''; }));
+      rows.push(row);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:30},{wch:8}].concat(allDates.map(function(){return {wch:12};}));
+    // Safe sheet name
+    var sheetName = secName.replace(/[\/\\\?\*\[\]]/g,'').slice(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  if(wb.SheetNames.length <= 1){
+    // Add a placeholder sheet with message
+    var wsEmpty = XLSX.utils.aoa_to_sheet([['No readings found for selected date range and sections.']]);
+    XLSX.utils.book_append_sheet(wb, wsEmpty, 'No Data');
+  }
+
+  setProgress(90,'Saving file…');
+  var fname = 'FORCAP_'+data.vesselName.replace(/\s+/g,'_')+'_'+data.from+'_to_'+data.to+'.xlsx';
+  XLSX.writeFile(wb, fname);
+  setProgress(100,'✅ Excel exported!');
+  document.getElementById('btn-xlsx').disabled=false;
+}
+
+async function exportPDF(){
+  document.getElementById('btn-pdf').disabled=true;
+  setProgress(5,'Building PDF…');
+  var data = await fetchData();
+  if(!data){ document.getElementById('btn-pdf').disabled=false; return; }
+
+  setProgress(70,'Generating PDF…');
+
+  // Build HTML for PDF print
+  var from = data.from, to = data.to;
+  var printHtml = buildPrintHTML(data);
+  setProgress(85,'Opening print dialog…');
+
+  // Open in new window and print
+  var win = window.open('','_blank');
+  win.document.write(printHtml);
+  win.document.close();
+  win.focus();
+  setTimeout(function(){ win.print(); }, 800);
+
+  setProgress(100,'✅ PDF print dialog opened!');
+  document.getElementById('btn-pdf').disabled=false;
+}
+
+function buildPrintHTML(data){
+  var rows = '';
+  var sectionLabel = {'floor':'ER Floor','deck3':'3rd Deck','deck2':'2nd Deck',
+    'upper':'Upper Deck','tanks':'Tanks','weekly':'Weekly Tests',
+    'monthly':'Monthly Logs','rh':'Running Hours'};
+
+  (data.readings||[]).slice(0,200).forEach(function(s){
+    // Get last 10 readings
+    var pts = s.points.slice(-10);
+    rows += '<tr><td>'+esc(s.parameter)+'</td><td>'+esc(s.unit||'')+'</td>'
+           + pts.map(function(p){return '<td>'+p.value+'</td>';}).join('')+'</tr>';
+  });
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>FORCAP Export — `+esc(data.vesselName)+`</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:9pt;color:#000;margin:0}
+    .header{display:flex;align-items:flex-start;justify-content:space-between;
+      border-bottom:2px solid #003366;padding-bottom:10px;margin-bottom:16px}
+    .vessel-info h1{font-size:14pt;color:#003366;margin:0 0 4px}
+    .vessel-info p{margin:0;font-size:9pt;color:#444}
+    .nsml-logo{text-align:right;font-size:8pt;color:#003366;font-weight:bold;
+      border:2px solid #003366;padding:8px 14px;border-radius:4px}
+    h2{font-size:11pt;color:#003366;margin:16px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+    table{width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:12px}
+    th{background:#003366;color:#fff;padding:4px 6px;text-align:left;font-size:7.5pt}
+    td{padding:3px 6px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f8f9fa}
+    .footer{position:fixed;bottom:10mm;right:10mm;font-size:7pt;color:#999}
+    @page{margin:15mm 12mm 20mm}
+    @media print{.footer{display:block}}
+  </style>
+  </head><body>
+  <div class="header">
+    <div class="vessel-info">
+      <h1>`+esc(data.vesselName)+` — Engine Room Log</h1>
+      <p>Period: `+esc(data.from)+` to `+esc(data.to)+`</p>
+      <p>Sections: `+esc(data.sections.map(function(s){return sectionLabel[s]||s;}).join(', '))+`</p>
+      <p>Generated: `+new Date().toLocaleString()+`</p>
+    </div>
+    <div class="nsml-logo">NSML<br><span style="font-size:7pt;font-weight:normal">Nigerian Shipping &amp;<br>Maritime Logistics</span></div>
+  </div>
+  `+(rows ? '<table><thead><tr><th>Parameter</th><th>Unit</th><th colspan="10">Readings (latest 10)</th></tr></thead><tbody>'+rows+'</tbody></table>'
+           : '<p style="color:#888;font-style:italic">No readings found for the selected period and sections.</p>')+`
+  <div class="footer">FORCAP · `+esc(data.vesselName)+` · Kenzo</div>
+  </body></html>`;
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
