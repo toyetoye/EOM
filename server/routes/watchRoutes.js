@@ -518,17 +518,10 @@ router.get('/field-catalog', requireAuth, async (req, res) => {
 // ── EXPORT — fetch readings by date range ────────────────────────────────────
 // GET /api/watches/export?vessel_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&sections=a,b
 router.get('/export', requireAuth, async (req, res) => {
-  const { vessel_id, from, to, sections } = req.query;
+  const { vessel_id, from, to, fids } = req.query;
   if (!vessel_id || !from || !to) return res.status(400).json({ error: 'vessel_id, from, to required' });
   try {
-    const sectionList = sections ? sections.split(',') : null;
-    const SECTION_MAP = {
-      floor: 'ER Floor', deck3: '3rd Deck', deck2: '2nd Deck',
-      upper: 'Upper Deck', tanks: 'Tanks', weekly: 'Weekly Tests',
-      monthly: 'Monthly Logs', rh: 'Running Hours'
-    };
-    const sectionNames = sectionList ? sectionList.map(s => SECTION_MAP[s] || s) : null;
-
+    const fidList = fids ? fids.split(',').map(f => f.trim()).filter(Boolean) : null;
     let query = `
       SELECT
         TO_CHAR(w.watch_date, 'YYYY-MM-DD') AS date,
@@ -549,12 +542,11 @@ router.get('/export', requireAuth, async (req, res) => {
         AND r.value IS NOT NULL
     `;
     const params = [vessel_id, from, to];
-    if (sectionNames) {
-      query += ` AND r.section = ANY($4)`;
-      params.push(sectionNames);
+    if (fidList && fidList.length) {
+      query += ` AND r.location_path = ANY($4)`;
+      params.push(fidList);
     }
     query += ` ORDER BY w.watch_date, r.section, r.equipment, r.parameter`;
-
     const { rows } = await pool.query(query, params);
     res.json({ rows, from, to });
   } catch (e) { res.status(500).json({ error: e.message }); }
