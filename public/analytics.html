@@ -77,16 +77,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
 /* Accordion sidebar */
 .acc-group{margin-bottom:4px}
+/* Floor-level header */
 .acc-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:8px;transition:background .15s;user-select:none}
 .acc-hdr:hover{background:rgba(255,255,255,.05)}
-.acc-chevron{font-size:8px;color:var(--t3);transition:transform .2s;flex-shrink:0;margin-left:auto}
-.acc-chevron.open{transform:rotate(90deg)}
 .fl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .fl-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;flex:1}
-.fl-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd;margin-left:auto;margin-right:4px}
-.acc-body{display:none;padding-bottom:6px}
+.fl-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd;margin-right:4px}
+.acc-chevron{font-size:8px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.acc-chevron.open{transform:rotate(90deg)}
+/* Floor body */
+.acc-body{display:none;padding-bottom:4px}
 .acc-body.open{display:block}
-.sec-hdr{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;padding:6px 10px 3px 14px;margin-top:2px}
+/* Section-level accordion inside floor */
+.sec-group{margin:2px 0}
+.sec-hdr{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;cursor:pointer;border-radius:6px;transition:background .15s;user-select:none}
+.sec-hdr:hover{background:rgba(255,255,255,.04)}
+.sec-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;flex:1}
+.sec-chevron{font-size:7px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.sec-chevron.open{transform:rotate(90deg)}
+.sec-body{display:none;padding-left:4px}
+.sec-body.open{display:block}
 </style>
 </head>
 <body>
@@ -181,22 +191,21 @@ function filterParams(){
 }
 
 // Floor-organised sidebar
-// ── Analytics sidebar ──────────────────────────────────────────────────────
-var openGroups = {};
-
+// ── Analytics sidebar — two-level accordion ─────────────────────────────────
+// CORRECT floor mapping matching logbook.html FLOORS definition exactly
 var SECTION_FLOORS = {
-  "A/C Plant":    "ER Floor",
-  "Auxiliaries":  "ER Floor",
-  "Main Engine":  "ER Floor",
-  "D/G No.1":     "3rd Deck",
-  "D/G No.2":     "3rd Deck",
-  "D/G No.3":     "3rd Deck",
-  "Fridge":       "2nd Deck",
-  "Tanks":        "Tanks",
-  "ER Rounds":    "ER Rounds",
-  "Running Hours":"Running Hours",
-  "Monthly Logs": "Monthly Logs",
-  "Weekly Tests": "Weekly Tests"
+  "Main Engine":   { floor:"ER Floor",   color:"#1570EF", order:0 },
+  "Auxiliaries":   { floor:"ER Floor",   color:"#1570EF", order:1 },
+  "D/G No.1":      { floor:"3rd Deck",   color:"#7C3AED", order:0 },
+  "D/G No.2":      { floor:"3rd Deck",   color:"#7C3AED", order:1 },
+  "D/G No.3":      { floor:"3rd Deck",   color:"#7C3AED", order:2 },
+  "A/C Plant":     { floor:"2nd Deck",   color:"#0891B2", order:0 },
+  "Fridge":        { floor:"2nd Deck",   color:"#0891B2", order:1 },
+  "Tanks":         { floor:"Tanks",      color:"#B45309", order:0 },
+  "ER Rounds":     { floor:"ER Rounds",  color:"#059669", order:0 },
+  "Running Hours": { floor:"Running Hours", color:"#6366F1", order:0 },
+  "Weekly Tests":  { floor:"Weekly Tests",  color:"#0EA5E9", order:0 },
+  "Monthly Logs":  { floor:"Monthly Logs",  color:"#8B5CF6", order:0 }
 };
 var FLOOR_ORDER  = ["ER Floor","3rd Deck","2nd Deck","Tanks","ER Rounds","Running Hours","Weekly Tests","Monthly Logs"];
 var FLOOR_COLORS = {
@@ -205,61 +214,86 @@ var FLOOR_COLORS = {
   "Running Hours":"#6366F1","Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"
 };
 
+// Track open state for both floors and sections
+var openGroups = {};    // floor open state
+var openSections = {};  // section open state  e.g. "ER Floor||Main Engine" = true
+
 function renderSidebar(items){
-  // Build floor→section→params map
+  // Build floor → section → params map
   var floors = {};
   items.forEach(function(c){
     var sec = c.section || "Other";
-    var fl  = SECTION_FLOORS[sec] || "Other";
-    if(!floors[fl]) floors[fl] = { color: FLOOR_COLORS[fl]||"#475569", sections:{} };
-    if(!floors[fl].sections[sec]) floors[fl].sections[sec] = [];
-    floors[fl].sections[sec].push(c);
+    var fi  = SECTION_FLOORS[sec] || { floor:"Other", color:"#475569", order:99 };
+    var fl  = fi.floor;
+    if(!floors[fl]){
+      floors[fl] = { color:FLOOR_COLORS[fl]||fi.color, sections:{}, order:FLOOR_ORDER.indexOf(fl) };
+    }
+    if(!floors[fl].sections[sec]){
+      floors[fl].sections[sec] = { params:[], order:fi.order };
+    }
+    floors[fl].sections[sec].params.push(c);
   });
 
   // Sort floors
   var fkeys = Object.keys(floors).sort(function(a,b){
-    var ia=FLOOR_ORDER.indexOf(a), ib=FLOOR_ORDER.indexOf(b);
-    if(ia<0) ia=99; if(ib<0) ib=99; return ia-ib;
+    return (floors[a].order<0?99:floors[a].order) - (floors[b].order<0?99:floors[b].order);
   });
 
-  // Default first floor open
+  // Default: open first floor and all its sections
   if(fkeys.length && !Object.keys(openGroups).length){
     openGroups[fkeys[0]] = true;
+    var firstSecs = Object.keys(floors[fkeys[0]].sections);
+    firstSecs.forEach(function(s){ openSections[fkeys[0]+"||"+s] = true; });
   }
 
   var h = "";
   fkeys.forEach(function(fl){
-    var data  = floors[fl];
+    var data   = floors[fl];
     var isOpen = !!openGroups[fl];
     var color  = data.color;
 
     // Count selected params in this floor
     var sel = 0;
-    Object.values(data.sections).forEach(function(ps){
-      ps.forEach(function(c){ if(selectedFids.indexOf(c.fid)>-1) sel++; });
+    Object.values(data.sections).forEach(function(sd){
+      sd.params.forEach(function(c){ if(selectedFids.indexOf(c.fid)>-1) sel++; });
     });
-    var selBadge = sel > 0
-      ? '<span class="fl-badge">'+sel+'</span>'
-      : '';
+    var selBadge = sel > 0 ? '<span class="fl-badge">'+sel+'</span>' : '';
 
-    // Floor header row
-    h += '<div class="acc-group" id="grp-' + fl.replace(/\s/g,'_') + '">';
-    h += '<div class="acc-hdr" data-grp="' + fl + '" onclick="toggleGroup(this.dataset.grp)">';
+    // ── Floor header ──
+    h += '<div class="acc-group">';
+    h += '<div class="acc-hdr" data-grp="'+fl+'" onclick="toggleGroup(this.dataset.grp)">';
     h += '<div class="fl-dot" style="background:'+color+'"></div>';
     h += '<span class="fl-label">'+esc(fl)+'</span>';
     h += selBadge;
-    h += '<span class="acc-chevron' + (isOpen?' open':'') + '">&#9658;</span>';
-    h += '</div>';  // end acc-hdr
+    h += '<span class="acc-chevron'+(isOpen?' open':'')+'">&#9658;</span>';
+    h += '</div>';
 
-    // Floor body
-    h += '<div class="acc-body' + (isOpen?' open':'') + '">';
+    // ── Floor body ──
+    h += '<div class="acc-body'+(isOpen?' open':'')+'">'; 
 
-    // Sections within this floor
-    var secKeys = Object.keys(data.sections).sort();
+    // Sort sections within floor by their order
+    var secKeys = Object.keys(data.sections).sort(function(a,b){
+      return data.sections[a].order - data.sections[b].order;
+    });
+
     secKeys.forEach(function(sec){
-      var params = data.sections[sec];
-      h += '<div class="sec-hdr">'+esc(sec)+'</div>';
-      params.forEach(function(c){
+      var sd      = data.sections[sec];
+      var secKey  = fl+"||"+sec;
+      var secOpen = !!openSections[secKey];
+      var secSel  = sd.params.filter(function(c){ return selectedFids.indexOf(c.fid)>-1; }).length;
+      var secBadge= secSel > 0 ? '<span class="fl-badge" style="font-size:8px;padding:0px 5px">'+secSel+'</span>' : '';
+
+      // ── Section header (collapsible) ──
+      h += '<div class="sec-group">';
+      h += '<div class="sec-hdr" data-floor="'+fl+'" data-sec="'+sec+'" onclick="toggleSection(this.dataset.floor,this.dataset.sec)">';
+      h += '<span class="sec-chevron'+(secOpen?' open':'')+'">&#9658;</span>';
+      h += '<span class="sec-label">'+esc(sec)+'</span>';
+      h += secBadge;
+      h += '</div>';
+
+      // ── Section body ──
+      h += '<div class="sec-body'+(secOpen?' open':'')+'">';
+      sd.params.forEach(function(c){
         var isSel = selectedFids.indexOf(c.fid) > -1;
         h += '<button class="param-btn'+(isSel?' selected':'')+'" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
         h += '<span class="param-name">'+esc(c.parameter)+'</span>';
@@ -269,38 +303,48 @@ function renderSidebar(items){
         h += '</span>';
         h += '</button>';
       });
+      h += '</div>'; // end sec-body
+      h += '</div>'; // end sec-group
     });
 
-    h += '</div>';  // end acc-body
-    h += '</div>';  // end acc-group
+    h += '</div>'; // end acc-body
+    h += '</div>'; // end acc-group
   });
 
   document.getElementById("sb-list").innerHTML = h ||
     '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
 }
 
-function toggleGroup(grp){
-  openGroups[grp] = !openGroups[grp];
-  var isOpen = openGroups[grp];
-
-  // Find acc-hdr with this data-grp and toggle its sibling body directly
+function toggleGroup(fl){
+  openGroups[fl] = !openGroups[fl];
+  var isOpen = openGroups[fl];
   document.querySelectorAll('.acc-hdr[data-grp]').forEach(function(hdr){
-    if(hdr.dataset.grp !== grp) return;
+    if(hdr.dataset.grp !== fl) return;
     var body    = hdr.nextElementSibling;
     var chevron = hdr.querySelector('.acc-chevron');
     if(body && body.classList.contains('acc-body')){
-      if(isOpen){
-        body.classList.add('open');
-      } else {
-        body.classList.remove('open');
-      }
+      body.classList.toggle('open', isOpen);
     }
-    if(chevron){
-      if(isOpen) chevron.classList.add('open');
-      else       chevron.classList.remove('open');
-    }
+    if(chevron) chevron.classList.toggle('open', isOpen);
   });
 }
+
+function toggleSection(fl, sec){
+  var key = fl+"||"+sec;
+  openSections[key] = !openSections[key];
+  var isOpen = openSections[key];
+  document.querySelectorAll('.sec-hdr[data-floor][data-sec]').forEach(function(hdr){
+    if(hdr.dataset.floor !== fl || hdr.dataset.sec !== sec) return;
+    var body    = hdr.nextElementSibling;
+    var chevron = hdr.querySelector('.sec-chevron');
+    if(body && body.classList.contains('sec-body')){
+      body.classList.toggle('open', isOpen);
+    }
+    if(chevron) chevron.classList.toggle('open', isOpen);
+  });
+}
+
+
 
 
 
