@@ -26,22 +26,25 @@ async function seed() {
     `, [superPw]);
 
     // ── Vessels ───────────────────────────────────────────────────────────────
-    const { rows: [at] } = await client.query(`
-      INSERT INTO eom_vessels (name,imo,type,active)
-      VALUES ('Alfred Temile','9859882','LPG',true)
-      ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name
-      RETURNING id
-    `);
-    const atId = at ? at.id : (await client.query("SELECT id FROM eom_vessels WHERE imo='9859882'")).rows[0].id;
-
-    const { rows: [ph2] } = await client.query(`
-      INSERT INTO eom_vessels (name,imo,type,active)
-      VALUES ('LNG Port Harcourt 2','9370906','LNG',true)
-      ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name
-      RETURNING id
-    `);
-    const ph2Id = ph2 ? ph2.id : (await client.query("SELECT id FROM eom_vessels WHERE imo='9370906'")).rows[0].id;
-
+    // All 13 fleet vessels — upsert by IMO
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('Aktoras','9958286','LNG','2-STROKE','AKTORAS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('Axios II','9943853','LNG','2-STROKE','AKTORAS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Adamawa','9262211','LNG','STEAM','RIVERS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Akwa-Ibom','9262209','LNG','STEAM','RIVERS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG River Niger','9262235','LNG','STEAM','RIVERS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Cross-River','9262223','LNG','STEAM','RIVERS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Sokoto','9216303','LNG','STEAM','RIVERS PLUS',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Finima II','9690145','LNG','DFDE','SHI',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Portharcourt II','9690157','LNG','DFDE','SHI',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Bonny II','9692002','LNG','DFDE','HHI',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('LNG Lagos II','9692014','LNG','DFDE','HHI',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('Alfred Temile','9859882','LPG','2-STROKE','AT',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    await client.query("INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ('Alfred Temile 10','9937127','LPG','2-STROKE','AT10',true) ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class");
+    const atRow  = await client.query("SELECT id FROM eom_vessels WHERE imo='9859882'");
+    const atId   = atRow.rows[0]?.id;
+    const ph2Row = await client.query("SELECT id FROM eom_vessels WHERE imo='9690157'");
+    const ph2Id  = ph2Row.rows[0]?.id;
+    
     // ── Vessel login (system account — NOT a crew member) ─────────────────────
     const vesselPw = await bcrypt.hash('Vessel@2025!', 10);
     const { rows: [atUser] } = await client.query(`
