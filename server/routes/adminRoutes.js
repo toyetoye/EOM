@@ -112,8 +112,8 @@ router.put('/vessels/:id', ...adminOnly, async (req, res) => {
   const { name, imo, type, active } = req.body;
   try {
     const { rows } = await pool.query(
-      'UPDATE eom_vessels SET name=$1, imo=$2, type=$3, active=$4 WHERE id=$5 RETURNING *',
-      [name, imo||null, type||'LPG', active !== false, req.params.id]
+      'UPDATE eom_vessels SET name=$1,imo=$2,type=$3,propulsion_type=$4,vessel_class=$5,active=$6 WHERE id=$7 RETURNING *',
+      [name, imo||null, type||'LPG', propulsion_type||null, vessel_class||null, active !== false, req.params.id]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
