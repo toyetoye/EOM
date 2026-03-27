@@ -583,14 +583,12 @@ async function runAIAnalysis(fid, paramName, section, meta, monthly, corrData){
     +'{"summary":"one sentence finding","findings":["finding with numbers","finding with numbers"],"likely_cause":"specific engineering explanation","evidence":["evidence from data","correlated parameter support"],"check_also":["specific item to inspect","specific measurement to take"],"action":"specific recommended action","risk":"Low|Medium|High|Critical","confidence":"Low|Medium|High"}';
 
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+    var resp=await fetch('/api/ai/diagnose',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('eom_token')||'')},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
         system:'You are an experienced marine chief engineer and technical superintendent specialising in LPG carriers with MAN B&W two-stroke engines. You analyse engine room data to identify equipment degradation, anomalies, and maintenance needs. Always respond with only valid JSON.',
-        messages:[{role:'user',content:prompt}]
+        prompt:prompt
       })
     });
     var data=await resp.json();
