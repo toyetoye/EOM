@@ -345,7 +345,7 @@ async function signDE(){
   if(!currentRec) return;
   var total=ITEMS.length, checked=document.querySelectorAll(".ck-box.checked").length;
   if(checked<total){
-    if(!confirm("Only "+checked+"/"+total+" items are checked. Sign anyway?")) return;
+    showToast("Note: Only "+checked+"/"+total+" items are checked.");
   }
   // Save current state first
   await saveDraft();
@@ -362,7 +362,7 @@ async function signCE(){
   if(!currentRec){alert("Save the checklist first");return;}
   var ceN=document.getElementById("ce-name")?.value||"";
   if(!ceN){alert("Enter Chief Engineer name");return;}
-  if(!confirm("Sign and LOCK this checklist? It will no longer be editable.")) return;
+  // Lock is confirmed by the CE signing action itself
   try{
     var rec=await EOM.post("/ums/"+currentRec.id+"/sign-ce",{chief_engineer:ceN});
     currentRec=rec;
@@ -374,7 +374,7 @@ async function signCE(){
 
 async function adminUnlock(){
   if(!currentRec){return;}
-  if(!confirm("Unlock and reset all signatures? This creates an audit trail.")) return;
+  // Admin unlock proceeds directly
   try{
     var rec=await EOM.post("/ums/"+currentRec.id+"/unlock",{});
     currentRec=rec;
