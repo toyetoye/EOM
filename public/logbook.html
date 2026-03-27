@@ -2289,17 +2289,60 @@ function buildRight(){
   el.innerHTML=html;
 }
 
-function submitLog(){
+function showConfirmModal(title,body,onYes,onNo){
+  var ov=document.createElement('div');
+  ov.style='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box=document.createElement('div');
+  box.style='background:var(--app);border:1.5px solid var(--line);border-radius:14px;max-width:420px;width:100%;padding:24px;font-family:var(--font)';
+  var h2=document.createElement('div');
+  h2.style='font-size:15px;font-weight:700;color:var(--t1);margin-bottom:8px';
+  h2.textContent=title;
+  var p=document.createElement('div');
+  p.style='font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:18px';
+  p.textContent=body;
+  var row=document.createElement('div');
+  row.style='display:flex;gap:10px';
+  var btnNo=document.createElement('button');
+  btnNo.textContent='Cancel';
+  btnNo.style='flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--t2);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer';
+  var btnYes=document.createElement('button');
+  btnYes.textContent='Confirm Submit';
+  btnYes.style='flex:1;padding:9px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer';
+  btnNo.onclick=function(){ov.remove();if(onNo)onNo();};
+  btnYes.onclick=function(){ov.remove();if(onYes)onYes();};
+  row.appendChild(btnNo); row.appendChild(btnYes);
+  box.appendChild(h2); box.appendChild(p); box.appendChild(row);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
+async function submitLog(){
   const eng=document.getElementById('duty_eng_inp')?document.getElementById('duty_eng_inp').value.trim():'';
   if(!eng){showToast('Enter Duty Engineer name','warn');return;}
   const{f,t}=getProgress();
-  if(f<t*.4&&!confirm('Only '+f+'/'+t+' fields completed. Submit anyway?'))return;
-  if(!confirm('Submit Watch '+WATCH_STATE.watchNumber+' — '+WATCH_STATE.watchDate+'?\n\nDuty Engineer: '+eng))return;
-  const btn=document.querySelector('.btn-submit');
-  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
-  doApiSave().then(()=>EOM.post('/watches/'+WATCH_STATE.watchId+'/submit',{duty_engineer:eng}))
-  .then(()=>{WATCH_STATE.locked=true;showToast('Watch log submitted ✓','success');if(btn){btn.textContent='✓ Submitted';btn.style.background='var(--ok)';btn.style.color='var(--ok-tx)';btn.disabled=true;}})
-  .catch(e=>{showToast(e.message,'error');if(btn){btn.disabled=false;btn.textContent='📋 Submit Daily Log';}});
+  if(f<t*.4){
+    await new Promise(function(resolve){
+      showConfirmModal(
+        'Low completion — submit anyway?',
+        'Only '+f+'/'+t+' fields are filled. Are you sure you want to submit this watch?',
+        resolve,
+        function(){resolve(null);}
+      );
+    }).then(function(ok){if(!ok)throw new Error('cancelled');});
+    return; // showConfirmModal is non-blocking so we chain differently
+  }
+  doSubmit(eng);
+}
+
+function doSubmit(eng){
+  const{f,t}=getProgress();
+  var bodyText='Watch '+WATCH_STATE.watchNumber+' — '+WATCH_STATE.watchDate+'\nDuty Engineer: '+eng+(f<t*1?' ('+f+'/'+t+' fields)':'');
+  showConfirmModal('Submit Daily Log?', bodyText, function(){
+    const btn=document.querySelector('.btn-submit');
+    if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+    doApiSave().then(function(){return EOM.post('/watches/'+WATCH_STATE.watchId+'/submit',{duty_engineer:eng});})
+    .then(function(){WATCH_STATE.locked=true;showToast('Watch log submitted ✓','success');if(btn){btn.textContent='✓ Submitted';btn.style.background='var(--ok)';btn.style.color='var(--ok-tx)';btn.disabled=true;}})
+    .catch(function(e){showToast(e.message,'error');if(btn){btn.disabled=false;btn.textContent='📋 Submit Daily Log';}});
+  });
 }
 
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const f=document.activeElement;if(!f?.matches('input[type=number]'))return;e.preventDefault();const all=[...document.getElementById('mid-body').querySelectorAll('input[type=number]')];const next=all[all.indexOf(f)+1];if(next){next.focus();next.select?.();}});
