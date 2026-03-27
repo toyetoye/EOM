@@ -56,11 +56,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 .cl-item.locked{cursor:default}
 .item-num{font-size:10px;font-weight:700;color:var(--t3);font-family:var(--mono);min-width:22px;margin-top:2px;flex-shrink:0}
 /* Custom checkbox */
-.ck-box{width:20px;height:20px;border:2px solid var(--bd);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px}
-.ck-box.checked{background:var(--green);border-color:var(--green)}
-.ck-box.checked::after{content:"";width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
-.item-text{font-size:12.5px;color:var(--t1);line-height:1.5;flex:1}
+.item-text{font-size:12.5px;color:var(--t1);line-height:1.5;flex:1;padding-right:8px}
 .cl-item.locked .item-text{color:var(--t2)}
+.status-sel{background:var(--sf2);border:1.5px solid var(--bd);color:var(--t1);font-family:var(--font);font-size:11px;font-weight:600;padding:5px 8px;border-radius:8px;outline:none;cursor:pointer;flex-shrink:0;min-width:130px;transition:.2s}
+.status-sel:focus{border-color:var(--blue)}
+.status-sel.ok{border-color:var(--green);background:rgba(34,197,94,.08);color:#86efac}
+.status-sel.fault{border-color:var(--red);background:rgba(239,68,68,.08);color:#fca5a5}
+.status-sel.nr{border-color:var(--amber);background:rgba(245,158,11,.08);color:#fcd34d}
+.status-sel:disabled{opacity:.5;cursor:default}
+.fault-row{display:none;flex-direction:column;gap:6px;padding:6px 20px 10px 54px;background:rgba(239,68,68,.04);border-left:3px solid var(--red)}
+.fault-lbl{font-size:10px;font-weight:700;color:#fca5a5;text-transform:uppercase;letter-spacing:.5px}
+.fault-input{background:var(--sf2);border:1.5px solid rgba(239,68,68,.4);color:var(--t1);font-family:var(--font);font-size:12px;padding:7px 10px;border-radius:8px;outline:none;resize:vertical;min-height:52px;width:100%}
+.fault-input:focus{border-color:var(--red)}
+.fault-input.missing{border-color:var(--red);box-shadow:0 0 0 2px rgba(239,68,68,.2)}
 /* Remarks */
 .remarks-area{padding:16px 20px;border-top:1px solid var(--bd);background:rgba(0,0,0,.1)}
 .remarks-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
@@ -232,23 +240,42 @@ function render(){
   else if(deSigned) pill.innerHTML='<span style="background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">D/E Signed</span>';
   else pill.innerHTML='<span style="background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3);padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">In Progress</span>';
 
-  var checkedCount=Object.values(items).filter(Boolean).length;
-  var pct=ITEMS.length>0?Math.round(checkedCount/ITEMS.length*100):0;
+  var answeredCount=Object.values(items).filter(function(v){return v&&(typeof v==="boolean"?v:v.status!=="");}).length;
+  var pct=ITEMS.length>0?Math.round(answeredCount/ITEMS.length*100):0;
 
   var refHtml=rec&&rec.ref_number?'<span class="ref-badge">'+rec.ref_number+'</span>':'<span style="font-size:11px;color:var(--t3)">Not saved yet</span>';
   if(isLocked) refHtml+=' <span class="lock-badge">&#128274; Locked</span>';
 
   // Item rows
-  var itemRows=ITEMS.map(function(text,i){
-    var checked=items[i]===true;
-    var lockedCls=(!canEdit)?" locked":"";
-    var clickFn=canEdit?"onclick=\"toggleItem("+i+")\"":"";
-    return '<div class="cl-item'+lockedCls+'" '+clickFn+' id="item-'+i+'">'+
-      '<span class="item-num">'+( i+1)+'.</span>'+
-      '<div class="ck-box'+(checked?" checked":"")+'" id="ck-'+i+'"></div>'+
-      '<span class="item-text">'+esc(text)+'</span>'+
-      '</div>';
-  }).join("");
+  function getItemData(i){var v=items[i];if(!v)return{status:"",comment:"",informed:false};if(typeof v==="boolean")return{status:v?"ok":"",comment:"",informed:false};return{status:v.status||"",comment:v.comment||"",informed:!!v.informed};}
+var faultCount=0;
+var itemRows=ITEMS.map(function(text,i){
+  var d=getItemData(i);
+  if(d.status==="fault")faultCount++;
+  var isFault=d.status==="fault";
+  var lockedCls=(!canEdit)?" locked":"";
+  var selDis=(!canEdit)?" disabled":"";
+  var selCls=d.status==="ok"?" ok":d.status==="fault"?" fault":d.status==="nr"?" nr":"";
+  var row='<div class="cl-item'+lockedCls+'" id="item-'+i+'">';
+  row+='<span class="item-num">'+(i+1)+'.</span>';
+  row+='<span class="item-text">'+esc(text)+'</span>';
+  row+='<select class="status-sel'+selCls+'" id="sel-'+i+'"'+selDis+' onchange="onStatusChange('+i+')">';
+  row+='<option value=""'+( d.status===""?" selected":"")+'>-- Select --</option>';
+  row+='<option value="ok"'+( d.status==="ok"?" selected":"")+'>Yes, All Okay</option>';
+  row+='<option value="fault"'+( d.status==="fault"?" selected":"")+'>No - Fault</option>';
+  row+='<option value="nr"'+( d.status==="nr"?" selected":"")+'>Not Running</option>';
+  row+='</select></div>';
+  if(isFault){
+    row+='<div class="fault-row" id="fault-row-'+i+'" style="display:flex;flex-direction:column">';
+    row+='<label class="fault-lbl">Fault description required</label>';
+    row+='<textarea class="fault-input'+(!d.comment?" missing":"")+'" id="fault-'+i+'"'+(!canEdit?" readonly":"")+' oninput="onFaultInput('+i+')">'+ esc(d.comment)+'</textarea>';
+    if(d.informed)row+='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.3)">Informed</span>';
+    row+='</div>';
+  } else {
+    row+='<div class="fault-row" id="fault-row-'+i+'"></div>';
+  }
+  return row;
+}).join("");
 
   // Remarks
   var remarksHtml='<div class="remarks-area">'+
@@ -287,7 +314,7 @@ function render(){
   // Action bar
   var saveBtn=canEdit?'<button class="hbtn hbtn-blue" onclick="saveDraft()" id="btn-save">Save Draft</button>':'';
   var unlockBtn=isLocked&&userRole==="admin"?'<button class="hbtn" onclick="adminUnlock()" style="background:var(--red);border-color:var(--red);color:#fff">Admin Unlock</button>':'';
-  var pctLbl=checkedCount+"/"+ITEMS.length+" items checked";
+  var pctLbl=answeredCount+"/"+ITEMS.length+" items completed";
   var actionBar='<div class="action-bar">'+
     '<div class="progress-row" style="flex:1;padding:0;background:transparent;border:none">'+
     '<div class="prog-track"><div class="prog-fill" style="width:'+pct+'%"></div></div>'+
@@ -306,25 +333,128 @@ function render(){
     '</div>';
 }
 
-function toggleItem(idx){
-  if(!currentRec||currentRec.is_locked) if(userRole!=="admin") return;
-  var ck=document.getElementById("ck-"+idx);
-  if(!ck) return;
-  ck.classList.toggle("checked");
-  // Update progress
-  var total=ITEMS.length, checked=document.querySelectorAll(".ck-box.checked").length;
-  var pct=Math.round(checked/total*100);
-  var pf=document.querySelector(".prog-fill");
-  var pl=document.querySelector(".prog-lbl");
-  if(pf) pf.style.width=pct+"%";
-  if(pl) pl.textContent=checked+"/"+total+" items checked";
+
+// Status dropdown handler
+function onStatusChange(idx){
+  var sel=document.getElementById('sel-'+idx);
+  if(!sel) return;
+  var val=sel.value;
+  sel.className='status-sel'+(val==='ok'?' ok':val==='fault'?' fault':val==='nr'?' nr':'');
+  var faultRow=document.getElementById('fault-row-'+idx);
+  if(faultRow){
+    if(val==='fault'){
+      faultRow.style.display='flex';
+      faultRow.style.flexDirection='column';
+      faultRow.innerHTML='<label class="fault-lbl">Fault description required</label>'
+        +'<textarea class="fault-input missing" id="fault-'+idx+'" placeholder="Describe the fault or corrective action taken..." oninput="onFaultInput('+idx+')"></textarea>';
+    } else {
+      faultRow.style.display='none';
+      faultRow.innerHTML='';
+    }
+  }
+  updateProgress();
+  updateSignBtn();
 }
+
+function onFaultInput(idx){
+  var ta=document.getElementById('fault-'+idx);
+  if(ta) ta.classList.toggle('missing',!ta.value.trim());
+  updateSignBtn();
+}
+
+function updateProgress(){
+  var sels=document.querySelectorAll('.status-sel');
+  var answered=[...sels].filter(function(s){return s.value!=='';}).length;
+  var total=ITEMS.length;
+  var pct=total>0?Math.round(answered/total*100):0;
+  var pf=document.querySelector('.prog-fill');
+  var pl=document.querySelector('.prog-lbl');
+  if(pf) pf.style.width=pct+'%';
+  if(pl) pl.textContent=answered+'/'+total+' items completed';
+}
+
+function updateSignBtn(){
+  var btn=document.getElementById('btn-sign-de');
+  if(!btn) return;
+  var missing=getFaultsMissingComment();
+  btn.disabled=missing.length>0;
+}
+
+function getFaultsMissingComment(){
+  var missing=[];
+  document.querySelectorAll('.status-sel').forEach(function(sel,i){
+    if(sel.value==='fault'){
+      var ta=document.getElementById('fault-'+i);
+      if(!ta||!ta.value.trim()) missing.push(i);
+    }
+  });
+  return missing;
+}
+
+function getFaultItems(){
+  var faults=[];
+  document.querySelectorAll('.status-sel').forEach(function(sel,i){
+    if(sel.value==='fault'){
+      var ta=document.getElementById('fault-'+i);
+      faults.push({idx:i,text:ITEMS[i],comment:ta?ta.value.trim():''});
+    }
+  });
+  return faults;
+}
+
+function showInformedPrompt(countLabel,itemText){
+  return new Promise(function(resolve){
+    var overlay=document.createElement('div');
+    overlay.style='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    var box=document.createElement('div');
+    box.style='background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;max-width:480px;width:100%;padding:24px';
+    box.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fault Recorded ('+countLabel+')</div>'
+      +'<div style="font-size:15px;font-weight:700;margin-bottom:10px">Has the 2E or C/E been informed?</div>'
+      +'<div style="font-size:13px;color:var(--t2);background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;margin-bottom:18px;line-height:1.5">'
+      +'"'+esc(itemText)+'"</div>'
+      +'<div style="display:flex;gap:10px" id="informed-btns"></div>';
+    var btnNo=document.createElement('button');
+    btnNo.textContent='No -- go back';
+    btnNo.style='flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--bd);background:transparent;color:var(--t2);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer';
+    var btnYes=document.createElement('button');
+    btnYes.textContent='Yes, informed';
+    btnYes.style='flex:1;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer';
+    btnNo.onclick=function(){overlay.remove();resolve(false);};
+    btnYes.onclick=function(){overlay.remove();resolve(true);};
+    box.querySelector('#informed-btns').appendChild(btnNo);
+    box.querySelector('#informed-btns').appendChild(btnYes);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+function showModal(msg){
+  var overlay=document.createElement('div');
+  overlay.style='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box=document.createElement('div');
+  box.style='background:var(--sf);border:1.5px solid rgba(239,68,68,.4);border-radius:14px;max-width:420px;width:100%;padding:24px';
+  var h2=document.createElement('div');
+  h2.style='font-size:15px;font-weight:700;margin-bottom:12px';
+  h2.textContent='Action Required';
+  var p=document.createElement('div');
+  p.style='font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:18px';
+  p.textContent=msg;
+  var btn=document.createElement('button');
+  btn.textContent='OK';
+  btn.style='width:100%;padding:10px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer';
+  btn.onclick=function(){overlay.remove();};
+  box.appendChild(h2); box.appendChild(p); box.appendChild(btn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+
 
 async function saveDraft(){
   var date=document.getElementById("cl-date").value;
   if(!date){alert("Select a date first");return;}
   var items={};
-  document.querySelectorAll(".ck-box").forEach(function(ck,i){items[i]=ck.classList.contains("checked");});
+  document.querySelectorAll(".status-sel").forEach(function(sel,i){var c="";if(sel.value==="fault"){var ta=document.getElementById("fault-"+i);c=ta?ta.value.trim():"";}items[i]={status:sel.value,comment:c,informed:!!(sel.dataset&&sel.dataset.informed==="true")};});
   var remarks=document.getElementById("remarks")?.value||"";
   var deN=document.getElementById("de-name")?.value||"";
   try{
@@ -339,23 +469,42 @@ async function saveDraft(){
 
 async function signDE(){
   var deN=document.getElementById("de-name")?.value||"";
-  var date=document.getElementById("cl-date").value;
-  // Save first if no record
-  if(!currentRec) await saveDraft();
-  if(!currentRec) return;
-  var total=ITEMS.length, checked=document.querySelectorAll(".ck-box.checked").length;
-  if(checked<total){
-    showToast("Note: Only "+checked+"/"+total+" items are checked.");
+  if(!deN){showToast("Enter your name before signing.");return;}
+  var unanswered=[...document.querySelectorAll(".status-sel")].filter(function(s){return s.value==="";}).length;
+  if(unanswered>0){showToast("All items must be answered before signing. ("+unanswered+" unanswered)");return;}
+  var missing=getFaultsMissingComment();
+  if(missing.length>0){
+    showToast("Fault description required for items: "+missing.map(function(i){return i+1;}).join(", "));
+    missing.forEach(function(i){var ta=document.getElementById("fault-"+i);if(ta)ta.classList.add("missing");});
+    return;
   }
-  // Save current state first
-  await saveDraft();
+  var faults=getFaultItems();
+  for(var fi=0;fi<faults.length;fi++){
+    var f=faults[fi];
+    var shortText=f.text.length>60?f.text.slice(0,60)+"...":f.text;
+    var informed=await showInformedPrompt((fi+1)+" of "+faults.length,shortText);
+    if(!informed){
+      var msg="Please inform the 2E or C/E about the fault on item "+(f.idx+1)+" before signing: "+shortText;
+      showModal(msg);
+      return;
+    }
+    var sel=document.getElementById("sel-"+f.idx);
+    if(sel)sel.dataset.informed="true";
+  }
+  var items={};
+  document.querySelectorAll(".status-sel").forEach(function(sel,i){
+    var c="";if(sel.value==="fault"){var ta=document.getElementById("fault-"+i);c=ta?ta.value.trim():"";}
+    items[i]={status:sel.value,comment:c,informed:!!(sel.dataset&&sel.dataset.informed==="true")};
+  });
   try{
+    var remarks=document.getElementById("remarks")?.value||"";
+    if(!currentRec)await saveDraft();
+    if(!currentRec)return;
+    await EOM.post("/ums",{vessel_id:vesselId,checklist_date:document.getElementById("cl-date").value,items:items,remarks:remarks,duty_engineer:deN});
     var rec=await EOM.post("/ums/"+currentRec.id+"/sign-de",{duty_engineer:deN});
-    currentRec=rec;
-    render();
-    loadHistory();
+    currentRec=rec;render();loadHistory();
     showToast("Duty Engineer signed. Ref: "+rec.ref_number);
-  }catch(e){alert("Sign error: "+e.message);}
+  }catch(e){showModal("Sign error: "+e.message);}
 }
 
 async function signCE(){
