@@ -84,6 +84,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 .acc-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;flex:1}
 .acc-body{display:none;padding:2px 4px 6px}
 .acc-body.open{display:block}
+.acc-hdr.active{background:rgba(255,255,255,.05)}
 </style>
 </head>
 <body>
@@ -249,12 +250,24 @@ function renderSidebar(items){
 }
 
 function toggleGroup(grp){
+  // Toggle state
   openGroups[grp] = !openGroups[grp];
-  var q = document.getElementById("param-search").value.toLowerCase();
-  var filtered = q ? catalog.filter(function(c){
-    return c.parameter.toLowerCase().indexOf(q)>-1 || c.equipment.toLowerCase().indexOf(q)>-1 || (c.section||"").toLowerCase().indexOf(q)>-1;
-  }) : catalog;
-  renderSidebar(filtered);
+  var isNowOpen = openGroups[grp];
+  // Find the acc-hdr with this data-grp and toggle its body directly — NO full re-render
+  var hdrs = document.querySelectorAll('.acc-hdr');
+  hdrs.forEach(function(hdr){
+    if(hdr.dataset.grp === grp){
+      var body = hdr.nextElementSibling;
+      var chevron = hdr.querySelector('.acc-chevron');
+      if(body){
+        body.classList.toggle('open', isNowOpen);
+      }
+      if(chevron){
+        chevron.classList.toggle('open', isNowOpen);
+      }
+      hdr.classList.toggle('active', isNowOpen);
+    }
+  });
 }
 
 
