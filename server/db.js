@@ -41,9 +41,15 @@ async function initDB() {
         name VARCHAR(200) NOT NULL,
         imo VARCHAR(20) UNIQUE,
         type VARCHAR(50) DEFAULT 'LPG',
+        propulsion_type VARCHAR(50),
+        vessel_class VARCHAR(50),
         active BOOLEAN DEFAULT true
       )
     `);
+
+    // Safe migration: add vessel metadata columns if not present
+    await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS propulsion_type VARCHAR(50)');
+    await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS vessel_class VARCHAR(50)');
 
     // ── WATCHES ──────────────────────────────────────────────────────────────
     // watch_number: 1=00-04  2=04-08  3=08-12  4=12-16  5=16-20  6=20-24
