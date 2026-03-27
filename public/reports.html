@@ -217,7 +217,7 @@ window.addEventListener('DOMContentLoaded', async function(){
     var v=await EOM.get('/vessels');
     if(!v.length){showEmpty('No vessels');return;}
     vesselId=v[0].id; vesselName=v[0].name;
-    document.getElementById('vessel-lbl').textContent='· '+vesselName;
+    document.getElementById('vessel-lbl').textContent='? '+vesselName;
     await showView('anomalies', document.getElementById('sb-anomalies'));
   }catch(e){showEmpty('Error: '+e.message);}
 });
@@ -232,9 +232,9 @@ async function showView(view,btn){
   else await renderYOY();
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // TODAY'S ANOMALIES
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 async function renderAnomalies(){
   showLoading('Scoring readings against 3-year baseline...');
   var today=new Date().toISOString().slice(0,10);
@@ -250,17 +250,17 @@ async function renderAnomalies(){
   var h='<div class="stat-grid">';
   h+='<div class="stat-card"><div class="stat-val" style="color:var(--t2)">'+d.total_readings+'</div><div class="stat-lbl">Readings Scored</div></div>';
   h+='<div class="stat-card"><div class="stat-val" style="color:var(--green)">'+norm+'</div><div class="stat-lbl">Within Normal Range</div></div>';
-  h+='<div class="stat-card"><div class="stat-val" style="color:'+(warn+crit>0?'var(--amber)':'var(--t2)')+'">'+warn+'</div><div class="stat-lbl">Warnings (>2σ)</div></div>';
-  h+='<div class="stat-card"><div class="stat-val" style="color:'+(crit>0?'var(--red)':'var(--t2)')+'">'+crit+'</div><div class="stat-lbl">Critical (>3σ)</div></div>';
+  h+='<div class="stat-card"><div class="stat-val" style="color:'+(warn+crit>0?'var(--amber)':'var(--t2)')+'">'+warn+'</div><div class="stat-lbl">Warnings (>2?)</div></div>';
+  h+='<div class="stat-card"><div class="stat-val" style="color:'+(crit>0?'var(--red)':'var(--t2)')+'">'+crit+'</div><div class="stat-lbl">Critical (>3?)</div></div>';
   h+='</div>';
 
   if(!d.anomalies.length){
-    h+='<div class="card"><div style="padding:40px;text-align:center"><div style="font-size:40px;margin-bottom:12px">✅</div>';
+    h+='<div class="card"><div style="padding:40px;text-align:center"><div style="font-size:40px;margin-bottom:12px">?</div>';
     h+='<div style="font-size:15px;font-weight:700;color:var(--green)">All readings within normal range</div>';
     h+='<div style="font-size:12px;color:var(--t2);margin-top:8px">'+d.total_readings+' readings scored. No statistical anomalies.</div></div></div>';
   } else {
     var SCOL=['','var(--blue)','var(--amber)','var(--red)'];
-    var SLBL=['','📊 Notable (1.5-2σ)','⚠️ Warning (2-3σ)','🚨 Critical (>3σ)'];
+    var SLBL=['','? Notable (1.5-2?)','?? Warning (2-3?)','? Critical (>3?)'];
     [3,2,1].forEach(function(sev){
       var anoms=d.anomalies.filter(function(a){return a.severity===sev;});
       if(!anoms.length) return;
@@ -268,7 +268,7 @@ async function renderAnomalies(){
       h+='<div class="card-hdr"><span class="card-title" style="color:'+SCOL[sev]+'">'+SLBL[sev]+'</span>';
       h+='<span class="card-meta">'+anoms.length+' parameters -- click any row to drill down</span></div>';
       anoms.forEach(function(a){
-        var dir=a.direction==='high'?'↑ HIGH':'↓ LOW';
+        var dir=a.direction==='high'?'? HIGH':'? LOW';
         var pct=a.pct_from_mean!==null?(a.pct_from_mean>0?'+':'')+a.pct_from_mean+'%':'';
         var interp=interpretAnomaly(a);
         h+='<div class="arow s'+sev+'" style="cursor:pointer" data-fid="'+a.fid+'" data-p="'+a.parameter+'" data-s="'+a.section+'" onclick="onDrillClick(this)">';
@@ -279,8 +279,8 @@ async function renderAnomalies(){
         h+='</div>';
         h+='<div style="text-align:right;margin-right:12px;flex-shrink:0">';
         h+='<div style="font-size:14px;font-weight:700;font-family:var(--mono);color:'+SCOL[sev]+'">'+a.value+' '+esc(a.unit||'')+'</div>';
-        h+='<div style="font-size:10px;color:var(--t3)">mean='+a.mean+(pct?' · '+pct+' from mean':'')+'</div>';
-        h+='<div style="font-size:10px;color:var(--t3)">σ score: '+a.z_score+'</div>';
+        h+='<div style="font-size:10px;color:var(--t3)">mean='+a.mean+(pct?' ? '+pct+' from mean':'')+'</div>';
+        h+='<div style="font-size:10px;color:var(--t3)">? score: '+a.z_score+'</div>';
         h+='</div>';
         var range=a.p90-a.p10; var bp=range>0?Math.min(98,Math.max(2,(a.value-a.p10)/range*100)):50;
         h+='<div style="width:80px;flex-shrink:0">';
@@ -318,9 +318,9 @@ function interpretAnomaly(a){
   return null;
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // MONTHLY TREND REPORT -- with clickable rows
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 async function renderMonthlyReport(){
   var now=new Date(); var y=now.getFullYear(), m=now.getMonth()+1;
   var ctrlHtml='<div class="ctrl"><span class="ctrl-lbl">Report Period</span>';
@@ -344,7 +344,7 @@ async function loadReportData(y,m){
   try{ reportData=await EOM.get('/watches/monthly-report?vessel_id='+vesselId+'&year='+y+'&month='+m); }
   catch(e){ document.getElementById('report-body').innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'; return; }
   var d=reportData, params=d.params||[];
-  if(!params.length){ document.getElementById('report-body').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:12px">📭</div><div>No data for '+MONTHS[m-1]+' '+y+'</div></div>'; return; }
+  if(!params.length){ document.getElementById('report-body').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:12px">?</div><div>No data for '+MONTHS[m-1]+' '+y+'</div></div>'; return; }
 
   var wData=params.filter(function(p){return p.current;}).length;
   var rising=params.filter(function(p){return p.yoy_pct!==null&&p.yoy_pct>5;}).length;
@@ -364,9 +364,9 @@ async function loadReportData(y,m){
 
   Object.keys(groups).sort().forEach(function(sec){
     var sp=groups[sec];
-    h+='<div class="card"><div class="card-hdr"><span class="card-title">'+esc(sec)+'</span><span class="card-meta">'+sp.length+' parameters · click to drill down</span></div>';
+    h+='<div class="card"><div class="card-hdr"><span class="card-title">'+esc(sec)+'</span><span class="card-meta">'+sp.length+' parameters ? click to drill down</span></div>';
     h+='<div style="overflow-x:auto"><table class="ptbl"><thead><tr>';
-    h+='<th>Parameter</th><th>Unit</th><th class="r">'+currLbl+'</th><th class="r">'+prevLbl+'</th><th class="r">YoY Δ</th><th class="r">YoY %</th><th>Trend</th></tr></thead><tbody>';
+    h+='<th>Parameter</th><th>Unit</th><th class="r">'+currLbl+'</th><th class="r">'+prevLbl+'</th><th class="r">YoY ?</th><th class="r">YoY %</th><th>Trend</th></tr></thead><tbody>';
     sp.forEach(function(p,pi){
       var curr=p.current?parseFloat(p.current.avg).toFixed(2):'--';
       var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'--';
@@ -410,9 +410,9 @@ async function loadReportData(y,m){
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // YEAR-ON-YEAR
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 async function renderYOY(){
   showLoading('Loading year-on-year analysis...');
   try{
@@ -428,15 +428,15 @@ async function renderYOY(){
         var items=movers.filter(function(p){return dir==='rise'?p.yoy_pct>0:p.yoy_pct<0;}).slice(0,12);
         if(!items.length) return;
         var col=dir==='rise'?'var(--red)':'var(--green)';
-        var lbl=dir==='rise'?'📈 Rising Parameters':'📉 Falling Parameters';
+        var lbl=dir==='rise'?'? Rising Parameters':'? Falling Parameters';
         h+='<div class="card" style="margin-bottom:16px"><div class="card-hdr"><span class="card-title" style="color:'+col+'">'+lbl+'</span><span class="card-meta">vs same month last year</span></div>';
         items.forEach(function(p){
           var curr=p.current?parseFloat(p.current.avg).toFixed(2):'--';
           var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'--';
           h+='<div class="arow" style="border-left:3px solid '+col+';cursor:pointer" data-fid="'+p.fid+'" data-p="'+esc(p.parameter)+'" data-s="'+esc(p.section)+'" onclick="onDrillClick(this)">';
-          h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+esc(p.parameter)+'</div><div style="font-size:10px;color:var(--t3)">'+esc(p.section)+' · '+esc(p.equipment)+'</div></div>';
+          h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+esc(p.parameter)+'</div><div style="font-size:10px;color:var(--t3)">'+esc(p.section)+' ? '+esc(p.equipment)+'</div></div>';
           h+='<div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+col+'">'+curr+' '+esc(p.unit||'')+'</div>';
-          h+='<div style="font-size:10px;color:var(--t3)">was '+prev+' · <span style="color:'+(dir==="rise"?"#fca5a5":"#86efac")+'">'+(p.yoy_pct>0?'+':'')+p.yoy_pct+'%</span></div></div>';
+          h+='<div style="font-size:10px;color:var(--t3)">was '+prev+' ? <span style="color:'+(dir==="rise"?"#fca5a5":"#86efac")+'">'+(p.yoy_pct>0?'+':'')+p.yoy_pct+'%</span></div></div>';
           h+='</div>';
         });
         h+='</div>';
@@ -446,9 +446,9 @@ async function renderYOY(){
   }catch(e){showEmpty('Error: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // DRILL-DOWN MODAL
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 async function openDrill(fid, paramName, section){
   document.getElementById('drill-title').textContent=paramName;
   document.getElementById('drill-sub').textContent=section;
@@ -614,22 +614,22 @@ function renderAIResult(a){
   h+='</div>';
 
   if(a.findings&&a.findings.length){
-    h+='<div class="finding"><strong>📊 Findings</strong>';
-    a.findings.forEach(function(f){h+='• '+esc(f)+'<br>';});
+    h+='<div class="finding"><strong>? Findings</strong>';
+    a.findings.forEach(function(f){h+='? '+esc(f)+'<br>';});
     h+='</div>';
   }
-  h+='<div class="finding"><strong>🔍 Likely Cause</strong>'+esc(a.likely_cause)+'</div>';
+  h+='<div class="finding"><strong>? Likely Cause</strong>'+esc(a.likely_cause)+'</div>';
   if(a.evidence&&a.evidence.length){
-    h+='<div class="finding"><strong>📋 Supporting Evidence</strong>';
-    a.evidence.forEach(function(e){h+='• '+esc(e)+'<br>';});
+    h+='<div class="finding"><strong>? Supporting Evidence</strong>';
+    a.evidence.forEach(function(e){h+='? '+esc(e)+'<br>';});
     h+='</div>';
   }
   if(a.check_also&&a.check_also.length){
-    h+='<div class="finding" style="border-left-color:var(--amber)"><strong>🔧 Also Check</strong>';
-    a.check_also.forEach(function(c){h+='• '+esc(c)+'<br>';});
+    h+='<div class="finding" style="border-left-color:var(--amber)"><strong>? Also Check</strong>';
+    a.check_also.forEach(function(c){h+='? '+esc(c)+'<br>';});
     h+='</div>';
   }
-  h+='<div class="finding" style="border-left-color:var(--green);background:rgba(34,197,94,.06)"><strong>✅ Recommended Action</strong>'+esc(a.action)+'</div>';
+  h+='<div class="finding" style="border-left-color:var(--green);background:rgba(34,197,94,.06)"><strong>? Recommended Action</strong>'+esc(a.action)+'</div>';
 
   document.getElementById('ai-content').innerHTML=h;
 }
@@ -639,9 +639,9 @@ function closeDrill(){
   destroyCharts(drillCharts); drillCharts=[];
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // PDF EXPORT
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 function exportPDF(){
   var content=document.getElementById('main').innerHTML;
   var titles={'anomalies':'Anomaly Report','report':'Monthly Trend Report','yoy':'Year-on-Year Analysis'};
@@ -675,11 +675,11 @@ function exportPDF(){
   setTimeout(function(){win.print();},600);
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 // HELPERS
-// ═══════════════════════════════════════════════════════════════════
+// ???????????????????????????????????????????????????????????????????
 function showLoading(msg){document.getElementById('main').innerHTML='<div class="empty"><div class="spinner"></div><div style="font-size:13px;color:var(--t2);margin-top:4px">'+(msg||'Loading...')+'</div></div>';}
-function showEmpty(msg){document.getElementById('main').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:13px">'+esc(msg)+'</div></div>';}
+function showEmpty(msg){document.getElementById('main').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:12px">?</div><div style="font-size:13px">'+esc(msg)+'</div></div>';}
 function destroyCharts(arr){arr.forEach(function(c){try{c.destroy();}catch(e){}});arr.length=0;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
