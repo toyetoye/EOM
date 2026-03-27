@@ -58,11 +58,10 @@ app.post('/api/migrate/vessels', async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: 'unauthorized' });
   try {
-    const { verifyToken } = require('./server/auth');
+    const { verifyToken } = require('./auth');
     const user = verifyToken(auth.replace('Bearer ', ''));
     if (user.role !== 'admin') return res.status(403).json({ error: 'admin only' });
-  } catch(e) { return res.status(401).json({ error: 'invalid token' }); }
-  const { pool } = require('./server/db');
+  } catch(e) { return res.status(401).json({ error: 'invalid token: '+e.message }); }
   const client = await pool.connect();
   const results = [];
   try {
@@ -83,7 +82,6 @@ app.post('/api/migrate/vessels', async (req, res) => {
   } finally { client.release(); }
   res.json({ migrated: results.length, vessels: results });
 });
-
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3002;
