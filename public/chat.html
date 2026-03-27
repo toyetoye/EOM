@@ -146,6 +146,21 @@ var VESSEL_CONTEXT = "VESSEL: Alfred Temile -- LPG Carrier\nMAIN ENGINE: MAN B&W
 window.addEventListener("DOMContentLoaded", async function(){
   if(typeof EOM==="undefined") return;
   if(!EOM.requireAuth()) return;
+  // Check role — AI chat is restricted to superintendent/manager/admin
+  var _u = EOM.user();
+  if(!_u || !['admin','superintendent','manager'].includes(_u.role)){
+    document.getElementById('messages').innerHTML =
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--t3);text-align:center;padding:40px">'
+      +'<div style="font-size:48px">&#128274;</div>'
+      +'<div style="font-size:18px;font-weight:700;color:var(--t2)">Access Restricted</div>'
+      +'<div style="font-size:13px;max-width:340px;line-height:1.6">AI Chat is available to Superintendents and Managers only. Contact your superintendent for access.</div>'
+      +'<a href="/logbook.html" style="margin-top:8px;padding:8px 20px;border-radius:8px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600">Back to Logbook</a>'
+      +'</div>';
+    document.getElementById('msg-input').disabled = true;
+    document.getElementById('send-btn').disabled = true;
+    document.querySelectorAll('.suggest-btn').forEach(function(b){b.disabled=true;b.style.opacity='.4';b.style.cursor='default';});
+    return;
+  }
   try{
     var vessels=await EOM.get("/vessels");
     if(!vessels.length) return;
