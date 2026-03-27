@@ -62,3 +62,56 @@ initDB()
     console.error('Failed to initialise DB:', err.message);
     process.exit(1);
   });
+
+// ── AI DIAGNOSTIC PROXY ───────────────────────────────────────────────────────
+// POST /api/ai/diagnose — proxies to Anthropic so we avoid browser CORS
+app.post('/api/ai/diagnose', require('./routes/authRoutes').requireAuthMiddleware || ((req,res,next) => next()), async (req, res) => {
+  // Simple auth check
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'eom-dev-secret');
+  } catch { return res.status(401).json({ error: 'Invalid token' }); }
+
+  const { system, prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+  try {
+    const https = require('https');
+    const body = JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: system || 'You are an experienced marine chief engineer. Respond only with valid JSON.',
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const options = {
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+
+    const proxyReq = https.request(options, (proxyRes) => {
+      let data = '';
+      proxyRes.on('data', chunk => { data += chunk; });
+      proxyRes.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          res.json(parsed);
+        } catch(e) {
+          res.status(500).json({ error: 'Invalid response from AI', raw: data.slice(0, 200) });
+        }
+      });
+    });
+    proxyReq.on('error', e => res.status(500).json({ error: e.message }));
+    proxyReq.write(body);
+    proxyReq.end();
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
