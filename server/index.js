@@ -53,36 +53,6 @@ app.get('*', (req, res) => {
 });
 
 
-// ── ONE-TIME VESSEL MIGRATION ENDPOINT ─────────────────────────────────────
-app.post('/api/migrate/vessels', async (req, res) => {
-  const token = (req.headers.authorization||'').replace('Bearer ','');
-  if (!token) return res.status(401).json({ error: 'unauthorized' });
-  try {
-    const jwt = require('jsonwebtoken');
-    const u = jwt.verify(token, process.env.JWT_SECRET || 'eom-dev-secret');
-    if (u.role !== 'admin') return res.status(403).json({ error: 'admin only' });
-  } catch(e) { return res.status(401).json({ error: 'bad token' }); }
-  const client = await pool.connect();
-  const results = [];
-  try {
-    await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS propulsion_type VARCHAR(50)');
-    await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS vessel_class VARCHAR(50)');
-    const vessels = [["Aktoras", "9958286", "LNG", "2-STROKE", "AKTORAS"], ["Axios II", "9943853", "LNG", "2-STROKE", "AKTORAS"], ["LNG Adamawa", "9262211", "LNG", "STEAM", "RIVERS"], ["LNG Akwa-Ibom", "9262209", "LNG", "STEAM", "RIVERS"], ["LNG River Niger", "9262235", "LNG", "STEAM", "RIVERS"], ["LNG Cross-River", "9262223", "LNG", "STEAM", "RIVERS"], ["LNG Sokoto", "9216303", "LNG", "STEAM", "RIVERS PLUS"], ["LNG Finima II", "9690145", "LNG", "DFDE", "SHI"], ["LNG Portharcourt II", "9690157", "LNG", "DFDE", "SHI"], ["LNG Bonny II", "9692002", "LNG", "DFDE", "HHI"], ["LNG Lagos II", "9692014", "LNG", "DFDE", "HHI"], ["Alfred Temile", "9859882", "LPG", "2-STROKE", "AT"], ["Alfred Temile 10", "9937127", "LPG", "2-STROKE", "AT10"]];
-    for (const [name, imo, type, propulsion_type, vessel_class] of vessels) {
-      const r = await client.query(
-        `INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active)
-         VALUES ($1,$2,$3,$4,$5,true)
-         ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,
-           propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class,active=true
-         RETURNING id,name,imo,type,propulsion_type,vessel_class`,
-        [name,imo,type,propulsion_type,vessel_class]
-      );
-      results.push(r.rows[0]);
-    }
-  } finally { client.release(); }
-  res.json({ migrated: results.length, vessels: results });
-});
-
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3002;
 
