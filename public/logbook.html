@@ -764,7 +764,13 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(!vessels.length){showToast('No vessels assigned','error');return;}
     const v=vessels[0];WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
     const vc=document.getElementById('vessel-chip-txt');
-    if(vc)vc.textContent=v.name+(v.imo?' · IMO '+v.imo:'');
+    if(vc){
+      var chipParts=[v.name];
+      if(v.imo) chipParts.push('IMO '+v.imo);
+      if(v.vessel_class) chipParts.push(v.vessel_class);
+      if(v.propulsion_type) chipParts.push(v.propulsion_type);
+      vc.textContent=chipParts.join(' · ');
+    }
     // Auto-expand first floor
     EXPANDED_FLOOR.current = 'floor';
     await Promise.all([loadWatch(), loadDutyEngineers(), loadDefectStats(), loadCycloneStatus(), loadAnomalies()]);
