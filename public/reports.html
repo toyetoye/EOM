@@ -613,26 +613,36 @@ function renderAIResult(a){
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">';
   h+='<span class="'+(RISK_CLS[a.risk]||'risk-low')+'">'+esc(a.risk||'Low')+' Risk</span>';
   h+='<span style="font-size:11px;color:var(--t3)">Confidence: '+esc(a.confidence||'Medium')+'</span>';
-  h+='<span style="font-size:13px;font-weight:600;color:var(--t1);flex:1">'+esc(a.summary)+'</span>';
   h+='</div>';
+  h+='<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:12px;line-height:1.5">'+esc(a.summary)+'</div>';
 
   if(a.findings&&a.findings.length){
-    h+='<div class="finding"><strong>? Findings</strong>';
-    a.findings.forEach(function(f){h+='? '+esc(f)+'<br>';});
+    h+='<div class="finding"><strong>Findings</strong>';
+    a.findings.forEach(function(f){
+      h+='<div style="margin-top:5px;padding-left:10px;border-left:2px solid var(--blue)">'+esc(f)+'</div>';
+    });
     h+='</div>';
   }
-  h+='<div class="finding"><strong>? Likely Cause</strong>'+esc(a.likely_cause)+'</div>';
+  h+='<div class="finding"><strong>Likely Cause</strong>';
+  h+='<div style="margin-top:5px;color:var(--t1)">'+esc(a.likely_cause)+'</div></div>';
+
   if(a.evidence&&a.evidence.length){
-    h+='<div class="finding"><strong>? Supporting Evidence</strong>';
-    a.evidence.forEach(function(e){h+='? '+esc(e)+'<br>';});
+    h+='<div class="finding"><strong>Supporting Evidence</strong>';
+    a.evidence.forEach(function(e){
+      h+='<div style="margin-top:5px;padding-left:10px;border-left:2px solid var(--blue)">'+esc(e)+'</div>';
+    });
     h+='</div>';
   }
   if(a.check_also&&a.check_also.length){
-    h+='<div class="finding" style="border-left-color:var(--amber)"><strong>? Also Check</strong>';
-    a.check_also.forEach(function(c){h+='? '+esc(c)+'<br>';});
+    h+='<div class="finding" style="border-left-color:var(--amber)"><strong>Also Check</strong>';
+    a.check_also.forEach(function(c){
+      h+='<div style="margin-top:5px;padding-left:10px;border-left:2px solid var(--amber)">'+esc(c)+'</div>';
+    });
     h+='</div>';
   }
-  h+='<div class="finding" style="border-left-color:var(--green);background:rgba(34,197,94,.06)"><strong>? Recommended Action</strong>'+esc(a.action)+'</div>';
+  h+='<div class="finding" style="border-left-color:var(--green);background:rgba(34,197,94,.06)">';
+  h+='<strong>Recommended Action</strong>';
+  h+='<div style="margin-top:5px;font-size:13px;color:var(--t1)">'+esc(a.action)+'</div></div>';
 
   document.getElementById('ai-content').innerHTML=h;
 }
