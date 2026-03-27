@@ -221,3 +221,53 @@ async function addDefectTables(client) {
   `);
 }
 module.exports.addDefectTables = addDefectTables;
+
+// ── UMS CHECKLIST TABLES ─────────────────────────────────────────────────────
+async function addUMSTables() {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ums_checklists (
+        id               SERIAL PRIMARY KEY,
+        ref_number       TEXT UNIQUE,
+        vessel_id        INTEGER REFERENCES eom_vessels(id),
+        checklist_date   DATE NOT NULL,
+        items            JSONB NOT NULL DEFAULT '{}',
+        remarks          TEXT,
+        duty_engineer    TEXT,
+        de_signed        BOOLEAN NOT NULL DEFAULT FALSE,
+        de_signed_at     TIMESTAMPTZ,
+        de_signed_by     INTEGER REFERENCES eom_users(id),
+        chief_engineer   TEXT,
+        ce_signed        BOOLEAN NOT NULL DEFAULT FALSE,
+        ce_signed_at     TIMESTAMPTZ,
+        ce_signed_by     INTEGER REFERENCES eom_users(id),
+        is_locked        BOOLEAN NOT NULL DEFAULT FALSE,
+        created_by       INTEGER REFERENCES eom_users(id),
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_ums_vessel_date ON ums_checklists(vessel_id, checklist_date)`);
+
+    // Auto-generate UMS ref number: UMS-YYYYMMDD-XXXX
+    await client.query(`
+      CREATE OR REPLACE FUNCTION set_ums_ref()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF NEW.ref_number IS NULL THEN
+          NEW.ref_number := 'UMS-' || TO_CHAR(NEW.checklist_date, 'YYYYMMDD') || '-' || LPAD(NEW.id::TEXT, 4, '0');
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    `);
+    await client.query(`DROP TRIGGER IF EXISTS trg_ums_ref ON ums_checklists`);
+    await client.query(`
+      CREATE TRIGGER trg_ums_ref
+        BEFORE INSERT ON ums_checklists
+        FOR EACH ROW EXECUTE FUNCTION set_ums_ref()
+    `);
+  } finally { client.release(); }
+}
+module.exports.addUMSTables = addUMSTables;
