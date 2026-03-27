@@ -345,33 +345,35 @@ function addMessage(role, text){
 }
 
 function formatAIText(text){
-  // Convert pipe tables
-  text=text.replace(/
-(\|[^
-]+\|)
-(\|[-| :]+\|)
-((?:\|[^
-]+\|
-?)+)/g, function(m,header,sep,rows){
-    var ths=header.split("|").filter(function(c){return c.trim();});
-    var trs=rows.trim().split("\n").map(function(r){return r.split("|").filter(function(c){return c.trim();});});
-    var html="<table><thead><tr>"+ths.map(function(h){return"<th>"+esc(h.trim())+"</th>";}).join("")+"</tr></thead><tbody>";
-    trs.forEach(function(tr){html+="<tr>"+tr.map(function(td){return"<td>"+esc(td.trim())+"</td>";}).join("")+"</tr>";});
-    return html+"</tbody></table>";
+  // Tables: detect | row | lines and convert
+  var lines=text.split("\n"); var out=[]; var tableLines=[]; var inTable=false;
+  function flushTable(){
+    if(tableLines.length<2){out=out.concat(tableLines);tableLines=[];inTable=false;return;}
+    var header=tableLines[0].split("|").filter(function(c){return c.trim();});
+    var rows=tableLines.slice(2).map(function(r){return r.split("|").filter(function(c){return c.trim();});});
+    var tbl="<table><thead><tr>"+header.map(function(h){return"<th>"+esc(h.trim())+"</th>";}).join("")+"</tr></thead><tbody>";
+    rows.forEach(function(r){tbl+="<tr>"+r.map(function(td){return"<td>"+esc(td.trim())+"</td>";}).join("")+"</tr>";});
+    out.push(tbl+"</tbody></table>"); tableLines=[]; inTable=false;
+  }
+  lines.forEach(function(line){
+    if(line.indexOf("|")>-1&&line.trim().charAt(0)==="|"){
+      inTable=true; tableLines.push(line);
+    } else { if(inTable) flushTable(); out.push(line); }
   });
+  if(inTable) flushTable();
+  text=out.join("\n");
   // Bold **text**
   text=text.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
   // Code blocks
-  text=text.replace(/```([^`]+)```/g,"<pre>$1</pre>");
+  text=text.replace(/```([\s\S]+?)```/g,"<pre>$1</pre>");
   // Inline code
-  text=text.replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,.1);padding:1px 4px;border-radius:4px;font-family:var(--mono);font-size:11px">$1</code>');
+  text=text.replace(/`([^`]+)`/g,"<code style=\"background:rgba(255,255,255,.1);padding:1px 4px;border-radius:4px;font-family:var(--mono);font-size:11px\">$1</code>");
   // Line breaks
-  text=text.replace(/
-/g,"<br>");
+  text=text.replace(/\n/g,"<br>");
   // Color risk words
-  text=text.replace(/(Critical|High Risk|Urgent)/g,'<span class="risk-hi">$1</span>');
-  text=text.replace(/(Medium Risk|Warning|Caution)/g,'<span class="risk-med">$1</span>');
-  text=text.replace(/(Normal|Low Risk|Within limits)/g,'<span class="risk-ok">$1</span>');
+  text=text.replace(/\b(Critical|High Risk|Urgent)\b/g,"<span class=risk-hi>$1</span>");
+  text=text.replace(/\b(Medium Risk|Warning|Caution)\b/g,"<span class=risk-med>$1</span>");
+  text=text.replace(/\b(Normal|Low Risk|Within limits)\b/g,"<span class=risk-ok>$1</span>");
   return text;
 }
 
