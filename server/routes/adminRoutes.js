@@ -94,12 +94,12 @@ router.get('/vessels', ...guard, async (req, res) => {
 });
 
 router.post('/vessels', ...adminOnly, async (req, res) => {
-  const { name, imo, type } = req.body;
+  const { name, imo, type, propulsion_type, vessel_class } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
   try {
     const { rows } = await pool.query(
-      'INSERT INTO eom_vessels (name,imo,type,active) VALUES ($1,$2,$3,true) RETURNING *',
-      [name.trim(), imo||null, type||'LPG']
+      'INSERT INTO eom_vessels (name,imo,type,propulsion_type,vessel_class,active) VALUES ($1,$2,$3,$4,$5,true) RETURNING *',
+      [name.trim(), imo||null, type||'LPG', propulsion_type||null, vessel_class||null]
     );
     res.json(rows[0]);
   } catch (e) {
