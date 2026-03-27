@@ -613,6 +613,56 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 </div>
 
 <script>
+
+// ── Vessel-class template overrides ─────────────────────────────────────────
+// Called after vessel is selected. Patches FLOORS metadata (labels, specs,
+// alarm limits) to match the specific vessel class.
+// FLOORS structure is shared; only sub-labels and limits differ between AT/AT10.
+function applyVesselClassOverrides(vessel){
+  var cls = vessel.vessel_class || 'AT';
+  var prop = vessel.propulsion_type || '2-STROKE';
+
+  // Helper: find equip by id across all floors
+  function findEquip(equipId){
+    for(var fl of FLOORS){ for(var eq of (fl.equip||[])){ if(eq.id===equipId) return eq; } }
+    return null;
+  }
+  function findField(equipId, tabId, fieldId){
+    var eq = findEquip(equipId); if(!eq) return null;
+    for(var tab of (eq.tabs||[])){
+      if(tab.id!==tabId) continue;
+      for(var f of (tab.fields||tab.duoFields||[])){
+        if(f.id===fieldId||f.id2===fieldId) return f;
+      }
+    }
+    return null;
+  }
+
+  if(cls==='AT10'){
+    // Main Engine — Alfred Temile 10 has WinGD X62-S (6-cyl, ~9,400kW, 86rpm nominal)
+    // based on running hours patterns and sister vessel specs
+    var me = findEquip('me');
+    if(me){
+      me.sub = 'WinGD X62-S · 6 Cylinders · ~9,400kW · 86rpm';
+      // AT10 ME has 6 cylinders (AT has 7)
+      for(var tab of (me.tabs||[])){
+        if(tab.cylinders) tab.cylinders.count = 6;
+      }
+    }
+    // D/G — Alfred Temile 10 uses Hyundai HiMSEN 8H21/32 (3 × 1,680kW)
+    var dg1 = findEquip('ae1'); if(dg1) dg1.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    var dg2 = findEquip('ae2'); if(dg2) dg2.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    var dg3 = findEquip('ae3'); if(dg3) dg3.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    // A/C Plant — AT10 has Hi Air 2-unit system (same as AT)
+    // No structural change needed
+    // Floor labels
+    for(var fl of FLOORS){
+      if(fl.id==='floor') fl.sub='Tank Top · Main Engine (AT10)';
+    }
+  }
+  // AT class — default FLOORS already match, no changes needed
+}
+
 // ── EOM API LAYER ─────────────────────────────────────────────────────────────
 var OBS_STATE = {};
 var EQ_REMARKS_V = {};
@@ -763,6 +813,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     const vessels=await EOM.get('/vessels');
     if(!vessels.length){showToast('No vessels assigned','error');return;}
     const v=vessels[0];WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
+    applyVesselClassOverrides(v);
     const vc=document.getElementById('vessel-chip-txt');
     if(vc){
       var chipParts=[v.name];
@@ -770,6 +821,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
       if(v.vessel_class) chipParts.push(v.vessel_class);
       if(v.propulsion_type) chipParts.push(v.propulsion_type);
       vc.textContent=chipParts.join(' · ');
+      // Add vessel class badge next to chip
+      var existingBadge=document.getElementById('vessel-class-badge');
+      if(existingBadge) existingBadge.remove();
+      if(v.vessel_class){
+        var badge=document.createElement('span');
+        badge.id='vessel-class-badge';
+        var badgeColor=v.type==='LNG'?'rgba(59,130,246,.2)':'rgba(124,58,237,.2)';
+        var textColor=v.type==='LNG'?'#93c5fd':'#c4b5fd';
+        badge.style='font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:'+badgeColor+';color:'+textColor+';margin-left:6px;vertical-align:middle';
+        badge.textContent=v.vessel_class+(v.propulsion_type?' · '+v.propulsion_type:'');
+        vc.parentElement.appendChild(badge);
+      }
     }
     // Auto-expand first floor
     EXPANDED_FLOOR.current = 'floor';
