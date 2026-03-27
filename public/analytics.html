@@ -177,55 +177,87 @@ function filterParams(){
   renderSidebar(filtered);
 }
 
-// Accordion state
+// Floor-organised sidebar
 var openGroups = {};
+var SECTION_FLOORS = {
+  "Main Engine":  {floor:"ER Floor",     color:"#1570EF"},
+  "Auxiliaries":  {floor:"ER Floor",     color:"#1570EF"},
+  "A/C Plant":    {floor:"ER Floor",     color:"#1570EF"},
+  "D/G No.1":     {floor:"3rd Deck",    color:"#7C3AED"},
+  "D/G No.2":     {floor:"3rd Deck",    color:"#7C3AED"},
+  "D/G No.3":     {floor:"3rd Deck",    color:"#7C3AED"},
+  "Fridge":       {floor:"2nd Deck",    color:"#0891B2"},
+  "Tanks":        {floor:"Tanks",        color:"#B45309"},
+  "ER Rounds":    {floor:"ER Rounds",    color:"#059669"},
+  "Running Hours":{floor:"Running Hours",color:"#6366F1"},
+  "Monthly Logs": {floor:"Monthly Logs", color:"#8B5CF6"},
+  "Weekly Tests": {floor:"Weekly Tests", color:"#0EA5E9"}
+};
+var FLOOR_ORDER = ["ER Floor","3rd Deck","2nd Deck","Tanks","ER Rounds","Running Hours","Weekly Tests","Monthly Logs"];
+var FLOOR_COLORS = {"ER Floor":"#1570EF","3rd Deck":"#7C3AED","2nd Deck":"#0891B2","Tanks":"#B45309","ER Rounds":"#059669","Running Hours":"#6366F1","Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"};
 
 function renderSidebar(items){
-  var groups = {};
+  var floors = {};
   items.forEach(function(c){
-    var grp = c.section || 'Other';
-    if(!groups[grp]) groups[grp] = [];
-    groups[grp].push(c);
+    var sec = c.section || "Other";
+    var fi = SECTION_FLOORS[sec] || {floor:"Other", color:"#475569"};
+    var fn = fi.floor;
+    if(!floors[fn]) floors[fn] = {color: FLOOR_COLORS[fn]||fi.color, sections:{}};
+    if(!floors[fn].sections[sec]) floors[fn].sections[sec] = [];
+    floors[fn].sections[sec].push(c);
   });
-  var grpKeys = Object.keys(groups).sort();
-  // Open first group by default
-  if(grpKeys.length && !Object.keys(openGroups).length) openGroups[grpKeys[0]] = true;
 
-  var h = '';
-  grpKeys.forEach(function(grp){
-    var isOpen = openGroups[grp];
-    var selCount = groups[grp].filter(function(c){ return selectedFids.indexOf(c.fid) > -1; }).length;
-    var badge = selCount > 0
-      ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">'+selCount+'</span>'
-      : '';
-    var safeGrp = grp.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    h += '<div class="acc-group">';
-    h += '<div class="acc-hdr" onclick="toggleGroup(\'' + safeGrp + '\')">';
-    h += '<span class="acc-chevron ' + (isOpen ? 'open' : '') + '">▶</span>';
-    h += '<span class="acc-label">' + esc(grp) + '</span>' + badge;
-    h += '</div>';
-    h += '<div class="acc-body' + (isOpen ? ' open' : '') + '">';
-    groups[grp].forEach(function(c){
-      var isSel = selectedFids.indexOf(c.fid) > -1;
-      h += '<button class="param-btn' + (isSel ? ' selected' : '') + '" onclick="toggleParam(\'' + c.fid + '\')">';
-      h += '<span class="param-name">' + esc(c.parameter) + '</span>';
-      h += '<span class="param-unit">' + esc(c.unit || '') + '</span>';
-      h += '<span class="param-count">' + c.reading_count + '×</span>';
-      h += '</button>';
-    });
-    h += '</div></div>';
+  var fkeys = Object.keys(floors).sort(function(a,b){
+    var ia=FLOOR_ORDER.indexOf(a); var ib=FLOOR_ORDER.indexOf(b);
+    if(ia===-1)ia=99; if(ib===-1)ib=99; return ia-ib;
   });
-  document.getElementById('sb-list').innerHTML = h || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
+
+  if(fkeys.length && !Object.keys(openGroups).length) openGroups[fkeys[0]] = true;
+
+  var h = "";
+  fkeys.forEach(function(fn){
+    var fl = floors[fn];
+    var isOpen = openGroups[fn];
+    var selCount = 0;
+    Object.values(fl.sections).forEach(function(ps){
+      ps.forEach(function(c){ if(selectedFids.indexOf(c.fid)>-1) selCount++; });
+    });
+    var badge = selCount > 0 ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">'+selCount+"</span>" : "";
+    h += '<div class="acc-group">';
+    h += '<div class="acc-hdr" data-grp="'+fn+'" onclick="toggleGroup(this.dataset.grp)">';
+    h += '<div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;background:'+fl.color+'"></div>';
+    h += '<span class="acc-label">'+esc(fn)+"</span>";
+    h += badge;
+    h += '<span class="acc-chevron '+(isOpen?"open":"")+'">&#9658;</span>';
+    h += "</div>";
+    h += '<div class="acc-body'+(isOpen?" open":"")+">";
+    Object.keys(fl.sections).sort().forEach(function(sec){
+      var params = fl.sections[sec];
+      h += '<div style="padding:5px 4px 2px 10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;">'+esc(sec)+"</div>";
+      params.forEach(function(c){
+        var isSel = selectedFids.indexOf(c.fid) > -1;
+        h += '<button class="param-btn'+(isSel?" selected":"")+'" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
+        h += '<span class="param-name">'+esc(c.parameter)+"</span>";
+        h += '<span class="param-unit">'+esc(c.unit||"")+"</span>";
+        h += '<span class="param-count">'+c.reading_count+"x</span>";
+        h += "</button>";
+      });
+    });
+    h += "</div></div>";
+  });
+  document.getElementById("sb-list").innerHTML = h || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
 }
 
 function toggleGroup(grp){
   openGroups[grp] = !openGroups[grp];
-  var q = document.getElementById('param-search').value.toLowerCase();
+  var q = document.getElementById("param-search").value.toLowerCase();
   var filtered = q ? catalog.filter(function(c){
-    return c.parameter.toLowerCase().indexOf(q) > -1 || c.equipment.toLowerCase().indexOf(q) > -1;
+    return c.parameter.toLowerCase().indexOf(q)>-1 || c.equipment.toLowerCase().indexOf(q)>-1 || (c.section||"").toLowerCase().indexOf(q)>-1;
   }) : catalog;
   renderSidebar(filtered);
 }
+
+
 
 
 function toggleParam(fid){
