@@ -618,6 +618,39 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 // Called after vessel is selected. Patches FLOORS metadata (labels, specs,
 // alarm limits) to match the specific vessel class.
 // FLOORS structure is shared; only sub-labels and limits differ between AT/AT10.
+
+async function onVesselSelectorChange(vesselId){
+  const vessels = WATCH_STATE._allVessels || [];
+  const v = vessels.find(x=>x.id===parseInt(vesselId));
+  if(!v) return;
+  WATCH_STATE.vesselId = v.id;
+  WATCH_STATE.vesselName = v.name;
+  applyVesselClassOverrides(v);
+  // Update chip text
+  const vc = document.getElementById('vessel-chip-txt');
+  if(vc){
+    var parts=[v.name];
+    if(v.imo) parts.push('IMO '+v.imo);
+    if(v.vessel_class) parts.push(v.vessel_class);
+    vc.textContent=parts.join(' · ');
+    var eb=document.getElementById('vessel-class-badge');
+    if(eb) eb.remove();
+    if(v.vessel_class){
+      var b=document.createElement('span');
+      b.id='vessel-class-badge';
+      var bc=v.type==='LNG'?'rgba(59,130,246,.2)':'rgba(124,58,237,.2)';
+      var tc=v.type==='LNG'?'#93c5fd':'#c4b5fd';
+      b.style='font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:'+bc+';color:'+tc+';margin-left:6px;vertical-align:middle';
+      b.textContent=v.vessel_class+(v.propulsion_type?' · '+v.propulsion_type:'');
+      vc.parentElement.appendChild(b);
+    }
+  }
+  // Reload the watch for the new vessel
+  const dateEl=document.getElementById('log_date');
+  if(dateEl && dateEl.value) await loadWatch(dateEl.value);
+  showToast('Switched to '+v.name);
+}
+
 function applyVesselClassOverrides(vessel){
   var cls = vessel.vessel_class || 'AT';
   var prop = vessel.propulsion_type || '2-STROKE';
@@ -812,8 +845,17 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{
     const vessels=await EOM.get('/vessels');
     if(!vessels.length){showToast('No vessels assigned','error');return;}
+    // Populate vessel selector for admin/superintendent/manager
+    const _user=EOM.user();
+    const _elevated=['admin','superintendent','manager'].includes(_user?.role);
+    const _sel=document.getElementById('vessel-selector');
+    if(_elevated && vessels.length>1 && _sel){
+      _sel.style.display='inline-block';
+      _sel.innerHTML=vessels.map(v=>`<option value="${v.id}">${v.name}${v.vessel_class?' ('+v.vessel_class+')':''}</option>`).join('');
+    }
     const v=vessels[0];WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
     applyVesselClassOverrides(v);
+    WATCH_STATE._allVessels=vessels;
     const vc=document.getElementById('vessel-chip-txt');
     if(vc){
       var chipParts=[v.name];
