@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDB } = require('./db');
+const { initDB, addUMSTables } = require('./db');
 
 const app = express();
 
@@ -33,6 +33,7 @@ app.use('/api/vessels', require('./routes/vesselRoutes'));
 app.use('/api/watches', require('./routes/watchRoutes'));
 app.use('/api/admin',   require('./routes/adminRoutes'));
 app.use('/api/defects',  require('./routes/defectRoutes'));
+app.use('/api/ums',      require('./routes/umsRoutes'));
 
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
