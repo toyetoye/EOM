@@ -172,7 +172,7 @@ async function loadFleetOverview() {
     grid.innerHTML = data.map(v => `
       <div class="vessel-card" onclick="filterVessel(${v.id})">
         <div class="vc-name">${v.name}</div>
-        <div class="vc-imo">${v.imo ? 'IMO ' + v.imo : v.type}</div>
+        <div class="vc-imo">${v.imo ? 'IMO ' + v.imo : ''}  <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:${v.type==='LNG'?'rgba(59,130,246,.15)':'rgba(124,58,237,.15)'};color:${v.type==='LNG'?'#93c5fd':'#c4b5fd'}">${v.type||''}</span>${v.vessel_class ? ' <span style="font-size:9px;color:var(--muted)">'+v.vessel_class+'</span>' : ''}${v.propulsion_type ? ' <span style="font-size:9px;color:var(--muted)">'+v.propulsion_type+'</span>' : ''}</div>
         <div class="vc-stats">
           <div class="vc-stat">
             <span class="vc-stat-val ${v.watches_today>0?'vc-ok':'vc-warn'}">${v.watches_today}</span>
@@ -196,8 +196,9 @@ function populateVesselFilter() {
   const sel = document.getElementById('fVessel');
   const mSel = document.getElementById('mVessel');
   vessels.forEach(v => {
-    sel.innerHTML += `<option value="${v.id}">${v.name}</option>`;
-    mSel.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+    const optLabel = v.name + (v.vessel_class ? ' ('+v.vessel_class+')' : '');
+    sel.innerHTML += `<option value="${v.id}">${optLabel}</option>`;
+    mSel.innerHTML += `<option value="${v.id}">${optLabel}</option>`;
   });
 }
 
