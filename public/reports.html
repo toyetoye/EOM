@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>FORCAP — AI Reports</title>
+<title>FORCAP -- AI Reports</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="/eom-api.js"></script>
@@ -114,7 +114,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
     <button class="sb-btn" id="sb-report" onclick="showView('report',this)">📊 Monthly Trend</button>
     <button class="sb-btn" id="sb-yoy" onclick="showView('yoy',this)">📈 Year-on-Year</button>
   </div>
-  <div class="main" id="main"><div class="empty"><div class="spinner"></div>Loading…</div></div>
+  <div class="main" id="main"><div class="empty"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <!-- Drill-down modal -->
@@ -142,7 +142,7 @@ var LOGO_URI='data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJ
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-// Engineering correlations — which parameters tell the same story
+// Engineering correlations -- which parameters tell the same story
 const CORRELATIONS={
   'ac1_cfi':['ac1_cfo','swt','ac1_hp','ac1_lp','ert'],
   'ac1_cfo':['ac1_cfi','swt','ac1_hp'],
@@ -175,38 +175,38 @@ const CORRELATIONS={
 
 // Engine-specific benchmarks for AI context
 const VESSEL_CONTEXT = `
-VESSEL: Alfred Temile — LPG Carrier
-MAIN ENGINE: MAN B&W 7S40ME-B9.5 — 7 cylinders, MCR 6,000 kW @ 136.9 rpm
+VESSEL: Alfred Temile -- LPG Carrier
+MAIN ENGINE: MAN B&W 7S40ME-B9.5 -- 7 cylinders, MCR 6,000 kW @ 136.9 rpm
 OPERATING AREA: West Africa / Gulf of Guinea
-- Sea water temperature: typically 26–32°C year-round; values outside 24–34°C are anomalous
-- Ambient ER temperature: typically 38–45°C; spikes above 48°C warrant investigation
+- Sea water temperature: typically 26-32 degC year-round; values outside 24-34 degC are anomalous
+- Ambient ER temperature: typically 38-45 degC; spikes above 48 degC warrant investigation
 - Any wild seasonal temperature swings are abnormal for this fixed operating area
 
 ENGINEERING BENCHMARKS:
 Cylinder Oil (MAN S40ME):
-- Normal consumption: 0.6–0.9 g/kWh
-- At MCR (6,000 kW): approx 86–130 kg/day = 2,600–3,900 kg/month
+- Normal consumption: 0.6-0.9 g/kWh
+- At MCR (6,000 kW): approx 86-130 kg/day = 2,600-3,900 kg/month
 - Consumption >1.2 g/kWh = investigate injection/scavenge
 - Consumption <0.4 g/kWh = risk of bore polishing
 
 A/C Plant (R407C refrigerant, seawater cooled):
-- HP pressure: 13–19 bar normal; >22 bar = condenser fouling or overcharge
-- LP pressure: 3.5–6 bar normal; <3 bar = undercharge or evaporator issue
-- Superheat: 5–10 K normal; >15 K = low charge or TXV/EEV issue
-- Receiver level: 60–85% normal
-- CFW In should track ~3–6°C above SW inlet temperature
+- HP pressure: 13-19 bar normal; >22 bar = condenser fouling or overcharge
+- LP pressure: 3.5-6 bar normal; <3 bar = undercharge or evaporator issue
+- Superheat: 5-10 K normal; >15 K = low charge or TXV/EEV issue
+- Receiver level: 60-85% normal
+- CFW In should track ~3-6 degC above SW inlet temperature
 
 Cooling Water System:
-- CFW temp rise across HT coolers: 5–12°C normal; >15°C = fouling or pump issue
-- CFW In – SW Inlet should be 3–8°C; rising differential = HT cooler fouling
-- CSW pump discharge pressure: 0.8–1.2 bar normal; falling = impeller wear or fouling
+- CFW temp rise across HT coolers: 5-12 degC normal; >15 degC = fouling or pump issue
+- CFW In - SW Inlet should be 3-8 degC; rising differential = HT cooler fouling
+- CSW pump discharge pressure: 0.8-1.2 bar normal; falling = impeller wear or fouling
 
 Stern Tube:
-- Discharge temperature: 40–60°C normal at sea; >65°C = bearing wear or LO starvation
+- Discharge temperature: 40-60 degC normal at sea; >65 degC = bearing wear or LO starvation
 - Header tank level should be stable; >2% drop per watch = seal leakage
 
 FWG Production:
-- Typical production: 15–25 tonnes/day depending on load
+- Typical production: 15-25 tonnes/day depending on load
 - Salinity should be <5 ppm for potable water
 `;
 
@@ -236,12 +236,12 @@ async function showView(view,btn){
 // TODAY'S ANOMALIES
 // ═══════════════════════════════════════════════════════════════════
 async function renderAnomalies(){
-  showLoading('Scoring readings against 3-year baseline…');
+  showLoading('Scoring readings against 3-year baseline...');
   var today=new Date().toISOString().slice(0,10);
   try{ anomalyData=await EOM.get('/watches/anomalies?vessel_id='+vesselId+'&date='+today); }
   catch(e){showEmpty('Error: '+e.message);return;}
   var d=anomalyData;
-  if(!d||!d.total_readings){showEmpty('No readings for today — submit the daily log first.');return;}
+  if(!d||!d.total_readings){showEmpty('No readings for today -- submit the daily log first.');return;}
   var crit=d.anomalies.filter(function(a){return a.severity===3;}).length;
   var warn=d.anomalies.filter(function(a){return a.severity===2;}).length;
   var note=d.anomalies.filter(function(a){return a.severity===1;}).length;
@@ -260,20 +260,20 @@ async function renderAnomalies(){
     h+='<div style="font-size:12px;color:var(--t2);margin-top:8px">'+d.total_readings+' readings scored. No statistical anomalies.</div></div></div>';
   } else {
     var SCOL=['','var(--blue)','var(--amber)','var(--red)'];
-    var SLBL=['','📊 Notable (1.5–2σ)','⚠️ Warning (2–3σ)','🚨 Critical (>3σ)'];
+    var SLBL=['','📊 Notable (1.5-2σ)','⚠️ Warning (2-3σ)','🚨 Critical (>3σ)'];
     [3,2,1].forEach(function(sev){
       var anoms=d.anomalies.filter(function(a){return a.severity===sev;});
       if(!anoms.length) return;
       h+='<div class="card">';
       h+='<div class="card-hdr"><span class="card-title" style="color:'+SCOL[sev]+'">'+SLBL[sev]+'</span>';
-      h+='<span class="card-meta">'+anoms.length+' parameters — click any row to drill down</span></div>';
+      h+='<span class="card-meta">'+anoms.length+' parameters -- click any row to drill down</span></div>';
       anoms.forEach(function(a){
         var dir=a.direction==='high'?'↑ HIGH':'↓ LOW';
         var pct=a.pct_from_mean!==null?(a.pct_from_mean>0?'+':'')+a.pct_from_mean+'%':'';
         var interp=interpretAnomaly(a);
         h+='<div class="arow s'+sev+'" style="cursor:pointer" data-fid="'+a.fid+'" data-p="'+a.parameter+'" data-s="'+a.section+'" onclick="onDrillClick(this)">';
         h+='<div style="flex:1;min-width:0">';
-        h+='<div style="font-size:12px;font-weight:700">'+esc(a.equipment)+' — '+esc(a.parameter)+'</div>';
+        h+='<div style="font-size:12px;font-weight:700">'+esc(a.equipment)+' -- '+esc(a.parameter)+'</div>';
         h+='<div style="font-size:10px;color:var(--t3)">'+esc(a.section)+'</div>';
         if(interp) h+='<div style="font-size:11px;color:var(--t2);margin-top:3px;font-style:italic">'+esc(interp)+'</div>';
         h+='</div>';
@@ -296,30 +296,30 @@ async function renderAnomalies(){
       h+='</div>';
     });
   }
-  h+='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px">Click any anomaly row to drill down — full history chart + AI diagnostic analysis</div>';
+  h+='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px">Click any anomaly row to drill down -- full history chart + AI diagnostic analysis</div>';
   document.getElementById('main').innerHTML=h;
 }
 
 function interpretAnomaly(a){
   var p=a.parameter.toLowerCase(),s=a.section.toLowerCase(),dir=a.direction;
-  if(p.includes('temp')&&p.includes('exh')&&dir==='high') return 'High exhaust temp — check fuel injection, scavenge air, or fuel quality';
-  if(p.includes('pressure')&&(p.includes('lube')||p.includes(' lo'))&&dir==='low') return 'Low LO pressure — check pump, filter, or sump level';
-  if(p.includes('temp')&&p.includes('bearing')&&dir==='high') return 'High bearing temp — check lubrication or alignment';
-  if(p.includes('sea water')&&dir==='high') return 'SW temp higher than typical for this area — verify sensor';
-  if(p.includes('superheat')&&dir==='high') return 'High superheat — low refrigerant charge or TXV/EEV fault';
-  if(p.includes('h.p pressure')&&dir==='high') return 'High HP pressure — condenser fouling or refrigerant overcharge';
-  if(p.includes('l.p pressure')&&dir==='low') return 'Low LP pressure — refrigerant undercharge or evaporator icing';
-  if(p.includes('receiver level')&&dir==='low') return 'Low refrigerant level — possible leak';
-  if(p.includes('stern tube')&&p.includes('temp')&&dir==='high') return 'High stern tube temp — check LO flow and bearing condition';
-  if(p.includes('cfw')&&dir==='high') return 'High cooling FW temp — check HT cooler, pump, or system load';
-  if(p.includes('cyl oil')&&dir==='low') return 'Cylinder oil level dropping — check consumption rate vs run hours';
-  if(p.includes('motor current')&&dir==='high') return 'High motor current — possible overload or mechanical resistance';
-  if(p.includes('fo')&&p.includes('press')&&dir==='low') return 'Low FO pressure — check booster pump or filter';
+  if(p.includes('temp')&&p.includes('exh')&&dir==='high') return 'High exhaust temp -- check fuel injection, scavenge air, or fuel quality';
+  if(p.includes('pressure')&&(p.includes('lube')||p.includes(' lo'))&&dir==='low') return 'Low LO pressure -- check pump, filter, or sump level';
+  if(p.includes('temp')&&p.includes('bearing')&&dir==='high') return 'High bearing temp -- check lubrication or alignment';
+  if(p.includes('sea water')&&dir==='high') return 'SW temp higher than typical for this area -- verify sensor';
+  if(p.includes('superheat')&&dir==='high') return 'High superheat -- low refrigerant charge or TXV/EEV fault';
+  if(p.includes('h.p pressure')&&dir==='high') return 'High HP pressure -- condenser fouling or refrigerant overcharge';
+  if(p.includes('l.p pressure')&&dir==='low') return 'Low LP pressure -- refrigerant undercharge or evaporator icing';
+  if(p.includes('receiver level')&&dir==='low') return 'Low refrigerant level -- possible leak';
+  if(p.includes('stern tube')&&p.includes('temp')&&dir==='high') return 'High stern tube temp -- check LO flow and bearing condition';
+  if(p.includes('cfw')&&dir==='high') return 'High cooling FW temp -- check HT cooler, pump, or system load';
+  if(p.includes('cyl oil')&&dir==='low') return 'Cylinder oil level dropping -- check consumption rate vs run hours';
+  if(p.includes('motor current')&&dir==='high') return 'High motor current -- possible overload or mechanical resistance';
+  if(p.includes('fo')&&p.includes('press')&&dir==='low') return 'Low FO pressure -- check booster pump or filter';
   return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// MONTHLY TREND REPORT — with clickable rows
+// MONTHLY TREND REPORT -- with clickable rows
 // ═══════════════════════════════════════════════════════════════════
 async function renderMonthlyReport(){
   var now=new Date(); var y=now.getFullYear(), m=now.getMonth()+1;
@@ -328,7 +328,7 @@ async function renderMonthlyReport(){
   ctrlHtml+='<select class="ctrl-sel" id="sel-year" onchange="refreshReport()">';
   for(var yr=now.getFullYear();yr>=2023;yr--) ctrlHtml+='<option value="'+yr+'"'+(yr===y?' selected':'')+'>'+yr+'</option>';
   ctrlHtml+='</select><span style="font-size:11px;color:var(--t3);margin-left:auto">Click any parameter row to drill down with AI analysis</span></div>';
-  document.getElementById('main').innerHTML=ctrlHtml+'<div id="report-body"><div class="empty"><div class="spinner"></div>Loading…</div></div>';
+  document.getElementById('main').innerHTML=ctrlHtml+'<div id="report-body"><div class="empty"><div class="spinner"></div>Loading...</div></div>';
   await loadReportData(y,m);
 }
 
@@ -336,7 +336,7 @@ async function refreshReport(){
   destroyCharts(sparkCharts); sparkCharts=[];
   var y=parseInt(document.getElementById('sel-year').value);
   var m=parseInt(document.getElementById('sel-month').value);
-  document.getElementById('report-body').innerHTML='<div class="empty"><div class="spinner"></div>Loading…</div>';
+  document.getElementById('report-body').innerHTML='<div class="empty"><div class="spinner"></div>Loading...</div>';
   await loadReportData(y,m);
 }
 
@@ -368,9 +368,9 @@ async function loadReportData(y,m){
     h+='<div style="overflow-x:auto"><table class="ptbl"><thead><tr>';
     h+='<th>Parameter</th><th>Unit</th><th class="r">'+currLbl+'</th><th class="r">'+prevLbl+'</th><th class="r">YoY Δ</th><th class="r">YoY %</th><th>Trend</th></tr></thead><tbody>';
     sp.forEach(function(p,pi){
-      var curr=p.current?parseFloat(p.current.avg).toFixed(2):'—';
-      var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'—';
-      var cls='flat', chg='—', pct='—';
+      var curr=p.current?parseFloat(p.current.avg).toFixed(2):'--';
+      var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'--';
+      var cls='flat', chg='--', pct='--';
       if(p.yoy_pct!==null){
         chg=(p.yoy_change>0?'+':'')+p.yoy_change;
         pct=(p.yoy_pct>0?'+':'')+p.yoy_pct+'%';
@@ -384,8 +384,8 @@ async function loadReportData(y,m){
       h+='<tr class="clickable" data-fid="'+p.fid+'" data-p="'+esc(p.parameter)+'" data-s="'+esc(sec)+'" onclick="onDrillClick(this)">';
       h+='<td style="font-weight:600">'+esc(p.parameter)+'</td>';
       h+='<td style="color:var(--t3);font-size:10px">'+esc(p.unit||'')+'</td>';
-      h+='<td class="r">'+(p.current?curr:'<span class="na">—</span>')+'</td>';
-      h+='<td class="r">'+(p.prev_year?prev:'<span class="na">—</span>')+'</td>';
+      h+='<td class="r">'+(p.current?curr:'<span class="na">--</span>')+'</td>';
+      h+='<td class="r">'+(p.prev_year?prev:'<span class="na">--</span>')+'</td>';
       h+='<td class="r '+cls+'">'+chg+'</td>';
       h+='<td class="r '+cls+'">'+pct+'</td>';
       h+='<td><canvas class="spark" id="'+cid+'" width="80" height="26"></canvas></td>';
@@ -414,14 +414,14 @@ async function loadReportData(y,m){
 // YEAR-ON-YEAR
 // ═══════════════════════════════════════════════════════════════════
 async function renderYOY(){
-  showLoading('Loading year-on-year analysis…');
+  showLoading('Loading year-on-year analysis...');
   try{
     var now=new Date();
     var d=await EOM.get('/watches/monthly-report?vessel_id='+vesselId+'&year='+now.getFullYear()+'&month='+(now.getMonth()+1));
     var params=d.params||[];
     var movers=params.filter(function(p){return p.yoy_pct!==null&&Math.abs(p.yoy_pct)>2;});
     movers.sort(function(a,b){return Math.abs(b.yoy_pct)-Math.abs(a.yoy_pct);});
-    var h='<div style="margin-bottom:16px;font-size:13px;color:var(--t2)">Largest parameter changes year-on-year — click any row for AI analysis</div>';
+    var h='<div style="margin-bottom:16px;font-size:13px;color:var(--t2)">Largest parameter changes year-on-year -- click any row for AI analysis</div>';
     if(!movers.length){ h+='<div class="card"><div style="padding:30px;text-align:center;color:var(--t3)">Not enough historical data yet for year-on-year comparison</div></div>'; }
     else {
       ['rise','fall'].forEach(function(dir){
@@ -431,8 +431,8 @@ async function renderYOY(){
         var lbl=dir==='rise'?'📈 Rising Parameters':'📉 Falling Parameters';
         h+='<div class="card" style="margin-bottom:16px"><div class="card-hdr"><span class="card-title" style="color:'+col+'">'+lbl+'</span><span class="card-meta">vs same month last year</span></div>';
         items.forEach(function(p){
-          var curr=p.current?parseFloat(p.current.avg).toFixed(2):'—';
-          var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'—';
+          var curr=p.current?parseFloat(p.current.avg).toFixed(2):'--';
+          var prev=p.prev_year?parseFloat(p.prev_year.avg).toFixed(2):'--';
           h+='<div class="arow" style="border-left:3px solid '+col+';cursor:pointer" data-fid="'+p.fid+'" data-p="'+esc(p.parameter)+'" data-s="'+esc(p.section)+'" onclick="onDrillClick(this)">';
           h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+esc(p.parameter)+'</div><div style="font-size:10px;color:var(--t3)">'+esc(p.section)+' · '+esc(p.equipment)+'</div></div>';
           h+='<div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+col+'">'+curr+' '+esc(p.unit||'')+'</div>';
@@ -452,7 +452,7 @@ async function renderYOY(){
 async function openDrill(fid, paramName, section){
   document.getElementById('drill-title').textContent=paramName;
   document.getElementById('drill-sub').textContent=section;
-  document.getElementById('drill-body').innerHTML='<div class="empty"><div class="spinner"></div>Loading parameter history…</div>';
+  document.getElementById('drill-body').innerHTML='<div class="empty"><div class="spinner"></div>Loading parameter history...</div>';
   document.getElementById('drill-modal').style.display='flex';
   destroyCharts(drillCharts); drillCharts=[];
 
@@ -489,7 +489,7 @@ function renderDrillContent(fid, paramName, section, detail, corrData){
   // Chart
   h+='<div class="chart-wrap">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-  h+='<div class="chart-title">'+esc(paramName)+' ('+esc(meta.unit||'')+') — 24 Month History';
+  h+='<div class="chart-title">'+esc(paramName)+' ('+esc(meta.unit||'')+') -- 24 Month History';
   if(corrData.length) h+=' + '+corrData.length+' correlated parameter'+(corrData.length>1?'s':'');
   h+='</div></div>';
   h+='<div style="height:280px;position:relative"><canvas id="drill-chart"></canvas></div>';
@@ -507,7 +507,7 @@ function renderDrillContent(fid, paramName, section, detail, corrData){
   // AI Analysis panel
   h+='<div class="ai-panel">';
   h+='<div class="ai-header"><span class="ai-badge">AI</span><span style="font-size:14px;font-weight:700">Deep Diagnostic Analysis</span></div>';
-  h+='<div id="ai-content"><div class="ai-loading"><div class="ai-spinner"></div>Analysing trends and correlations for '+esc(paramName)+'…</div></div>';
+  h+='<div id="ai-content"><div class="ai-loading"><div class="ai-spinner"></div>Analysing trends and correlations for '+esc(paramName)+'...</div></div>';
   h+='</div>';
 
   body.innerHTML=h;
@@ -579,7 +579,7 @@ async function runAIAnalysis(fid, paramName, section, meta, monthly, corrData){
     +(corrStr?'\n\nCORRELATED PARAMETERS ON THIS VESSEL:\n'+corrStr:'')
     +'\n\nTASK: As an experienced marine chief engineer, analyse this data and provide a structured diagnostic assessment.'
     +'\nConsider: (1) Is the trend normal for this vessel type and operating area? (2) Do correlated parameters support or contradict your hypothesis? (3) What specific engineering failure mode does this suggest? (4) What action is needed?'
-    +'\n\nRespond ONLY with valid JSON — no preamble, no markdown:\n'
+    +'\n\nRespond ONLY with valid JSON -- no preamble, no markdown:\n'
     +'{"summary":"one sentence finding","findings":["finding with numbers","finding with numbers"],"likely_cause":"specific engineering explanation","evidence":["evidence from data","correlated parameter support"],"check_also":["specific item to inspect","specific measurement to take"],"action":"specific recommended action","risk":"Low|Medium|High|Critical","confidence":"Low|Medium|High"}';
 
   try{
@@ -646,7 +646,7 @@ function exportPDF(){
   var content=document.getElementById('main').innerHTML;
   var titles={'anomalies':'Anomaly Report','report':'Monthly Trend Report','yoy':'Year-on-Year Analysis'};
   var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"/>'
-    +'<title>FORCAP — '+esc(vesselName)+'</title>'
+    +'<title>FORCAP -- '+esc(vesselName)+'</title>'
     +'<style>body{font-family:Arial,sans-serif;font-size:8.5pt}@page{margin:14mm 10mm 20mm;size:A4}'
     +'.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #003366;padding-bottom:8px;margin-bottom:14px}'
     +'.info h1{font-size:12pt;color:#003366;margin:0 0 3px}.info p{margin:1px 0;font-size:8pt;color:#444}'
@@ -663,7 +663,7 @@ function exportPDF(){
     +'.fl{position:fixed;bottom:7mm;left:10mm;font-size:7pt;color:#555;font-weight:600}'
     +'.fr{position:fixed;bottom:7mm;right:10mm;font-size:7pt;color:#bbb}'
     +'</style></head><body>'
-    +'<div class="hdr"><div class="info"><h1>'+esc(vesselName)+' — '+titles[currentView]+'</h1>'
+    +'<div class="hdr"><div class="info"><h1>'+esc(vesselName)+' -- '+titles[currentView]+'</h1>'
     +'<p>Generated: '+new Date().toLocaleString()+'</p></div>'
     +'<img class="nsml" src="'+LOGO_URI+'" alt="NSML"/></div>'
     +content
@@ -678,7 +678,7 @@ function exportPDF(){
 // ═══════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════
-function showLoading(msg){document.getElementById('main').innerHTML='<div class="empty"><div class="spinner"></div><div style="font-size:13px;color:var(--t2);margin-top:4px">'+(msg||'Loading…')+'</div></div>';}
+function showLoading(msg){document.getElementById('main').innerHTML='<div class="empty"><div class="spinner"></div><div style="font-size:13px;color:var(--t2);margin-top:4px">'+(msg||'Loading...')+'</div></div>';}
 function showEmpty(msg){document.getElementById('main').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:13px">'+esc(msg)+'</div></div>';}
 function destroyCharts(arr){arr.forEach(function(c){try{c.destroy();}catch(e){}});arr.length=0;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
