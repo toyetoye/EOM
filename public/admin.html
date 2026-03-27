@@ -136,6 +136,26 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <option value="Other">Other</option>
           </select>
         </div>
+        <div class="fg"><label class="fl">Propulsion Type</label>
+          <select class="fs" id="v-prop">
+            <option value="">-- Select --</option>
+            <option value="2-STROKE">2-Stroke (MAN B&W / WinGD)</option>
+            <option value="STEAM">Steam Turbine</option>
+            <option value="DFDE">DFDE (Dual-Fuel Diesel-Electric)</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Vessel Class</label>
+          <select class="fs" id="v-class">
+            <option value="">-- Select --</option>
+            <option value="AT">AT — Alfred Temile (LPG)</option>
+            <option value="AT10">AT10 — Alfred Temile 10 (LPG)</option>
+            <option value="AKTORAS">AKTORAS — 2-Stroke LNG</option>
+            <option value="RIVERS">RIVERS — Steam LNG</option>
+            <option value="RIVERS PLUS">RIVERS PLUS — Steam LNG</option>
+            <option value="SHI">SHI — DFDE LNG (Samsung)</option>
+            <option value="HHI">HHI — DFDE LNG (Hyundai)</option>
+          </select>
+        </div>
       </div>
       <div class="fg">
         <label class="fl">Status</label>
@@ -311,13 +331,15 @@ function renderVessels(){
   <div class="card"><div class="card-head"><span class="card-title">${vessels.length} vessels</span>
   ${isAdmin?'<button class="hbtn hbtn-primary" onclick="openAddVessel()">+ Add Vessel</button>':''}
   </div>
-  <table><thead><tr><th>Vessel Name</th><th>IMO</th><th>Type</th><th>Crew Assigned</th><th>Status</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
+  <table><thead><tr><th>Vessel Name</th><th>IMO</th><th>Type</th><th>Propulsion</th><th>Class</th><th>Crew</th><th>Status</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
 
   vessels.forEach(function(v){
     h+=`<tr>
       <td style="font-weight:600">${esc(v.name)}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">${esc(v.imo||'—')}</td>
       <td>${esc(v.type||'—')}</td>
+      <td style="font-size:10px;color:var(--t3)">${esc(v.propulsion_type||'—')}</td>
+      <td><span style="background:rgba(59,130,246,.1);color:#93c5fd;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:700">${esc(v.vessel_class||'—')}</span></td>
       <td style="text-align:center">${v.crew_count||0}</td>
       <td><span class="pill ${v.active?'pill-on':'pill-off'}">${v.active?'Active':'Inactive'}</span></td>
       ${isAdmin?`<td>
@@ -348,6 +370,8 @@ function openEditVessel(id){
   document.getElementById('v-name').value=v.name||'';
   document.getElementById('v-imo').value=v.imo||'';
   document.getElementById('v-type').value=v.type||'LPG';
+  if(document.getElementById('v-prop')) document.getElementById('v-prop').value=v.propulsion_type||'';
+  if(document.getElementById('v-class')) document.getElementById('v-class').value=v.vessel_class||'';
   document.getElementById('v-active').value=v.active?'true':'false';
   document.getElementById('vmodal').style.display='flex';
 }
@@ -357,14 +381,16 @@ async function saveVessel(){
   const name=document.getElementById('v-name').value.trim();
   const imo=document.getElementById('v-imo').value.trim();
   const type=document.getElementById('v-type').value;
+  const propulsion_type=document.getElementById('v-prop')?.value||null;
+  const vessel_class=document.getElementById('v-class')?.value||null;
   const active=document.getElementById('v-active').value==='true';
   if(!name){alert('Vessel name is required');return;}
   btn.disabled=true; btn.textContent='Saving…';
   try{
     if(editVesselId){
-      await EOM.put('/admin/vessels/'+editVesselId,{name,imo,type,active});
+      await EOM.put('/admin/vessels/'+editVesselId,{name,imo,type,propulsion_type,vessel_class,active});
     }else{
-      await EOM.post('/admin/vessels',{name,imo,type});
+      await EOM.post('/admin/vessels',{name,imo,type,propulsion_type,vessel_class});
     }
     cm('vmodal'); await loadAll(); renderVessels();
   }catch(e){alert('Error: '+e.message);}
