@@ -109,7 +109,7 @@ router.post('/vessels', ...adminOnly, async (req, res) => {
 });
 
 router.put('/vessels/:id', ...adminOnly, async (req, res) => {
-  const { name, imo, type, active } = req.body;
+  const { name, imo, type, propulsion_type, vessel_class, active } = req.body;
   try {
     const { rows } = await pool.query(
       'UPDATE eom_vessels SET name=$1,imo=$2,type=$3,propulsion_type=$4,vessel_class=$5,active=$6 WHERE id=$7 RETURNING *',
