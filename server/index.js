@@ -70,9 +70,16 @@ app.post('/api/ai/diagnose', require('./routes/authRoutes').requireAuthMiddlewar
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'No token' });
+  let decoded;
   try {
-    require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'eom-dev-secret');
+    decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'eom-dev-secret');
   } catch { return res.status(401).json({ error: 'Invalid token' }); }
+
+  // AI chat restricted to superintendent, manager, admin only
+  const allowedRoles = ['admin', 'superintendent', 'manager'];
+  if (!allowedRoles.includes(decoded.role)) {
+    return res.status(403).json({ error: 'AI chat is restricted to superintendents and managers.' });
+  }
 
   const { system, prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
