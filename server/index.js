@@ -53,15 +53,15 @@ app.get('*', (req, res) => {
 });
 
 
-// ── ONE-TIME VESSEL MIGRATION ENDPOINT ───────────────────────────────────────
+// ── ONE-TIME VESSEL MIGRATION ENDPOINT ─────────────────────────────────────
 app.post('/api/migrate/vessels', async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'unauthorized' });
+  const token = (req.headers.authorization||'').replace('Bearer ','');
+  if (!token) return res.status(401).json({ error: 'unauthorized' });
   try {
-    const { verifyToken } = require('./auth');
-    const user = verifyToken(auth.replace('Bearer ', ''));
-    if (user.role !== 'admin') return res.status(403).json({ error: 'admin only' });
-  } catch(e) { return res.status(401).json({ error: 'invalid token: '+e.message }); }
+    const jwt = require('jsonwebtoken');
+    const u = jwt.verify(token, process.env.JWT_SECRET || 'eom-dev-secret');
+    if (u.role !== 'admin') return res.status(403).json({ error: 'admin only' });
+  } catch(e) { return res.status(401).json({ error: 'bad token' }); }
   const client = await pool.connect();
   const results = [];
   try {
@@ -74,8 +74,8 @@ app.post('/api/migrate/vessels', async (req, res) => {
          VALUES ($1,$2,$3,$4,$5,true)
          ON CONFLICT (imo) DO UPDATE SET name=EXCLUDED.name,type=EXCLUDED.type,
            propulsion_type=EXCLUDED.propulsion_type,vessel_class=EXCLUDED.vessel_class,active=true
-         RETURNING id,name,vessel_class`,
-        [name, imo, type, propulsion_type, vessel_class]
+         RETURNING id,name,imo,type,propulsion_type,vessel_class`,
+        [name,imo,type,propulsion_type,vessel_class]
       );
       results.push(r.rows[0]);
     }
