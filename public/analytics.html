@@ -76,15 +76,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
 /* Accordion sidebar */
-.acc-group{margin-bottom:2px}
-.acc-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:8px;transition:.15s;user-select:none}
-.acc-hdr:hover{background:rgba(255,255,255,.04)}
-.acc-chevron{font-size:8px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.acc-group{margin-bottom:4px}
+.acc-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:8px;transition:background .15s;user-select:none}
+.acc-hdr:hover{background:rgba(255,255,255,.05)}
+.acc-chevron{font-size:8px;color:var(--t3);transition:transform .2s;flex-shrink:0;margin-left:auto}
 .acc-chevron.open{transform:rotate(90deg)}
-.acc-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;flex:1}
-.acc-body{display:none;padding:2px 4px 6px}
+.fl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.fl-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;flex:1}
+.fl-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd;margin-left:auto;margin-right:4px}
+.acc-body{display:none;padding-bottom:6px}
 .acc-body.open{display:block}
-.acc-hdr.active{background:rgba(255,255,255,.05)}
+.sec-hdr{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;padding:6px 10px 3px 14px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -179,96 +181,128 @@ function filterParams(){
 }
 
 // Floor-organised sidebar
+// ── Analytics sidebar ──────────────────────────────────────────────────────
 var openGroups = {};
+
 var SECTION_FLOORS = {
-  "Main Engine":  {floor:"ER Floor",     color:"#1570EF"},
-  "Auxiliaries":  {floor:"ER Floor",     color:"#1570EF"},
-  "A/C Plant":    {floor:"ER Floor",     color:"#1570EF"},
-  "D/G No.1":     {floor:"3rd Deck",    color:"#7C3AED"},
-  "D/G No.2":     {floor:"3rd Deck",    color:"#7C3AED"},
-  "D/G No.3":     {floor:"3rd Deck",    color:"#7C3AED"},
-  "Fridge":       {floor:"2nd Deck",    color:"#0891B2"},
-  "Tanks":        {floor:"Tanks",        color:"#B45309"},
-  "ER Rounds":    {floor:"ER Rounds",    color:"#059669"},
-  "Running Hours":{floor:"Running Hours",color:"#6366F1"},
-  "Monthly Logs": {floor:"Monthly Logs", color:"#8B5CF6"},
-  "Weekly Tests": {floor:"Weekly Tests", color:"#0EA5E9"}
+  "A/C Plant":    "ER Floor",
+  "Auxiliaries":  "ER Floor",
+  "Main Engine":  "ER Floor",
+  "D/G No.1":     "3rd Deck",
+  "D/G No.2":     "3rd Deck",
+  "D/G No.3":     "3rd Deck",
+  "Fridge":       "2nd Deck",
+  "Tanks":        "Tanks",
+  "ER Rounds":    "ER Rounds",
+  "Running Hours":"Running Hours",
+  "Monthly Logs": "Monthly Logs",
+  "Weekly Tests": "Weekly Tests"
 };
-var FLOOR_ORDER = ["ER Floor","3rd Deck","2nd Deck","Tanks","ER Rounds","Running Hours","Weekly Tests","Monthly Logs"];
-var FLOOR_COLORS = {"ER Floor":"#1570EF","3rd Deck":"#7C3AED","2nd Deck":"#0891B2","Tanks":"#B45309","ER Rounds":"#059669","Running Hours":"#6366F1","Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"};
+var FLOOR_ORDER  = ["ER Floor","3rd Deck","2nd Deck","Tanks","ER Rounds","Running Hours","Weekly Tests","Monthly Logs"];
+var FLOOR_COLORS = {
+  "ER Floor":"#1570EF","3rd Deck":"#7C3AED","2nd Deck":"#0891B2",
+  "Tanks":"#B45309","ER Rounds":"#059669",
+  "Running Hours":"#6366F1","Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"
+};
 
 function renderSidebar(items){
+  // Build floor→section→params map
   var floors = {};
   items.forEach(function(c){
     var sec = c.section || "Other";
-    var fi = SECTION_FLOORS[sec] || {floor:"Other", color:"#475569"};
-    var fn = fi.floor;
-    if(!floors[fn]) floors[fn] = {color: FLOOR_COLORS[fn]||fi.color, sections:{}};
-    if(!floors[fn].sections[sec]) floors[fn].sections[sec] = [];
-    floors[fn].sections[sec].push(c);
+    var fl  = SECTION_FLOORS[sec] || "Other";
+    if(!floors[fl]) floors[fl] = { color: FLOOR_COLORS[fl]||"#475569", sections:{} };
+    if(!floors[fl].sections[sec]) floors[fl].sections[sec] = [];
+    floors[fl].sections[sec].push(c);
   });
 
+  // Sort floors
   var fkeys = Object.keys(floors).sort(function(a,b){
-    var ia=FLOOR_ORDER.indexOf(a); var ib=FLOOR_ORDER.indexOf(b);
-    if(ia===-1)ia=99; if(ib===-1)ib=99; return ia-ib;
+    var ia=FLOOR_ORDER.indexOf(a), ib=FLOOR_ORDER.indexOf(b);
+    if(ia<0) ia=99; if(ib<0) ib=99; return ia-ib;
   });
 
-  if(fkeys.length && !Object.keys(openGroups).length) openGroups[fkeys[0]] = true;
+  // Default first floor open
+  if(fkeys.length && !Object.keys(openGroups).length){
+    openGroups[fkeys[0]] = true;
+  }
 
   var h = "";
-  fkeys.forEach(function(fn){
-    var fl = floors[fn];
-    var isOpen = openGroups[fn];
-    var selCount = 0;
-    Object.values(fl.sections).forEach(function(ps){
-      ps.forEach(function(c){ if(selectedFids.indexOf(c.fid)>-1) selCount++; });
+  fkeys.forEach(function(fl){
+    var data  = floors[fl];
+    var isOpen = !!openGroups[fl];
+    var color  = data.color;
+
+    // Count selected params in this floor
+    var sel = 0;
+    Object.values(data.sections).forEach(function(ps){
+      ps.forEach(function(c){ if(selectedFids.indexOf(c.fid)>-1) sel++; });
     });
-    var badge = selCount > 0 ? '<span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,.2);color:#93c5fd">'+selCount+"</span>" : "";
-    h += '<div class="acc-group">';
-    h += '<div class="acc-hdr" data-grp="'+fn+'" onclick="toggleGroup(this.dataset.grp)">';
-    h += '<div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;background:'+fl.color+'"></div>';
-    h += '<span class="acc-label">'+esc(fn)+"</span>";
-    h += badge;
-    h += '<span class="acc-chevron '+(isOpen?"open":"")+'">&#9658;</span>';
-    h += "</div>";
-    h += '<div class="acc-body'+(isOpen?" open":"")+">";
-    Object.keys(fl.sections).sort().forEach(function(sec){
-      var params = fl.sections[sec];
-      h += '<div style="padding:5px 4px 2px 10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;">'+esc(sec)+"</div>";
+    var selBadge = sel > 0
+      ? '<span class="fl-badge">'+sel+'</span>'
+      : '';
+
+    // Floor header row
+    h += '<div class="acc-group" id="grp-' + fl.replace(/\s/g,'_') + '">';
+    h += '<div class="acc-hdr" data-grp="' + fl + '" onclick="toggleGroup(this.dataset.grp)">';
+    h += '<div class="fl-dot" style="background:'+color+'"></div>';
+    h += '<span class="fl-label">'+esc(fl)+'</span>';
+    h += selBadge;
+    h += '<span class="acc-chevron' + (isOpen?' open':'') + '">&#9658;</span>';
+    h += '</div>';  // end acc-hdr
+
+    // Floor body
+    h += '<div class="acc-body' + (isOpen?' open':'') + '">';
+
+    // Sections within this floor
+    var secKeys = Object.keys(data.sections).sort();
+    secKeys.forEach(function(sec){
+      var params = data.sections[sec];
+      h += '<div class="sec-hdr">'+esc(sec)+'</div>';
       params.forEach(function(c){
         var isSel = selectedFids.indexOf(c.fid) > -1;
-        h += '<button class="param-btn'+(isSel?" selected":"")+'" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
-        h += '<span class="param-name">'+esc(c.parameter)+"</span>";
-        h += '<span class="param-unit">'+esc(c.unit||"")+"</span>";
-        h += '<span class="param-count">'+c.reading_count+"x</span>";
-        h += "</button>";
+        h += '<button class="param-btn'+(isSel?' selected':'')+'" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
+        h += '<span class="param-name">'+esc(c.parameter)+'</span>';
+        h += '<span class="param-right">';
+        h += '<span class="param-unit">'+esc(c.unit||'')+'</span>';
+        h += '<span class="param-count">'+c.reading_count+'x</span>';
+        h += '</span>';
+        h += '</button>';
       });
     });
-    h += "</div></div>";
+
+    h += '</div>';  // end acc-body
+    h += '</div>';  // end acc-group
   });
-  document.getElementById("sb-list").innerHTML = h || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
+
+  document.getElementById("sb-list").innerHTML = h ||
+    '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">No parameters found</div>';
 }
 
 function toggleGroup(grp){
-  // Toggle state
   openGroups[grp] = !openGroups[grp];
-  var isNowOpen = openGroups[grp];
-  // Find the acc-hdr with this data-grp and toggle its body directly — NO full re-render
-  var hdrs = document.querySelectorAll('.acc-hdr');
-  hdrs.forEach(function(hdr){
-    if(hdr.dataset.grp === grp){
-      var body = hdr.nextElementSibling;
-      var chevron = hdr.querySelector('.acc-chevron');
-      if(body){
-        body.classList.toggle('open', isNowOpen);
+  var isOpen = openGroups[grp];
+
+  // Find acc-hdr with this data-grp and toggle its sibling body directly
+  document.querySelectorAll('.acc-hdr[data-grp]').forEach(function(hdr){
+    if(hdr.dataset.grp !== grp) return;
+    var body    = hdr.nextElementSibling;
+    var chevron = hdr.querySelector('.acc-chevron');
+    if(body && body.classList.contains('acc-body')){
+      if(isOpen){
+        body.classList.add('open');
+      } else {
+        body.classList.remove('open');
       }
-      if(chevron){
-        chevron.classList.toggle('open', isNowOpen);
-      }
-      hdr.classList.toggle('active', isNowOpen);
+    }
+    if(chevron){
+      if(isOpen) chevron.classList.add('open');
+      else       chevron.classList.remove('open');
     }
   });
 }
+
+
 
 
 
