@@ -56,6 +56,7 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3002;
 
 initDB()
+  .then(() => addUMSTables())
   .then(() => {
     app.listen(PORT, () => console.log(`EOM backend on :${PORT}`));
   })
