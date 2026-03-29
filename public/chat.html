@@ -164,7 +164,7 @@ window.addEventListener("DOMContentLoaded", async function(){
   try{
     var vessels=await EOM.get("/vessels");
     if(!vessels.length) return;
-    vesselId=vessels[0].id; vesselName=vessels[0].name;
+    var _cv=EOM.pickVessel(vessels); vesselId=_cv.id; vesselName=_cv.name;
     document.getElementById("vessel-lbl").textContent="-- "+vesselName;
     // Load catalog in background for context
     catalog = await EOM.get("/watches/field-catalog?vessel_id="+vesselId);
