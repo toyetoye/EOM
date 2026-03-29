@@ -218,7 +218,7 @@ window.addEventListener('DOMContentLoaded', async function(){
   try{
     var v=await EOM.get('/vessels');
     if(!v.length){showEmpty('No vessels');return;}
-    vesselId=v[0].id; vesselName=v[0].name;
+    vesselId=EOM.pickVessel(v).id; vesselName=EOM.pickVessel(v).name;
     document.getElementById('vessel-lbl').textContent='? '+vesselName;
     await showView('anomalies', document.getElementById('sb-anomalies'));
   }catch(e){showEmpty('Error: '+e.message);}
