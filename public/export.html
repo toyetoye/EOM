@@ -123,7 +123,7 @@ window.addEventListener('DOMContentLoaded', async function(){
   if(!EOM.requireAuth()) return;
   try{
     var vessels=await EOM.get('/vessels');
-    if(vessels.length){ vesselId=vessels[0].id; vesselName=vessels[0].name; document.getElementById('vessel-lbl').textContent='· '+vesselName; }
+    if(vessels.length){ var _cv=EOM.pickVessel(vessels); vesselId=_cv.id; vesselName=_cv.name; document.getElementById('vessel-lbl').textContent='· '+vesselName; }
     catalog = await EOM.get('/watches/field-catalog?vessel_id='+vesselId);
     buildPicker();
   }catch(e){ document.getElementById('sec-picker').innerHTML='<div style="color:var(--t3);font-size:12px;padding:10px">Error loading equipment: '+e.message+'</div>'; }
