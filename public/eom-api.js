@@ -51,3 +51,29 @@ EOM.watchLabel = (n) => (['','00–04','04–08','08–12','12–16','16–20','
 
 // Today as YYYY-MM-DD
 EOM.today = () => new Date().toISOString().slice(0,10);
+
+// ── Vessel selection persistence ─────────────────────────────────────────
+// Stores the admin/superintendent's selected vessel so all pages stay in sync.
+// vessel role users always get their assigned vessel (vessels[0]) from the API.
+const VESSEL_KEY = 'eom_selected_vessel';
+
+EOM.setSelectedVessel = function(vesselId) {
+  localStorage.setItem(VESSEL_KEY, String(vesselId));
+};
+
+EOM.getSelectedVesselId = function() {
+  const stored = localStorage.getItem(VESSEL_KEY);
+  return stored ? parseInt(stored) : null;
+};
+
+// Call this instead of vessels[0] on every page.
+// Returns the vessel that matches the stored selection, or falls back to vessels[0].
+EOM.pickVessel = function(vessels) {
+  if (!vessels || !vessels.length) return null;
+  const storedId = EOM.getSelectedVesselId();
+  if (storedId) {
+    const found = vessels.find(v => v.id === storedId);
+    if (found) return found;
+  }
+  return vessels[0];
+};
