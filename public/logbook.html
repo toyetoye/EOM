@@ -654,47 +654,44 @@ async function onVesselSelectorChange(vesselId){
 
 function applyVesselClassOverrides(vessel){
   var cls = vessel.vessel_class || 'AT';
-  var prop = vessel.propulsion_type || '2-STROKE';
 
-  // Helper: find equip by id across all floors
-  function findEquip(equipId){
-    for(var fl of FLOORS){ for(var eq of (fl.equip||[])){ if(eq.id===equipId) return eq; } }
-    return null;
-  }
-  function findField(equipId, tabId, fieldId){
-    var eq = findEquip(equipId); if(!eq) return null;
-    for(var tab of (eq.tabs||[])){
-      if(tab.id!==tabId) continue;
-      for(var f of (tab.fields||tab.duoFields||[])){
-        if(f.id===fieldId||f.id2===fieldId) return f;
-      }
-    }
+  // Helper to find equipment across floors
+  function findEquip(id){
+    for(var fl of FLOORS){ for(var eq of (fl.equip||[])){ if(eq.id===id) return eq; } }
     return null;
   }
 
+  // ── Step 1: Always reset to AT defaults first ─────────────────────────
+  var me = findEquip('me');
+  if(me){
+    me.sub = '7S40ME-B9.5 · 6000kW · 136.9rpm';
+    for(var tab of (me.tabs||[])){ if(tab.cylinders) tab.cylinders.count = 7; }
+  }
+  var dg1=findEquip('ae1'); if(dg1) dg1.sub='Himsen 7H21/32 · 1500kW · 900rpm';
+  var dg2=findEquip('ae2'); if(dg2) dg2.sub='Himsen 7H21/32 · 1500kW · 900rpm';
+  var dg3=findEquip('ae3'); if(dg3) dg3.sub='Himsen 7H21/32 · 1500kW · 900rpm';
+  for(var fl of FLOORS){
+    if(fl.id==='floor') fl.sub='Tank Top · Main Engine';
+  }
+
+  // ── Step 2: Apply class-specific overrides ────────────────────────────
   if(cls==='AT10'){
-    // Main Engine — Alfred Temile 10 has WinGD X62-S (6-cyl, ~9,400kW, 86rpm nominal)
-    // based on running hours patterns and sister vessel specs
-    var me = findEquip('me');
+    // AT10: WinGD X62-S, 6 cylinders, ~9,400kW
     if(me){
       me.sub = 'WinGD X62-S · 6 Cylinders · ~9,400kW · 86rpm';
-      // AT10 ME has 6 cylinders (AT has 7)
-      for(var tab of (me.tabs||[])){
-        if(tab.cylinders) tab.cylinders.count = 6;
-      }
+      for(var tab2 of (me.tabs||[])){ if(tab2.cylinders) tab2.cylinders.count = 6; }
     }
-    // D/G — Alfred Temile 10 uses Hyundai HiMSEN 8H21/32 (3 × 1,680kW)
-    var dg1 = findEquip('ae1'); if(dg1) dg1.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
-    var dg2 = findEquip('ae2'); if(dg2) dg2.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
-    var dg3 = findEquip('ae3'); if(dg3) dg3.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
-    // A/C Plant — AT10 has Hi Air 2-unit system (same as AT)
-    // No structural change needed
-    // Floor labels
-    for(var fl of FLOORS){
-      if(fl.id==='floor') fl.sub='Tank Top · Main Engine (AT10)';
+    // AT10 D/Gs: Himsen 8H21/32 (8-cylinder, 1,680kW)
+    if(dg1) dg1.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    if(dg2) dg2.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    if(dg3) dg3.sub='Himsen 8H21/32 · 1,680kW · 900rpm';
+    for(var fl2 of FLOORS){
+      if(fl2.id==='floor') fl2.sub='Tank Top · Main Engine (AT10)';
     }
   }
-  // AT class — default FLOORS already match, no changes needed
+  // Other classes (LNG Steam, DFDE, AKTORAS) — to be added when those
+  // logbook templates are built. For now they load the AT defaults as a
+  // neutral base.
 }
 
 // ── EOM API LAYER ─────────────────────────────────────────────────────────────
