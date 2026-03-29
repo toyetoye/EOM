@@ -623,6 +623,7 @@ async function onVesselSelectorChange(vesselId){
   const vessels = WATCH_STATE._allVessels || [];
   const v = vessels.find(x=>x.id===parseInt(vesselId));
   if(!v) return;
+  EOM.setSelectedVessel(v.id); // persist across pages
   WATCH_STATE.vesselId = v.id;
   WATCH_STATE.vesselName = v.name;
   applyVesselClassOverrides(v);
@@ -853,7 +854,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
       _sel.style.display='inline-block';
       _sel.innerHTML=vessels.map(v=>`<option value="${v.id}">${v.name}${v.vessel_class?' ('+v.vessel_class+')':''}</option>`).join('');
     }
-    const v=vessels[0];WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
+    const v=EOM.pickVessel(vessels);WATCH_STATE.vesselId=v.id;WATCH_STATE.vesselName=v.name;
+    // Sync selector to stored vessel
+    if(_sel) _sel.value=v.id;
     applyVesselClassOverrides(v);
     WATCH_STATE._allVessels=vessels;
     const vc=document.getElementById('vessel-chip-txt');
