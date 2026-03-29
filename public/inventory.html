@@ -141,7 +141,7 @@ window.addEventListener('DOMContentLoaded', async function(){
   try {
     const vessels = await EOM.get('/vessels');
     if(!vessels.length){ showError('No vessels assigned.'); return; }
-    vesselId = vessels[0].id;
+    vesselId = EOM.pickVessel(vessels).id;
     document.getElementById('vessel-lbl').textContent = '· ' + vessels[0].name;
     loadData();
   } catch(e){ showError(e.message); }
