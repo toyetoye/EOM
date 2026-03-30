@@ -845,7 +845,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(!vessels.length){showToast('No vessels assigned','error');return;}
     // Populate vessel selector for admin/superintendent/manager
     const _user=EOM.user();
-    const _elevated=['admin','superintendent','manager'].includes(_user?.role);
+    const _elevated=['admin','superintendent','manager','smt'].includes(_user?.role);
     const _sel=document.getElementById('vessel-selector');
     if(_elevated && vessels.length>1 && _sel){
       _sel.style.display='inline-block';
