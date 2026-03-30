@@ -231,13 +231,68 @@ var openGroups   = {};   // floor level
 var openSections = {};   // section level  key = "floor||section"
 
 function renderSidebar(items){
+  // ── Per-parameter floor+section overrides ────────────────────────────────
+  // These parameters have section="ER Rounds" in the DB (logged on ER Rounds sheet)
+  // but physically belong to specific equipment. Override both floor AND section.
+  var PARAM_OVERRIDE = {
+    // ER Floor
+    "ME HYD  FLUSHING COUNTER":          { floor:"ER Floor",  section:"Main Engine"    },
+    "ME HYD FLUSHING COUNTER":           { floor:"ER Floor",  section:"Main Engine"    },
+    // 3rd Deck — D/G No.1
+    "NO.1 DG LO SUMP LEVEL":             { floor:"3rd Deck",  section:"D/G No.1"       },
+    "Running Hours DG 1":                { floor:"3rd Deck",  section:"D/G No.1"       },
+    "Total hours run DG 1":              { floor:"3rd Deck",  section:"D/G No.1"       },
+    // 3rd Deck — D/G No.2
+    "NO.2 DG LO SUMP LEVEL":             { floor:"3rd Deck",  section:"D/G No.2"       },
+    "Running Hours DG 2":                { floor:"3rd Deck",  section:"D/G No.2"       },
+    "Total hours run DG 2":              { floor:"3rd Deck",  section:"D/G No.2"       },
+    // 3rd Deck — D/G No.3
+    "NO.3 DG LO SUMP LEVEL":             { floor:"3rd Deck",  section:"D/G No.3"       },
+    "Running Hours DG 3":                { floor:"3rd Deck",  section:"D/G No.3"       },
+    "Total hours run DG 3":              { floor:"3rd Deck",  section:"D/G No.3"       },
+    // 3rd Deck — Purifiers
+    "NO.1 HFO PURIFIER R/H":             { floor:"3rd Deck",  section:"Purifiers"      },
+    "NO.2 HFO PURIFIER R/H":             { floor:"3rd Deck",  section:"Purifiers"      },
+    "NO.1 LO PURIFIER R/H":              { floor:"3rd Deck",  section:"Purifiers"      },
+    "NO.2 LO PURIFIER R/H":              { floor:"3rd Deck",  section:"Purifiers"      },
+    "FO FLUSHING COUNTER":               { floor:"3rd Deck",  section:"Purifiers"      },
+    "HFO FLUSHING COUNTER":              { floor:"3rd Deck",  section:"Purifiers"      },
+    "FWG COUNTER":                       { floor:"3rd Deck",  section:"Purifiers"      },
+    "Fresh Water Gen Total produced":    { floor:"3rd Deck",  section:"Purifiers"      },
+    // 2nd Deck — Air Compressors
+    "NO.1 MAIN AIR COMP R/HR":           { floor:"2nd Deck",  section:"Air Compressors"},
+    "NO.2 MAIN AIR COMP R/HR":           { floor:"2nd Deck",  section:"Air Compressors"},
+    "CONTROL AIR COMP R/HR":             { floor:"2nd Deck",  section:"Air Compressors"},
+    "GS AIR COMP R/HRS":                 { floor:"2nd Deck",  section:"Air Compressors"},
+    "NO.1 MAIN AIR COMP TOTAL RUN HOURS":{ floor:"2nd Deck",  section:"Air Compressors"},
+    "NO.2 MAIN AIR COMP TOTAL RUN HOURS":{ floor:"2nd Deck",  section:"Air Compressors"},
+    // 2nd Deck — A/C Plant
+    "AIR CONDITIONING RUNNING HOURS":    { floor:"2nd Deck",  section:"A/C Plant"      },
+    // 2nd Deck — Fridge
+    "Fridge Compressor Run Hours":       { floor:"2nd Deck",  section:"Fridge"         },
+    // Tanks
+    "STBD FW TANK":                      { floor:"Tanks",     section:"Tanks"          },
+    "PORT FW TANK":                      { floor:"Tanks",     section:"Tanks"          },
+    "FW EXPANSION TANK":                 { floor:"Tanks",     section:"Tanks"          }
+  };
+
   var floors = {};
   items.forEach(function(c){
-    var sec = c.section || "Other";
-    var fi  = SECTION_FLOORS[sec] || { floor:"Other", color:"#475569", order:99 };
-    var fl  = fi.floor;
-    if(!floors[fl]) floors[fl] = { color:FLOOR_COLORS[fl]||fi.color, sections:{}, order:FLOOR_ORDER.indexOf(fl)<0?99:FLOOR_ORDER.indexOf(fl) };
-    if(!floors[fl].sections[sec]) floors[fl].sections[sec] = { params:[], order:fi.order };
+    // Check param-level override first, then fall back to section-based mapping
+    var override = PARAM_OVERRIDE[c.parameter];
+    var fl, sec, sectionOrder;
+    if(override){
+      fl  = override.floor;
+      sec = override.section;
+      sectionOrder = SECTION_FLOORS[sec] ? SECTION_FLOORS[sec].order : 0;
+    } else {
+      sec = c.section || "Other";
+      var fi = SECTION_FLOORS[sec] || { floor:"Other", color:"#475569", order:99 };
+      fl  = fi.floor;
+      sectionOrder = fi.order;
+    }
+    if(!floors[fl]) floors[fl] = { color:FLOOR_COLORS[fl]||"#475569", sections:{}, order:FLOOR_ORDER.indexOf(fl)<0?99:FLOOR_ORDER.indexOf(fl) };
+    if(!floors[fl].sections[sec]) floors[fl].sections[sec] = { params:[], order:sectionOrder };
     floors[fl].sections[sec].params.push(c);
   });
 
@@ -278,7 +333,7 @@ function renderSidebar(items){
       h += '<div class="sec-body'+(secOpen?' open':'')+'">';
       sd.params.forEach(function(c){
         var isSel = selectedFids.indexOf(c.fid)>-1;
-        h += '<button class="param-btn'+(isSel?' selected':'')+'" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
+        h += '<button class="param-btn'+(isSel?' selected':'')+'\" data-fid="'+c.fid+'" onclick="toggleParam(this.dataset.fid)">';
         h += '<span class="param-name">'+esc(c.parameter)+'</span>';
         h += '<span class="param-right"><span class="param-unit">'+esc(c.unit||'')+'</span><span class="param-count">'+c.reading_count+'x</span></span>';
         h += '</button>';
