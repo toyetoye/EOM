@@ -29,12 +29,12 @@ app.use(express.json({ limit: '2mb' }));
 
 // ── API ROUTES ────────────────────────────────────────────────────────────────
 app.use('/api/auth',    require('./routes/authRoutes'));
+app.use('/api/vessels',  require('./routes/dutyEngineerRoutes'));
 app.use('/api/vessels', require('./routes/vesselRoutes'));
 app.use('/api/watches', require('./routes/watchRoutes'));
 app.use('/api/admin',   require('./routes/adminRoutes'));
 app.use('/api/defects',  require('./routes/defectRoutes'));
 app.use('/api/ums',      require('./routes/umsRoutes'));
-app.use('/api/vessels',  require('./routes/dutyEngineerRoutes'));
 
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
