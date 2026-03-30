@@ -32,7 +32,7 @@ router.post('/users', ...guard, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO eom_users (username,password,role,display_name,email)
        VALUES ($1,$2,$3,$4,$5) RETURNING id,username,role,display_name,email`,
-      [username.toLowerCase().trim(), hashed, role||'engineer',
+      [username.toLowerCase().trim(), hashed, ['admin','superintendent','manager','smt','vessel','engineer'].includes(role||'engineer') ? (role||'engineer') : 'engineer',
        display_name||username, email||null]
     );
     const user = rows[0];
