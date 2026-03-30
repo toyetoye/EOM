@@ -47,6 +47,7 @@ async function seed() {
     
     // ── Vessel login (system account — NOT a crew member) ─────────────────────
     const vesselPw = await bcrypt.hash('Vessel@2025!', 10);
+    const smtPw    = await bcrypt.hash('SMT@2025!', 10);
     const { rows: [atUser] } = await client.query(`
       INSERT INTO eom_users (username,password,role,display_name,active)
       VALUES ('alfred_temile',$1,'vessel','Alfred Temile (Vessel)',true)
@@ -59,6 +60,32 @@ async function seed() {
         VALUES ($1,$2) ON CONFLICT DO NOTHING
       `, [atUser.id, atId]);
     }
+
+    // ── SMT (Chief Engineer) login for Alfred Temile ──────────────────────────
+    const { rows: [atSmt] } = await client.query(
+      "INSERT INTO eom_users (username,password,role,display_name,active) VALUES ('alfred_temile_ce',$1,'smt','Alfred Temile (C/E)',true) ON CONFLICT (username) DO UPDATE SET role='smt', display_name='Alfred Temile (C/E)' RETURNING id",
+      [smtPw]
+    );
+    if (atSmt) {
+      await client.query(
+        'INSERT INTO eom_user_vessels (user_id,vessel_id) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+        [atSmt.id, atId]
+      );
+    }
+
+    // ── Seed duty engineers for Alfred Temile ─────────────────────────────────
+    for (const de of [
+      { rank:'2nd Engineer',        name:'Michael Okafor',       ord:1 },
+      { rank:'3rd Engineer',        name:'Emmanuel Nwachukwu',   ord:2 },
+      { rank:'4th Engineer',        name:'Samuel Adeyemi',       ord:3 },
+      { rank:'Electrical Officer',  name:'Chukwuemeka Eze',      ord:4 },
+    ]) {
+      await client.query(
+        'INSERT INTO vessel_duty_engineers (vessel_id,rank,name,display_order,active) VALUES ($1,$2,$3,$4,true) ON CONFLICT DO NOTHING',
+        [atId, de.rank, de.name, de.ord]
+      );
+    }
+
 
     const { rows: [ph2User] } = await client.query(`
       INSERT INTO eom_users (username,password,role,display_name,active)
@@ -79,7 +106,8 @@ async function seed() {
     console.log('System accounts:');
     console.log('  admin          / Admin@2025!   (admin access)');
     console.log('  superintendent / Super@2025!   (superintendent)');
-    console.log('  alfred_temile  / Vessel@2025!  (vessel login)');
+    console.log('  alfred_temile     / Vessel@2025!  (vessel D/E login)');
+    console.log('  alfred_temile_ce  / SMT@2025!     (vessel SMT/CE login)');
     console.log('');
     console.log('👉 Log in as admin and go to /admin.html to add individual crew members');
   } catch (e) {
