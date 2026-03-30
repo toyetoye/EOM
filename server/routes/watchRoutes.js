@@ -266,7 +266,7 @@ router.post('/:id/submit', requireAuth, async (req, res) => {
 
 // ── LOCK watch (super/admin only — prevents further amendment) ────────────────
 // POST /api/watches/:id/lock
-router.post('/:id/lock', requireAuth, requireRole('admin', 'superintendent'), async (req, res) => {
+router.post('/:id/lock', requireAuth, requireRole('admin', 'superintendent', 'smt'), async (req, res) => {
   try {
     await pool.query(
       `UPDATE eom_watches SET status='locked' WHERE id=$1`, [req.params.id]
@@ -279,7 +279,7 @@ router.post('/:id/lock', requireAuth, requireRole('admin', 'superintendent'), as
 
 // ── UNLOCK watch (super/admin — with reason) ──────────────────────────────────
 // POST /api/watches/:id/unlock
-router.post('/:id/unlock', requireAuth, requireRole('admin', 'superintendent'), async (req, res) => {
+router.post('/:id/unlock', requireAuth, requireRole('admin', 'superintendent', 'smt'), async (req, res) => {
   const { reason } = req.body;
   try {
     await pool.query(
@@ -297,7 +297,7 @@ router.post('/:id/unlock', requireAuth, requireRole('admin', 'superintendent'), 
 
 // ── FLEET OVERVIEW (super/admin dashboard) ────────────────────────────────────
 // GET /api/watches/fleet-overview
-router.get('/fleet-overview', requireAuth, requireRole('admin', 'superintendent'), async (req, res) => {
+router.get('/fleet-overview', requireAuth, requireRole('admin', 'superintendent', 'smt'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
