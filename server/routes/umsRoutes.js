@@ -103,7 +103,10 @@ router.post('/:id/sign-de', requireAuth, async (req, res) => {
 });
 
 // ── SIGN — chief engineer signs and LOCKS ────────────────────────────────────
-router.post('/:id/sign-ce', requireAuth, async (req, res) => {
+router.post('/:id/sign-ce', requireAuth,
+  (req,res,next)=>{ if(!['admin','superintendent','manager','smt'].includes(req.user.role))
+    return res.status(403).json({error:'C/E signature requires SMT or above role'}); next(); },
+  async (req, res) => {
   try {
     const { rows: rec } = await pool.query('SELECT * FROM ums_checklists WHERE id=$1', [req.params.id]);
     if (!rec.length) return res.status(404).json({ error: 'Not found' });
