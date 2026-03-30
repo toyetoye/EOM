@@ -196,53 +196,106 @@ function filterParams(){
 //   LPG (AT/AT10), LNG 2-Stroke (AKTORAS), LNG Steam (RIVERS/RIVERS PLUS), LNG DFDE (SHI/HHI)
 // When a new vessel type logs data with different section names, add them here.
 var SECTION_FLOORS = {
-  // ── LPG / LNG 2-Stroke (MAN B&W) ───────────────────────────────────────
+  // ── ER Floor ───────────────────────────────────────────────────────────
   "Main Engine":      { floor:"ER Floor",   color:"#1570EF", order:0 },
   "Auxiliaries":      { floor:"ER Floor",   color:"#1570EF", order:1 },
-  "D/G No.1":         { floor:"3rd Deck",   color:"#7C3AED", order:0 },
-  "D/G No.2":         { floor:"3rd Deck",   color:"#7C3AED", order:1 },
-  "D/G No.3":         { floor:"3rd Deck",   color:"#7C3AED", order:2 },
-  "D/G No.4":         { floor:"3rd Deck",   color:"#7C3AED", order:3 },
-  "A/C Plant":        { floor:"2nd Deck",   color:"#0891B2", order:0 },
-  "Fridge":           { floor:"2nd Deck",   color:"#0891B2", order:1 },
-  "Steering Gear":    { floor:"2nd Deck",   color:"#0891B2", order:2 },
-  "Tanks":            { floor:"Tanks",      color:"#B45309", order:0 },
+  "MGPS & ICCP":      { floor:"ER Floor",   color:"#1570EF", order:2 },
+  // ── 3rd Deck ───────────────────────────────────────────────────────────
+  "Purifiers":        { floor:"3rd Deck",   color:"#7C3AED", order:0 },
+  "D/G No.1":         { floor:"3rd Deck",   color:"#7C3AED", order:1 },
+  "D/G No.2":         { floor:"3rd Deck",   color:"#7C3AED", order:2 },
+  "D/G No.3":         { floor:"3rd Deck",   color:"#7C3AED", order:3 },
+  "D/G No.4":         { floor:"3rd Deck",   color:"#7C3AED", order:4 },
+  "Sewage Treatment Plant": { floor:"3rd Deck", color:"#7C3AED", order:5 },
+  // ── 2nd Deck ───────────────────────────────────────────────────────────
+  "Air Compressors":  { floor:"2nd Deck",   color:"#0891B2", order:0 },
+  "A/C Plant":        { floor:"2nd Deck",   color:"#0891B2", order:1 },
+  "Fridge & Cold Rooms": { floor:"2nd Deck", color:"#0891B2", order:2 },
+  "Fridge":           { floor:"2nd Deck",   color:"#0891B2", order:2 },
+  "Steering Gear":    { floor:"2nd Deck",   color:"#0891B2", order:3 },
+  // ── Upper Deck ─────────────────────────────────────────────────────────
+  "Composite Boiler": { floor:"Upper Deck", color:"#F79009", order:0 },
+  "G/E SCR System":   { floor:"Upper Deck", color:"#F79009", order:1 },
+  "E/R Fans":         { floor:"Upper Deck", color:"#F79009", order:2 },
+  // ── Tanks ──────────────────────────────────────────────────────────────
+  "Fuel Oil Tanks":   { floor:"Tanks",      color:"#B45309", order:0 },
+  "Lube Oil Tanks":   { floor:"Tanks",      color:"#B45309", order:1 },
+  "ER Misc Tanks":    { floor:"Tanks",      color:"#B45309", order:2 },
+  "Tanks":            { floor:"Tanks",      color:"#B45309", order:3 },
+  // ── ER Rounds ──────────────────────────────────────────────────────────
   "ER Rounds":        { floor:"ER Rounds",  color:"#059669", order:0 },
-  "Running Hours":    { floor:"Running Hours", color:"#6366F1", order:0 },
+  // ── Weekly Tests ───────────────────────────────────────────────────────
   "Weekly Tests":     { floor:"Weekly Tests",  color:"#0EA5E9", order:0 },
+  "Lube Oil Tests":   { floor:"Weekly Tests",  color:"#0EA5E9", order:0 },
+  "Boiler Water Tests": { floor:"Weekly Tests", color:"#0EA5E9", order:1 },
+  "Cooling Water Tests": { floor:"Weekly Tests", color:"#0EA5E9", order:2 },
+  "Drinking Water Tests": { floor:"Weekly Tests", color:"#0EA5E9", order:3 },
+  // ── Monthly Logs (includes Running Hours) ──────────────────────────────
   "Monthly Logs":     { floor:"Monthly Logs",  color:"#8B5CF6", order:0 },
+  "Scavenge Inspection": { floor:"Monthly Logs", color:"#8B5CF6", order:1 },
+  "Chemicals Inventory": { floor:"Monthly Logs", color:"#8B5CF6", order:2 },
+  "Running Hours":    { floor:"Monthly Logs",  color:"#8B5CF6", order:3 },
+  "Propulsion & ME":  { floor:"Monthly Logs",  color:"#8B5CF6", order:4 },
+  "Diesel Generators":{ floor:"Monthly Logs",  color:"#8B5CF6", order:5 },
+  "Compressed Air":   { floor:"Monthly Logs",  color:"#8B5CF6", order:6 },
+  "Cooling & FW":     { floor:"Monthly Logs",  color:"#8B5CF6", order:7 },
+  "Lube Oil System":  { floor:"Monthly Logs",  color:"#8B5CF6", order:8 },
+  "Fuel Oil System":  { floor:"Monthly Logs",  color:"#8B5CF6", order:9 },
+  "Fire, Bilge & GS": { floor:"Monthly Logs",  color:"#8B5CF6", order:10 },
+  "AC & Refrigeration":{ floor:"Monthly Logs", color:"#8B5CF6", order:11 },
+  "Ventilation":      { floor:"Monthly Logs",  color:"#8B5CF6", order:12 },
+  "Cargo System":     { floor:"Monthly Logs",  color:"#8B5CF6", order:13 },
   // ── LNG Steam (Rivers/Rivers Plus) ────────────────────────────────────
-  "Steam Turbine":    { floor:"ER Floor",   color:"#1570EF", order:0 },
-  "Steam Plant":      { floor:"ER Floor",   color:"#1570EF", order:1 },
-  "Boiler No.1":      { floor:"ER Floor",   color:"#1570EF", order:2 },
-  "Boiler No.2":      { floor:"ER Floor",   color:"#1570EF", order:3 },
-  "GS Turbine":       { floor:"3rd Deck",   color:"#7C3AED", order:0 },
-  "Cargo Machinery":  { floor:"Upper Deck", color:"#0EA5E9", order:0 },
+  "Steam Turbine":    { floor:"ER Floor",   color:"#1570EF", order:3 },
+  "Steam Plant":      { floor:"ER Floor",   color:"#1570EF", order:4 },
+  "Boiler No.1":      { floor:"ER Floor",   color:"#1570EF", order:5 },
+  "Boiler No.2":      { floor:"ER Floor",   color:"#1570EF", order:6 },
+  "GS Turbine":       { floor:"3rd Deck",   color:"#7C3AED", order:6 },
+  "Cargo Machinery":  { floor:"Upper Deck", color:"#F79009", order:3 },
   // ── LNG DFDE (SHI/HHI) ────────────────────────────────────────────────
-  "ME No.1":          { floor:"ER Floor",   color:"#1570EF", order:0 },
-  "ME No.2":          { floor:"ER Floor",   color:"#1570EF", order:1 },
-  "ME No.3":          { floor:"ER Floor",   color:"#1570EF", order:2 },
-  "ME No.4":          { floor:"ER Floor",   color:"#1570EF", order:3 },
-  "Shaft Generator":  { floor:"ER Floor",   color:"#1570EF", order:4 },
-  "Power Management": { floor:"3rd Deck",   color:"#7C3AED", order:0 },
+  "ME No.1":          { floor:"ER Floor",   color:"#1570EF", order:3 },
+  "ME No.2":          { floor:"ER Floor",   color:"#1570EF", order:4 },
+  "ME No.3":          { floor:"ER Floor",   color:"#1570EF", order:5 },
+  "ME No.4":          { floor:"ER Floor",   color:"#1570EF", order:6 },
+  "Shaft Generator":  { floor:"ER Floor",   color:"#1570EF", order:7 },
+  "Power Management": { floor:"3rd Deck",   color:"#7C3AED", order:6 },
   // ── LNG 2-Stroke (Aktoras) ────────────────────────────────────────────
-  "Gas Supply":       { floor:"Upper Deck", color:"#0EA5E9", order:0 },
-  "Reliq Plant":      { floor:"Upper Deck", color:"#0EA5E9", order:1 },
-  "Fuel Gas System":  { floor:"ER Floor",   color:"#1570EF", order:5 },
-  // ── Universal sections ────────────────────────────────────────────────
-  "Air Compressors":  { floor:"ER Floor",   color:"#1570EF", order:6 },
-  "Purifiers":        { floor:"3rd Deck",   color:"#7C3AED", order:4 },
-  "Fresh Water":      { floor:"ER Floor",   color:"#1570EF", order:7 },
-  "Bilge & GS":       { floor:"ER Floor",   color:"#1570EF", order:8 }
+  "Gas Supply":       { floor:"Upper Deck", color:"#F79009", order:3 },
+  "Reliq Plant":      { floor:"Upper Deck", color:"#F79009", order:4 },
+  "Fuel Gas System":  { floor:"ER Floor",   color:"#1570EF", order:8 },
+  // ── Universal fallbacks ────────────────────────────────────────────────
+  "Fresh Water":      { floor:"ER Floor",   color:"#1570EF", order:9 },
+  "Bilge & GS":       { floor:"ER Floor",   color:"#1570EF", order:10 }
 };
+
+// ── Daily Running Hours counters — remap by parameter name to correct floor ──
+// These are individual reading parameters that should appear under their
+// physical floor location rather than the generic "Running Hours" section.
+var RH_COUNTER_FLOOR_MAP = {
+  "ER Floor":  ["ME HYD FLUSHING COUNTER"],
+  "3rd Deck":  ["FWG COUNTER","NO.1 HFO PURIFIER R/H","NO.2 HFO PURIFIER R/H",
+                "NO.1 LO PURIFIER R/H","NO.2 LO PURIFIER R/H","FO FLUSHING COUNTER",
+                "NO.1 DG LO SUMP LEVEL","NO.2 DG LO SUMP LEVEL","NO.3 DG LO SUMP LEVEL",
+                "Running Hours DG 1","Running Hours DG 2","Running Hours DG 3",
+                "Total hours run DG 1","Total hours run DG 2","Total hours run DG 3"],
+  "2nd Deck":  ["NO.1 MAIN AIR COMP R/HR","NO.2 MAIN AIR COMP R/HR",
+                "CONTROL AIR COMP R/HR","GS AIR COMP R/HRS"],
+  "Tanks":     ["STBD FW TANK","PORT FW TANK","FW EXPANSION TANK"]
+};
+// Build a quick lookup: parameter name → floor override
+var _rhParamFloor = {};
+Object.keys(RH_COUNTER_FLOOR_MAP).forEach(function(fl){
+  RH_COUNTER_FLOOR_MAP[fl].forEach(function(p){ _rhParamFloor[p.toUpperCase()] = fl; });
+});
+
 var FLOOR_ORDER = [
   "ER Floor","3rd Deck","2nd Deck","Upper Deck",
-  "Tanks","ER Rounds","Running Hours","Weekly Tests","Monthly Logs"
+  "Tanks","ER Rounds","Weekly Tests","Monthly Logs"
 ];
 var FLOOR_COLORS = {
-  "ER Floor":"#1570EF","3rd Deck":"#7C3AED","2nd Deck":"#0891B2","Upper Deck":"#0EA5E9",
+  "ER Floor":"#1570EF","3rd Deck":"#7C3AED","2nd Deck":"#0891B2","Upper Deck":"#F79009",
   "Tanks":"#B45309","ER Rounds":"#059669",
-  "Running Hours":"#6366F1","Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"
+  "Weekly Tests":"#0EA5E9","Monthly Logs":"#8B5CF6"
 };
 
 // Track open state for both floors and sections
@@ -254,7 +307,9 @@ function renderSidebar(items){
   items.forEach(function(c){
     var sec = c.section || "Other";
     var fi  = SECTION_FLOORS[sec] || { floor:"Other", color:"#475569", order:99 };
-    var fl  = fi.floor;
+    // Override floor for daily running-hours counters based on parameter name
+    var rhOverride = _rhParamFloor[(c.parameter||'').toUpperCase()];
+    var fl  = rhOverride || fi.floor;
     if(!floors[fl]) floors[fl] = { color:FLOOR_COLORS[fl]||fi.color, sections:{}, order:FLOOR_ORDER.indexOf(fl)<0?99:FLOOR_ORDER.indexOf(fl) };
     if(!floors[fl].sections[sec]) floors[fl].sections[sec] = { params:[], order:fi.order };
     floors[fl].sections[sec].params.push(c);
