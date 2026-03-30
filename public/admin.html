@@ -454,6 +454,108 @@ if(typeof EOM!=='undefined'){
     const d=await r.json();if(!r.ok) throw new Error(d.error||'Failed');return d;
   };
 }
+
+// ── Duty Engineer Roster Management ──────────────────────────────────────
+var rosterVesselId = null, rosterVesselName = '';
+
+async function openRoster(vesselId, vesselName){
+  rosterVesselId = vesselId;
+  rosterVesselName = vesselName;
+  await renderRosterModal();
+  document.getElementById('roster-modal').style.display='flex';
+  var lbl=document.getElementById('roster-vessel-lbl');
+  if(lbl) lbl.textContent=vesselName;
+}
+
+function closeRoster(){
+  document.getElementById('roster-modal').style.display='none';
+}
+
+async function renderRosterModal(){
+  const body = document.getElementById('roster-body');
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">Loading…</div>';
+  try{
+    const roster = await EOM.get('/vessels/'+rosterVesselId+'/duty-engineers/all');
+    if(!roster.length){
+      body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">No duty engineers added yet.</div>';
+      return;
+    }
+    body.innerHTML = roster.map(de=>
+      `<div class="de-row" id="de-row-${de.id}">
+        <span class="de-rank">${esc(de.rank)}</span>
+        <span class="de-name">${esc(de.name)}</span>
+        <span class="de-status" style="color:${de.active?'var(--green)':'var(--t3)'}">
+          ${de.active?'Active':'Inactive'}
+        </span>
+        <button class="act" onclick="removeDE(${de.id})" style="color:var(--red)">Remove</button>
+      </div>`
+    ).join('');
+  }catch(e){ body.innerHTML = '<div style="color:var(--red);padding:16px">Error: '+e.message+'</div>'; }
+}
+
+async function addDE(){
+  const rank = document.getElementById('de-rank').value.trim();
+  const name = document.getElementById('de-name-input').value.trim();
+  if(!rank||!name){ showToast('Rank and name required','error'); return; }
+  try{
+    await EOM.post('/vessels/'+rosterVesselId+'/duty-engineers', {rank, name, display_order:0});
+    document.getElementById('de-rank').value='';
+    document.getElementById('de-name-input').value='';
+    await renderRosterModal();
+    showToast('Duty engineer added');
+  }catch(e){ showToast('Error: '+e.message,'error'); }
+}
+
+async function removeDE(deId){
+  try{
+    await EOM.del('/vessels/'+rosterVesselId+'/duty-engineers/'+deId);
+    await renderRosterModal();
+    showToast('Removed');
+  }catch(e){ showToast('Error: '+e.message,'error'); }
+}
+
+// Helper for DELETE
+EOM.del = EOM.del || async function(path){
+  const r = await fetch(EOM.base+path, {method:'DELETE',headers:{'Authorization':'Bearer '+EOM.token()}});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+};
+
 </script>
+
+<div id="roster-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--sf1);border:1px solid var(--bd);border-radius:14px;width:560px;max-height:80vh;overflow:auto;padding:28px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="margin:0;font-size:15px;color:var(--t1)">👥 Duty Engineer Roster</h3>
+      <button onclick="closeRoster()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:16px">Managing roster for: <strong id="roster-vessel-lbl" style="color:var(--t2)"></strong></div>
+    <div id="roster-body" style="margin-bottom:20px"></div>
+    <div style="border-top:1px solid var(--bd);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Add Duty Engineer</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+        <div>
+          <label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Rank</label>
+          <select id="de-rank" class="fs" style="width:100%">
+            <option value="">-- Select Rank --</option>
+            <option>2nd Engineer</option><option>3rd Engineer</option>
+            <option>4th Engineer</option><option>5th Engineer</option>
+            <option>Electrical Officer</option><option>Motorman</option>
+            <option>Wiper</option><option>Cadet (Engineering)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Full Name</label>
+          <input id="de-name-input" class="fi" type="text" placeholder="e.g. John Okafor" style="width:100%">
+        </div>
+        <button onclick="addDE()" class="hbtn hbtn-primary">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+.de-row{display:grid;grid-template-columns:160px 1fr 70px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.de-rank{color:var(--t2);font-weight:600}.de-name{color:var(--t1)}
+</style>
 </body>
 </html>
