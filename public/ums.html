@@ -292,13 +292,13 @@ var itemRows=ITEMS.map(function(text,i){
   var signHtml='<div class="sign-area">'+
     '<div class="sign-block">'+
     '<div class="sign-label">Duty Engineer</div>'+
-    '<input class="sign-input" id="de-name" placeholder="Name" value="'+esc(rec&&rec.duty_engineer?rec.duty_engineer:userName)+'"'+(deSigned?' readonly':'' )+'/>'+
+    '<input class="sign-input" id="de-name" placeholder="Name" value="'+esc(rec&&rec.duty_engineer?rec.duty_engineer:(window._selectedDE||userName))+'"'+(deSigned?' readonly':'' )+'/>'+
     deSignedMeta+
     (!deSigned&&canEdit?'<button class="sign-btn btn-de" onclick="signDE()" id="btn-sign-de">Sign as Duty Engineer</button>':'' )+
     '</div>'+
     '<div class="sign-block">'+
     '<div class="sign-label">Chief Engineer</div>'+
-    '<input class="sign-input" id="ce-name" placeholder="Name" value="'+esc(rec&&rec.chief_engineer?rec.chief_engineer:"")+'"'+(ceSigned?' readonly':'' )+'/>'+
+    '<input class="sign-input" id="ce-name" placeholder="Name" value="'+esc(rec&&rec.chief_engineer?rec.chief_engineer:(userRole==="smt"?userName:""))+'"'+(ceSigned?' readonly':'' )+'/>'+
     ceSignedMeta+
     (deSigned&&!ceSigned&&canCESign?'<button class="sign-btn btn-ce" onclick="signCE()" id="btn-sign-ce">Sign & Lock Checklist</button>':'' )+
     (isLocked&&userRole==="admin"?'<button class="sign-btn" style="background:var(--red);color:#fff;margin-top:8px" onclick="adminUnlock()">Admin Unlock</button>':'' )+
