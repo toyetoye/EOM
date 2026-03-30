@@ -648,9 +648,10 @@ async function onVesselSelectorChange(vesselId){
       vc.parentElement.appendChild(b);
     }
   }
-  // Reload the watch for the new vessel
+  // Reload the watch and duty engineer roster for the new vessel
   const dateEl=document.getElementById('log_date');
   if(dateEl && dateEl.value) await loadWatch(dateEl.value);
+  await loadDutyEngineers();
   showToast('Switched to '+v.name);
 }
 
@@ -846,16 +847,22 @@ function onDESelected(sel){
 
 function applySelectedDE(de){
   if(!de) return;
-  // 1. Update duty_eng_inp (feeds into watch submission)
-  var inp = document.getElementById('duty_eng_inp');
-  if(inp) inp.value = de.label;
-  // 2. Sync dropdown to match stored value
+  // 1. Sync dropdown to match stored value — only apply if D/E exists in current roster
   var sel = document.getElementById('de_select');
+  var matched = false;
   if(sel){
     for(var i=0; i<sel.options.length; i++){
-      if(sel.options[i].text === de.label){ sel.selectedIndex=i; break; }
+      if(sel.options[i].text === de.label){ sel.selectedIndex=i; matched=true; break; }
     }
   }
+  if(!matched){
+    // Stored D/E not in current vessel's roster — clear stale selection
+    setSelectedDE(null);
+    return;
+  }
+  // 2. Update duty_eng_inp (feeds into watch submission)
+  var inp = document.getElementById('duty_eng_inp');
+  if(inp) inp.value = de.label;
   // 3. Update the D/E label in the topbar and logbook header
   var deLabel = document.getElementById('de-active-label');
   if(deLabel) deLabel.textContent = de.label;
@@ -962,7 +969,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
     // Auto-expand first floor
     EXPANDED_FLOOR.current = 'floor';
-    await Promise.all([loadWatch(), loadDutyEngineers(), loadDefectStats(), loadCycloneStatus(), loadAnomalies()]);
+    await Promise.all([loadWatch(), loadDefectStats(), loadCycloneStatus(), loadAnomalies()]);
+    await loadDutyEngineers();
   }catch(e){showToast('Load error: '+e.message,'error');console.error(e);}
   setInterval(()=>{if(WATCH_STATE.watchId&&!WATCH_STATE.locked)doApiSave();},60000);
 });
