@@ -524,8 +524,9 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
     <!-- Watch selector removed — UMS vessel, one log per day -->
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2)">D/E:
       <select id="de_select"
-        style="border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none;max-width:180px">
-        <option value="">— Select —</option>
+        style="border:1px solid var(--inp-bd);background:var(--inp-bg);color:var(--t1);border-radius:var(--rsm);padding:4px 8px;font-size:12px;font-family:var(--font);outline:none;max-width:180px"
+        onchange="onDESelected(this)">
+        <option value="">— Select D/E —</option>
       </select>
     </label>
     <span id="save-state" style="font-size:11px;color:var(--t3)">● Saved</span>
@@ -624,6 +625,7 @@ async function onVesselSelectorChange(vesselId){
   const v = vessels.find(x=>x.id===parseInt(vesselId));
   if(!v) return;
   EOM.setSelectedVessel(v.id); // persist across pages
+  setSelectedDE(null); // clear DE when switching vessels
   WATCH_STATE.vesselId = v.id;
   WATCH_STATE.vesselName = v.name;
   applyVesselClassOverrides(v);
@@ -797,15 +799,81 @@ function showToast(msg,type='info'){
   toastTimer=setTimeout(()=>{t.style.opacity='0';},3500);
 }
 
+
+// ── Duty Engineer selection persistence ──────────────────────────────────
+// Stores selected D/E in localStorage so it persists across navigation.
+// Key: "eom_selected_de" = JSON {id, rank, name, label}
+var EOM_DE_KEY = 'eom_selected_de';
+
+function getSelectedDE(){
+  try{ return JSON.parse(localStorage.getItem(EOM_DE_KEY)||'null'); }
+  catch(e){ return null; }
+}
+function setSelectedDE(de){
+  if(de) localStorage.setItem(EOM_DE_KEY, JSON.stringify(de));
+  else   localStorage.removeItem(EOM_DE_KEY);
+}
+
+function onDESelected(sel){
+  var val = sel.value;
+  if(!val){ setSelectedDE(null); return; }
+
+  // Get the selected option's dataset
+  var opt = sel.options[sel.selectedIndex];
+  var de = {
+    id:    parseInt(opt.dataset.deId||0),
+    rank:  opt.dataset.rank  || val,
+    name:  opt.dataset.name  || val,
+    label: opt.text           // "Rank — Name"
+  };
+
+  // ── Confirmation prompt ──────────────────────────────────────────────
+  showConfirmModal(
+    'Signing in as Duty Engineer',
+    de.rank + '\n' + de.name + '\n\nConfirm you are signing in as this Duty Engineer for this watch?',
+    function(){
+      // Confirmed — persist and apply
+      setSelectedDE(de);
+      applySelectedDE(de);
+      showToast('Signed in as ' + de.label, 'success');
+    },
+    function(){
+      // Cancelled — reset dropdown
+      sel.value = '';
+    }
+  );
+}
+
+function applySelectedDE(de){
+  if(!de) return;
+  // 1. Update duty_eng_inp (feeds into watch submission)
+  var inp = document.getElementById('duty_eng_inp');
+  if(inp) inp.value = de.label;
+  // 2. Sync dropdown to match stored value
+  var sel = document.getElementById('de_select');
+  if(sel){
+    for(var i=0; i<sel.options.length; i++){
+      if(sel.options[i].text === de.label){ sel.selectedIndex=i; break; }
+    }
+  }
+  // 3. Update the D/E label in the topbar and logbook header
+  var deLabel = document.getElementById('de-active-label');
+  if(deLabel) deLabel.textContent = de.label;
+}
+
+function restoreSelectedDE(){
+  var de = getSelectedDE();
+  if(de) applySelectedDE(de);
+}
+
 async function loadDutyEngineers(){
   try{
     const roster = await EOM.get('/vessels/'+WATCH_STATE.vesselId+'/duty-engineers');
     const sel = document.getElementById('de_select');
     if(!sel) return;
-    sel.innerHTML = '<option value="">— Select Duty Engineer —</option>';
+    sel.innerHTML = '<option value="">— Select D/E —</option>';
     (roster||[]).forEach(de=>{
       const opt = document.createElement('option');
-      // value = "Rank — Name" format stored in watch record
       opt.value = de.rank + ' — ' + de.name;
       opt.textContent = de.rank + ' — ' + de.name;
       opt.dataset.deId = de.id;
@@ -813,6 +881,18 @@ async function loadDutyEngineers(){
       opt.dataset.name = de.name;
       sel.appendChild(opt);
     });
+    // Restore previously selected D/E (persists across navigation)
+    restoreSelectedDE();
+    // Also: if the current watch already has a duty_engineer set, sync dropdown to it
+    var inp = document.getElementById('duty_eng_inp');
+    if(inp && inp.value && !getSelectedDE()){
+      for(var i=0; i<sel.options.length; i++){
+        if(sel.options[i].text === inp.value.trim()){
+          sel.selectedIndex = i;
+          break;
+        }
+      }
+    }
   }catch(e){ console.warn('Could not load duty engineers:', e); }
 }
 
