@@ -156,9 +156,9 @@ var UMS_ITEMS=["Gas detection system and Fire Detection System fully operational
 window.addEventListener('DOMContentLoaded', async function(){
   if(typeof EOM==='undefined') return;
   if(!EOM.requireAuth()) return;
-  // Audit available to superintendent/admin/manager
+  // Audit available to superintendent/admin/manager/smt
   var u=EOM.user();
-  if(!u||!['admin','superintendent','manager'].includes(u.role)){
+  if(!u||!['admin','superintendent','manager','smt'].includes(u.role)){
     document.getElementById('results-list').innerHTML='<div class="empty"><div style="font-size:36px;margin-bottom:10px">&#128274;</div><div style="font-size:15px;font-weight:700">Access Restricted</div><div style="margin-top:8px;font-size:13px">Audit Trail is available to Superintendents and Managers only.</div><a href="/logbook.html" style="display:inline-block;margin-top:16px;padding:8px 20px;background:var(--blue);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Back to Logbook</a></div>';
     return;
   }
