@@ -51,6 +51,21 @@ async function initDB() {
     await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS propulsion_type VARCHAR(50)');
     await client.query('ALTER TABLE eom_vessels ADD COLUMN IF NOT EXISTS vessel_class VARCHAR(50)');
 
+
+    // ── DUTY ENGINEERS ROSTER ────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS vessel_duty_engineers (
+        id             SERIAL PRIMARY KEY,
+        vessel_id      INTEGER NOT NULL REFERENCES eom_vessels(id) ON DELETE CASCADE,
+        rank           VARCHAR(100) NOT NULL,
+        name           VARCHAR(200) NOT NULL,
+        display_order  INTEGER DEFAULT 0,
+        active         BOOLEAN DEFAULT true,
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_vde_vessel ON vessel_duty_engineers(vessel_id)');
+
     // ── WATCHES ──────────────────────────────────────────────────────────────
     // watch_number: 1=00-04  2=04-08  3=08-12  4=12-16  5=16-20  6=20-24
     await client.query(`
