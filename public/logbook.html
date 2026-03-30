@@ -799,14 +799,18 @@ function showToast(msg,type='info'){
 
 async function loadDutyEngineers(){
   try{
-    const users = await EOM.get('/vessels/'+WATCH_STATE.vesselId+'/duty-engineers');
+    const roster = await EOM.get('/vessels/'+WATCH_STATE.vesselId+'/duty-engineers');
     const sel = document.getElementById('de_select');
     if(!sel) return;
     sel.innerHTML = '<option value="">— Select Duty Engineer —</option>';
-    (users||[]).forEach(u=>{
+    (roster||[]).forEach(de=>{
       const opt = document.createElement('option');
-      opt.value = u.display_name || u.username;
-      opt.textContent = (u.display_name||u.username) + (u.designation?' ('+u.designation+')':'');
+      // value = "Rank — Name" format stored in watch record
+      opt.value = de.rank + ' — ' + de.name;
+      opt.textContent = de.rank + ' — ' + de.name;
+      opt.dataset.deId = de.id;
+      opt.dataset.rank = de.rank;
+      opt.dataset.name = de.name;
       sel.appendChild(opt);
     });
   }catch(e){ console.warn('Could not load duty engineers:', e); }
