@@ -231,6 +231,7 @@ function render(){
   var items=rec&&rec.items?rec.items:{};
   var isLocked=rec&&rec.is_locked;
   var canEdit=!isLocked||(userRole==="admin");
+  var canCESign=['admin','superintendent','manager','smt'].includes(userRole);
   var deSigned=rec&&rec.de_signed;
   var ceSigned=rec&&rec.ce_signed;
 
@@ -299,7 +300,7 @@ var itemRows=ITEMS.map(function(text,i){
     '<div class="sign-label">Chief Engineer</div>'+
     '<input class="sign-input" id="ce-name" placeholder="Name" value="'+esc(rec&&rec.chief_engineer?rec.chief_engineer:"")+'"'+(ceSigned?' readonly':'' )+'/>'+
     ceSignedMeta+
-    (deSigned&&!ceSigned&&canEdit?'<button class="sign-btn btn-ce" onclick="signCE()" id="btn-sign-ce">Sign & Lock Checklist</button>':'' )+
+    (deSigned&&!ceSigned&&canCESign?'<button class="sign-btn btn-ce" onclick="signCE()" id="btn-sign-ce">Sign & Lock Checklist</button>':'' )+
     (isLocked&&userRole==="admin"?'<button class="sign-btn" style="background:var(--red);color:#fff;margin-top:8px" onclick="adminUnlock()">Admin Unlock</button>':'' )+
     '</div>'+
     '</div>';
@@ -508,6 +509,7 @@ async function signDE(){
 }
 
 async function signCE(){
+  if(!canCESign){showToast('C/E signature requires SMT or above','error');return;}
   if(!currentRec){alert("Save the checklist first");return;}
   var ceN=document.getElementById("ce-name")?.value||"";
   if(!ceN){alert("Enter Chief Engineer name");return;}
