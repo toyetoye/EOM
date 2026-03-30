@@ -166,12 +166,24 @@ window.addEventListener("DOMContentLoaded", async function(){
     if(!v.length) return;
     var _cv=EOM.pickVessel(v); vesselId=_cv.id; vesselName=_cv.name;
     document.getElementById("vessel-lbl").textContent="-- "+vesselName;
+  // Show active D/E if signed in
+  var _de=getSelectedDE();
+  var _deEl=document.getElementById("de-active-lbl");
+  if(_deEl&&_de) _deEl.textContent="D/E: "+_de.label;
+  else if(_deEl) _deEl.textContent="";
   }catch(e){}
   setToday();
   loadHistory();
   // Patch EOM if needed
   if(!EOM.post) EOM.post=async function(p,b){var t=localStorage.getItem("eom_token");var r=await fetch("/api"+p,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+t},body:JSON.stringify(b)});var d=await r.json();if(!r.ok)throw new Error(d.error||"Failed");return d;};
 });
+
+
+// Read D/E selection from localStorage (set by logbook.html when D/E signs in)
+function getSelectedDE(){
+  try{ return JSON.parse(localStorage.getItem('eom_selected_de')||'null'); }
+  catch(e){ return null; }
+}
 
 function setToday(){
   document.getElementById("cl-date").value=new Date().toISOString().slice(0,10);
@@ -292,7 +304,7 @@ var itemRows=ITEMS.map(function(text,i){
   var signHtml='<div class="sign-area">'+
     '<div class="sign-block">'+
     '<div class="sign-label">Duty Engineer</div>'+
-    '<input class="sign-input" id="de-name" placeholder="Name" value="'+esc(rec&&rec.duty_engineer?rec.duty_engineer:(window._selectedDE||userName))+'"'+(deSigned?' readonly':'' )+'/>'+
+    '<input class="sign-input" id="de-name" placeholder="Name" value="'+(()=>{ var v=rec&&rec.duty_engineer; if(v) return esc(v); var de=getSelectedDE(); return de?esc(de.label):''; })()+'"'+(deSigned?' readonly':'' )+'/>'+
     deSignedMeta+
     (!deSigned&&canEdit?'<button class="sign-btn btn-de" onclick="signDE()" id="btn-sign-de">Sign as Duty Engineer</button>':'' )+
     '</div>'+
