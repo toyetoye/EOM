@@ -345,6 +345,7 @@ function renderVessels(){
       <td><span class="pill ${v.active?'pill-on':'pill-off'}">${v.active?'Active':'Inactive'}</span></td>
       ${isAdmin?`<td>
         <button class="act" onclick="openEditVessel(${v.id})">✏️ Edit</button>
+        <button class="act" onclick="openRoster(${v.id},'${v.name}')" style="background:rgba(99,102,241,.15);color:#a5b4fc">👥 Roster</button>
         ${v.active?`<button class="act danger" onclick="deactivateVessel(${v.id})">Deactivate</button>`:''}
       </td>`:''}
     </tr>`;
