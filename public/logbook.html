@@ -220,6 +220,9 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 .pw-val.up{color:var(--warn)}
 .pw-val.dn{color:var(--blue)}
 .pw-val.alm{color:var(--alm)}
+.fr-auto{background:rgba(127,86,217,.04);border-radius:4px;padding:4px 6px}
+.finp-auto{background:var(--bg2)!important;border-color:var(--line2)!important;color:var(--t3)!important;cursor:not-allowed;opacity:.8}
+.auto-badge{font-size:10px;color:#7F56D9;white-space:nowrap;text-align:right;font-weight:600;opacity:.8}
 .pw-hdr{font-size:9.5px;font-weight:700;letter-spacing:.5px;color:var(--t3);text-transform:uppercase;text-align:right;opacity:.7;font-family:var(--font)}
 
 /* WATCH HISTORY TABLE (Area 3) */
@@ -1614,143 +1617,41 @@ const FLOORS=[
   }]},
 ]},
 // ─── RUNNING HOURS ────────────────────────────────────────────────────────
-{id:'rh',label:'Running Hours',sub:'All 141 equipment items',color:'#7F56D9',freq:'monthly',equip:[
-  {id:'rh_prop',name:'Propulsion & ME',sub:'Main Engine · Aux Blowers · Hydraulics',icon:'⚙️',tabs:[{
-    id:'rh_prop_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_17',lbl:'MAIN ENGINE',unit:'hrs'},
-      {id:'rh_18',lbl:'NO.1 ME HYDRAULIC OIL PUMP',unit:'hrs'},
-      {id:'rh_19',lbl:'NO.2 ME HYDRAULIC OIL PUMP',unit:'hrs'},
-      {id:'rh_20',lbl:'NO.1 ME AUXILIARY BLOWER',unit:'hrs'},
-      {id:'rh_21',lbl:'NO.2 ME AUXILIARY BLOWER',unit:'hrs'},
-      {id:'rh_53',lbl:'MAIN ENGINE TURNING GEAR',unit:'hrs'},
-      {id:'rh_54',lbl:'NO.1 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
-      {id:'rh_55',lbl:'NO.2 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
+{id:'rh',label:'Running Hours',sub:'Daily counters & instrument readings',color:'#7F56D9',freq:'monthly',equip:[
+  {id:'counters',name:'Counters',sub:'FWG · Air Comp · Purifiers · DG R/H · FW Tanks',icon:'🔢',tabs:[{
+    id:'counters_t',label:'Counters',icon:'🔢',fields:[
+      {id:'cnt_fwg',          lbl:'FWG COUNTER',                    unit:''},
+      {id:'cnt_air1',         lbl:'NO.1 MAIN AIR COMP R/HR',        unit:'hrs'},
+      {id:'cnt_air2',         lbl:'NO.2 MAIN AIR COMP R/HR',        unit:'hrs'},
+      {id:'cnt_ctrl_air',     lbl:'CONTROL AIR COMP R/HR',          unit:'hrs'},
+      {id:'cnt_gs_air',       lbl:'GS AIR COMP R/HRS',              unit:'hrs'},
+      {id:'cnt_hfo_pur1',     lbl:'NO.1 HFO PURIFIER R/H',          unit:'hrs'},
+      {id:'cnt_hfo_pur2',     lbl:'NO.2 HFO PURIFIER R/H',          unit:'hrs'},
+      {id:'cnt_lo_pur1',      lbl:'NO.1 LO PURIFIER R/H',           unit:'hrs'},
+      {id:'cnt_lo_pur2',      lbl:'NO.2 LO PURIFIER R/H',           unit:'hrs'},
+      {id:'cnt_me_hyd',       lbl:'ME HYD FLUSHING COUNTER',        unit:''},
+      {id:'cnt_fo_flush',     lbl:'FO FLUSHING COUNTER',            unit:''},
+      {id:'cnt_fw_stbd',      lbl:'STBD FW TANK',                   unit:'m³'},
+      {id:'cnt_fw_port',      lbl:'PORT FW TANK',                   unit:'m³'},
+      {id:'cnt_fw_exp',       lbl:'FW EXPANSION TANK',              unit:'m³'},
+      {id:'cnt_dg1_lo',       lbl:'NO.1 DG LO SUMP LEVEL',         unit:'m³'},
+      {id:'cnt_dg2_lo',       lbl:'NO.2 DG LO SUMP LEVEL',         unit:'m³'},
+      {id:'cnt_dg3_lo',       lbl:'NO.3 DG LO SUMP LEVEL',         unit:'m³'},
+      {id:'cnt_dg1_rh',       lbl:'RUNNING HOURS DG 1',             unit:'hrs'},
+      {id:'cnt_dg2_rh',       lbl:'RUNNING HOURS DG 2',             unit:'hrs'},
+      {id:'cnt_dg3_rh',       lbl:'RUNNING HOURS DG 3',             unit:'hrs'},
     ]}]},
-  {id:'rh_dg',name:'Diesel Generators',sub:'DG1/2/3 · Emergency DG · Prelube',icon:'🔋',tabs:[{
-    id:'rh_dg_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_22',lbl:'NO.1 DIESEL GENERATOR',unit:'hrs'},
-      {id:'rh_23',lbl:'NO.2 DIESEL GENERATOR',unit:'hrs'},
-      {id:'rh_24',lbl:'NO.3 DIESEL GENERATOR',unit:'hrs'},
-      {id:'rh_62',lbl:'EMERGENCY DIESEL GENERATOR',unit:'hrs'},
-      {id:'rh_59',lbl:'NO.1 GE PRELUBE PUMP',unit:'hrs'},
-      {id:'rh_60',lbl:'NO.2 GE PRELUBE PUMP',unit:'hrs'},
-      {id:'rh_61',lbl:'NO.3 GE PRELUBE PUMP',unit:'hrs'},
-    ]}]},
-  {id:'rh_air',name:'Compressed Air',sub:'Main · Control · GS · Emergency',icon:'💨',tabs:[{
-    id:'rh_air_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_112',lbl:'NO.1 MAIN AIR COMPRESSOR',unit:'hrs'},
-      {id:'rh_113',lbl:'NO.2 MAIN AIR COMPRESSOR',unit:'hrs'},
-      {id:'rh_114',lbl:'EMERGENCY AIR COMPRESSOR',unit:'hrs'},
-      {id:'rh_115',lbl:'GS AIR COMPRESSOR',unit:'hrs'},
-      {id:'rh_116',lbl:'CONTROL AIR COMPRESSOR',unit:'hrs'},
-    ]}]},
-  {id:'rh_cool',name:'Cooling & FW',sub:'HT/LT CFW · Boiler Feed · FWG',icon:'💧',tabs:[{
-    id:'rh_cool_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_83',lbl:'NO.1 HT CFW PUMP',unit:'hrs'},
-      {id:'rh_84',lbl:'NO.2 HT CFW PUMP',unit:'hrs'},
-      {id:'rh_80',lbl:'NO.1 LT CFW PUMP',unit:'hrs'},
-      {id:'rh_81',lbl:'NO.2 LT CFW PUMP',unit:'hrs'},
-      {id:'rh_82',lbl:'NO.3 LT CFW PUMP',unit:'hrs'},
-      {id:'rh_71',lbl:'FWG EJECTOR PUMP',unit:'hrs'},
-      {id:'rh_78',lbl:'NO.1 BOILER FEED WATER PUMP',unit:'hrs'},
-      {id:'rh_79',lbl:'NO.2 BOILER FEED WATER PUMP',unit:'hrs'},
-    ]}]},
-  {id:'rh_lo',name:'Lube Oil System',sub:'Main LO · Purifiers · Stern Tube',icon:'🛢️',tabs:[{
-    id:'rh_lo_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_86',lbl:'NO.1 MAIN LO PUMP',unit:'hrs'},
-      {id:'rh_87',lbl:'NO.2 MAIN LO PUMP',unit:'hrs'},
-      {id:'rh_88',lbl:'NO.1 LO PURIFIER FEED PUMP',unit:'hrs'},
-      {id:'rh_89',lbl:'NO.2 LO PURIFIER FEED PUMP',unit:'hrs'},
-      {id:'rh_90',lbl:'NO.1 STERN TUBE LO PUMP',unit:'hrs'},
-      {id:'rh_91',lbl:'NO.2 STERN TUBE LO PUMP',unit:'hrs'},
-      {id:'rh_135',lbl:'NO.1 HFO PURIFIER',unit:'hrs'},
-      {id:'rh_136',lbl:'NO.2 HFO PURIFIER',unit:'hrs'},
-      {id:'rh_137',lbl:'NO.1 LO PURIFIER',unit:'hrs'},
-      {id:'rh_138',lbl:'NO.2 LO PURIFIER',unit:'hrs'},
-    ]}]},
-  {id:'rh_fo',name:'Fuel Oil System',sub:'Supply · Circ · Boiler FO · Transfer',icon:'⛽',tabs:[{
-    id:'rh_fo_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_92',lbl:'NO.1 FO SUPPLY PUMP',unit:'hrs'},
-      {id:'rh_93',lbl:'NO.2 FO SUPPLY PUMP',unit:'hrs'},
-      {id:'rh_94',lbl:'NO.1 FO CIRC PUMP',unit:'hrs'},
-      {id:'rh_95',lbl:'NO.2 FO CIRC PUMP',unit:'hrs'},
-      {id:'rh_96',lbl:'NO.1 HFO PURIFIER FEED PUMP',unit:'hrs'},
-      {id:'rh_97',lbl:'NO.2 HFO PURIFIER FEED PUMP',unit:'hrs'},
-      {id:'rh_98',lbl:'NO.1 BOILER FO PUMP',unit:'hrs'},
-      {id:'rh_99',lbl:'NO.2 BOILER FO PUMP',unit:'hrs'},
-      {id:'rh_100',lbl:'NO.1 FWD HFO TRANSFER PUMP',unit:'hrs'},
-      {id:'rh_101',lbl:'NO.2 FWD HFO TRANSFER PUMP',unit:'hrs'},
-      {id:'rh_102',lbl:'NO.1 MGO FLUSHING PUMP',unit:'hrs'},
-      {id:'rh_103',lbl:'NO.2 MGO FLUSHING PUMP',unit:'hrs'},
-    ]}]},
-  {id:'rh_fbgs',name:'Fire, Bilge & GS',sub:'Fire · Bilge · Ballast · Spray',icon:'🚒',tabs:[{
-    id:'rh_fbgs_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_63',lbl:'NO.1 MAIN CSW PUMP',unit:'hrs'},
-      {id:'rh_64',lbl:'NO.2 MAIN CSW PUMP',unit:'hrs'},
-      {id:'rh_65',lbl:'NO.3 MAIN CSW PUMP',unit:'hrs'},
-      {id:'rh_69',lbl:'NO.1 FIRE, BILGE & GS PUMP',unit:'hrs'},
-      {id:'rh_70',lbl:'NO.2 FIRE, BILGE & GS PUMP',unit:'hrs'},
-      {id:'rh_72',lbl:'NO.1 BALLAST PUMP',unit:'hrs'},
-      {id:'rh_73',lbl:'NO.2 BALLAST PUMP',unit:'hrs'},
-      {id:'rh_74',lbl:'ANTI PIRACY PUMP',unit:'hrs'},
-      {id:'rh_75',lbl:'FIRE JOCKEY PUMP',unit:'hrs'},
-      {id:'rh_76',lbl:'EMERGENCY FIRE PUMP',unit:'hrs'},
-      {id:'rh_77',lbl:'WATER SPRAY PUMP',unit:'hrs'},
-      {id:'rh_139',lbl:'INCINERATOR',unit:'hrs'},
-      {id:'rh_140',lbl:'BOILER COMBUSTION',unit:'hrs'},
-      {id:'rh_141',lbl:'HYPERMIST WATER PUMP',unit:'hrs'},
-    ]}]},
-  {id:'rh_acref',name:'AC & Refrigeration',sub:'AC Comp · Fridge · Package Units',icon:'❄️',tabs:[{
-    id:'rh_acref_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_117',lbl:'NO.1 AC COMPRESSOR',unit:'hrs'},
-      {id:'rh_118',lbl:'NO.2 AC COMPRESSOR',unit:'hrs'},
-      {id:'rh_119',lbl:'NO.1 FRIDGE COMPRESSOR',unit:'hrs'},
-      {id:'rh_120',lbl:'NO.2 FRIDGE COMPRESSOR',unit:'hrs'},
-      {id:'rh_121',lbl:'NO.1 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
-      {id:'rh_122',lbl:'NO.1 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
-      {id:'rh_123',lbl:'NO.2 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
-      {id:'rh_124',lbl:'NO.2 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
-      {id:'rh_125',lbl:'NO.1 MCC PACKAGE UNIT COOLER FAN',unit:'hrs'},
-      {id:'rh_126',lbl:'NO.1 MCC PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
-      {id:'rh_129',lbl:'CCR PACKAGE UNIT COOLER FAN',unit:'hrs'},
-      {id:'rh_130',lbl:'CCR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
-      {id:'rh_131',lbl:'WHEELHOUSE UNIT COOLER FAN',unit:'hrs'},
-      {id:'rh_132',lbl:'WHEELHOUSE UNIT COOLER COMPRESSOR',unit:'hrs'},
-    ]}]},
-  {id:'rh_vent',name:'Ventilation',sub:'4 × ER supply fans',icon:'🌀',tabs:[{
-    id:'rh_vent_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_107',lbl:'NO.1 ER VENT SUPPLY FAN',unit:'hrs'},
-      {id:'rh_108',lbl:'NO.2 ER VENT SUPPLY FAN',unit:'hrs'},
-      {id:'rh_109',lbl:'NO.3 ER VENT SUPPLY FAN',unit:'hrs'},
-      {id:'rh_110',lbl:'NO.4 ER VENT SUPPLY FAN',unit:'hrs'},
-      {id:'rh_111',lbl:'BOILER FD FAN',unit:'hrs'},
-    ]}]},
-  {id:'rh_cargo',name:'Cargo System',sub:'Deep well · Booster · Reliq · IGG',icon:'🚢',tabs:[{
-    id:'rh_cargo_t',label:'Running Hours',icon:'⏱️',fields:[
-      {id:'rh_5',lbl:'CARGO TANK 1 DEEP WELL PUMP PORT',unit:'hrs'},
-      {id:'rh_6',lbl:'CARGO TANK 1 DEEP WELL PUMP STBD',unit:'hrs'},
-      {id:'rh_7',lbl:'CARGO TANK 2 DEEP WELL PUMP PORT',unit:'hrs'},
-      {id:'rh_8',lbl:'CARGO TANK 2 DEEP WELL PUMP STBD',unit:'hrs'},
-      {id:'rh_9',lbl:'CARGO TANK 3 DEEP WELL PUMP PORT',unit:'hrs'},
-      {id:'rh_10',lbl:'CARGO TANK 3 DEEP WELL PUMP STBD',unit:'hrs'},
-      {id:'rh_11',lbl:'NO.1 CARGO BOOSTER PUMP',unit:'hrs'},
-      {id:'rh_12',lbl:'NO.2 CARGO BOOSTER PUMP',unit:'hrs'},
-      {id:'rh_13',lbl:'NO.1 RELIQ COMPRESSOR',unit:'hrs'},
-      {id:'rh_14',lbl:'NO.2 RELIQ COMPRESSOR',unit:'hrs'},
-      {id:'rh_15',lbl:'NO.3 RELIQ COMPRESSOR',unit:'hrs'},
-      {id:'rh_25',lbl:'NO.1 CARGO CSW PUMP',unit:'hrs'},
-      {id:'rh_26',lbl:'NO.2 CARGO CSW PUMP',unit:'hrs'},
-      {id:'rh_27',lbl:'NO.3 CARGO CSW PUMP',unit:'hrs'},
-      {id:'rh_39',lbl:'NO.1 IGG BLOWER A',unit:'hrs'},
-      {id:'rh_40',lbl:'NO.2 IGG BLOWER B',unit:'hrs'},
-      {id:'rh_41',lbl:'IGG WET GAS BLOWER',unit:'hrs'},
-      {id:'rh_42',lbl:'IGG SYSTEM',unit:'hrs'},
-      {id:'rh_133',lbl:'IGG COMPRESSOR',unit:'hrs'},
-      {id:'rh_3',lbl:'NO.1 GAS FREEING FAN',unit:'hrs'},
-      {id:'rh_4',lbl:'NO.2 GAS FREEING FAN',unit:'hrs'},
-      {id:'rh_16',lbl:'BOW THRUSTER',unit:'hrs'},
-      {id:'rh_51',lbl:'NO.1 STEERING GEAR',unit:'hrs'},
-      {id:'rh_52',lbl:'NO.2 STEERING GEAR',unit:'hrs'},
+  {id:'auto_calc',name:'Auto-Calculated Totals',sub:'Derived from daily counter differences',icon:'🔄',tabs:[{
+    id:'auto_t',label:'Auto-Calculated',icon:'🔄',fields:[
+      {id:'cnt_dg1_run',      lbl:'TOTAL HOURS RUN DG 1',                  unit:'hrs', readonly:true},
+      {id:'cnt_dg2_run',      lbl:'TOTAL HOURS RUN DG 2',                  unit:'hrs', readonly:true},
+      {id:'cnt_dg3_run',      lbl:'TOTAL HOURS RUN DG 3',                  unit:'hrs', readonly:true},
+      {id:'cnt_fwg_prod',     lbl:'FRESH WATER GEN TOTAL PRODUCED',        unit:'m³',  readonly:true},
+      {id:'cnt_ac_rh',        lbl:'AIR CONDITIONING RUNNING HOURS',        unit:'hrs', readonly:true},
+      {id:'cnt_fridge_rh',    lbl:'FRIDGE COMPRESSOR RUN HOURS',           unit:'hrs', readonly:true},
+      {id:'cnt_air1_total',   lbl:'NO.1 MAIN AIR COMP TOTAL RUN HOURS',   unit:'hrs', readonly:true},
+      {id:'cnt_air2_total',   lbl:'NO.2 MAIN AIR COMP TOTAL RUN HOURS',   unit:'hrs', readonly:true},
+      {id:'cnt_hfo_flush_ttl',lbl:'HFO FLUSHING COUNTER',                  unit:'',    readonly:true},
     ]}]},
 ]},
 // ─── WEEKLY TESTS ─────────────────────────────────────────────────────────
@@ -1810,7 +1711,7 @@ const FLOORS=[
     ]}]},
 ]},
 // ─── MONTHLY LOGS ─────────────────────────────────────────────────────────
-{id:'monthly',label:'Monthly Logs',sub:'Scavenge · Performance · Inventory',color:'#10B981',freq:'monthly',equip:[
+{id:'monthly',label:'Monthly Logs',sub:'Scavenge · Performance · Inventory · EOM Running Hours',color:'#10B981',freq:'monthly',equip:[
   {id:'scavenge',name:'Scavenge Inspection',sub:'Monthly per cylinder',icon:'🔍',tabs:[{
     id:'scav_t',label:'Inspection',icon:'🔍',cylinders:{count:7,params:[
       {id:'piston_crown',lbl:'Piston Crown',unit:''},
@@ -2037,6 +1938,144 @@ const FLOORS=[
       {id:'loi_trans_80w90',lbl:'TRANSMISSION AXLE 80W-90',unit:'L'}
     ]},
   ]},
+  // ── EOM Running Hours (monthly cumulative — all 141 equipment items) ──
+  {id:'rh_prop',name:'EOM R/H — Propulsion & ME',sub:'Main Engine · Aux Blowers · Hydraulics',icon:'⚙️',tabs:[{
+    id:'rh_prop_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_17',lbl:'MAIN ENGINE',unit:'hrs'},
+      {id:'rh_18',lbl:'NO.1 ME HYDRAULIC OIL PUMP',unit:'hrs'},
+      {id:'rh_19',lbl:'NO.2 ME HYDRAULIC OIL PUMP',unit:'hrs'},
+      {id:'rh_20',lbl:'NO.1 ME AUXILIARY BLOWER',unit:'hrs'},
+      {id:'rh_21',lbl:'NO.2 ME AUXILIARY BLOWER',unit:'hrs'},
+      {id:'rh_53',lbl:'MAIN ENGINE TURNING GEAR',unit:'hrs'},
+      {id:'rh_54',lbl:'NO.1 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
+      {id:'rh_55',lbl:'NO.2 MAIN ENGINE HYDRAULIC PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_dg',name:'EOM R/H — Diesel Generators',sub:'DG1/2/3 · Emergency DG · Prelube',icon:'🔋',tabs:[{
+    id:'rh_dg_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_22',lbl:'NO.1 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_23',lbl:'NO.2 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_24',lbl:'NO.3 DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_62',lbl:'EMERGENCY DIESEL GENERATOR',unit:'hrs'},
+      {id:'rh_59',lbl:'NO.1 GE PRELUBE PUMP',unit:'hrs'},
+      {id:'rh_60',lbl:'NO.2 GE PRELUBE PUMP',unit:'hrs'},
+      {id:'rh_61',lbl:'NO.3 GE PRELUBE PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_air',name:'EOM R/H — Compressed Air',sub:'Main · Control · GS · Emergency',icon:'💨',tabs:[{
+    id:'rh_air_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_112',lbl:'NO.1 MAIN AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_113',lbl:'NO.2 MAIN AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_114',lbl:'EMERGENCY AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_115',lbl:'GS AIR COMPRESSOR',unit:'hrs'},
+      {id:'rh_116',lbl:'CONTROL AIR COMPRESSOR',unit:'hrs'},
+    ]}]},
+  {id:'rh_cool',name:'EOM R/H — Cooling & FW',sub:'HT/LT CFW · Boiler Feed · FWG',icon:'💧',tabs:[{
+    id:'rh_cool_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_83',lbl:'NO.1 HT CFW PUMP',unit:'hrs'},
+      {id:'rh_84',lbl:'NO.2 HT CFW PUMP',unit:'hrs'},
+      {id:'rh_80',lbl:'NO.1 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_81',lbl:'NO.2 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_82',lbl:'NO.3 LT CFW PUMP',unit:'hrs'},
+      {id:'rh_71',lbl:'FWG EJECTOR PUMP',unit:'hrs'},
+      {id:'rh_78',lbl:'NO.1 BOILER FEED WATER PUMP',unit:'hrs'},
+      {id:'rh_79',lbl:'NO.2 BOILER FEED WATER PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_lo',name:'EOM R/H — Lube Oil System',sub:'Main LO · Purifiers · Stern Tube',icon:'🛢️',tabs:[{
+    id:'rh_lo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_86',lbl:'NO.1 MAIN LO PUMP',unit:'hrs'},
+      {id:'rh_87',lbl:'NO.2 MAIN LO PUMP',unit:'hrs'},
+      {id:'rh_88',lbl:'NO.1 LO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_89',lbl:'NO.2 LO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_90',lbl:'NO.1 STERN TUBE LO PUMP',unit:'hrs'},
+      {id:'rh_91',lbl:'NO.2 STERN TUBE LO PUMP',unit:'hrs'},
+      {id:'rh_135',lbl:'NO.1 HFO PURIFIER',unit:'hrs'},
+      {id:'rh_136',lbl:'NO.2 HFO PURIFIER',unit:'hrs'},
+      {id:'rh_137',lbl:'NO.1 LO PURIFIER',unit:'hrs'},
+      {id:'rh_138',lbl:'NO.2 LO PURIFIER',unit:'hrs'},
+    ]}]},
+  {id:'rh_fo',name:'EOM R/H — Fuel Oil System',sub:'Supply · Circ · Boiler FO · Transfer',icon:'⛽',tabs:[{
+    id:'rh_fo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_92',lbl:'NO.1 FO SUPPLY PUMP',unit:'hrs'},
+      {id:'rh_93',lbl:'NO.2 FO SUPPLY PUMP',unit:'hrs'},
+      {id:'rh_94',lbl:'NO.1 FO CIRC PUMP',unit:'hrs'},
+      {id:'rh_95',lbl:'NO.2 FO CIRC PUMP',unit:'hrs'},
+      {id:'rh_96',lbl:'NO.1 HFO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_97',lbl:'NO.2 HFO PURIFIER FEED PUMP',unit:'hrs'},
+      {id:'rh_98',lbl:'NO.1 BOILER FO PUMP',unit:'hrs'},
+      {id:'rh_99',lbl:'NO.2 BOILER FO PUMP',unit:'hrs'},
+      {id:'rh_100',lbl:'NO.1 FWD HFO TRANSFER PUMP',unit:'hrs'},
+      {id:'rh_101',lbl:'NO.2 FWD HFO TRANSFER PUMP',unit:'hrs'},
+      {id:'rh_102',lbl:'NO.1 MGO FLUSHING PUMP',unit:'hrs'},
+      {id:'rh_103',lbl:'NO.2 MGO FLUSHING PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_fbgs',name:'EOM R/H — Fire, Bilge & GS',sub:'Fire · Bilge · Ballast · Spray',icon:'🚒',tabs:[{
+    id:'rh_fbgs_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_63',lbl:'NO.1 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_64',lbl:'NO.2 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_65',lbl:'NO.3 MAIN CSW PUMP',unit:'hrs'},
+      {id:'rh_69',lbl:'NO.1 FIRE, BILGE & GS PUMP',unit:'hrs'},
+      {id:'rh_70',lbl:'NO.2 FIRE, BILGE & GS PUMP',unit:'hrs'},
+      {id:'rh_72',lbl:'NO.1 BALLAST PUMP',unit:'hrs'},
+      {id:'rh_73',lbl:'NO.2 BALLAST PUMP',unit:'hrs'},
+      {id:'rh_74',lbl:'ANTI PIRACY PUMP',unit:'hrs'},
+      {id:'rh_75',lbl:'FIRE JOCKEY PUMP',unit:'hrs'},
+      {id:'rh_76',lbl:'EMERGENCY FIRE PUMP',unit:'hrs'},
+      {id:'rh_77',lbl:'WATER SPRAY PUMP',unit:'hrs'},
+      {id:'rh_139',lbl:'INCINERATOR',unit:'hrs'},
+      {id:'rh_140',lbl:'BOILER COMBUSTION',unit:'hrs'},
+      {id:'rh_141',lbl:'HYPERMIST WATER PUMP',unit:'hrs'},
+    ]}]},
+  {id:'rh_acref',name:'EOM R/H — AC & Refrigeration',sub:'AC Comp · Fridge · Package Units',icon:'❄️',tabs:[{
+    id:'rh_acref_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_117',lbl:'NO.1 AC COMPRESSOR',unit:'hrs'},
+      {id:'rh_118',lbl:'NO.2 AC COMPRESSOR',unit:'hrs'},
+      {id:'rh_119',lbl:'NO.1 FRIDGE COMPRESSOR',unit:'hrs'},
+      {id:'rh_120',lbl:'NO.2 FRIDGE COMPRESSOR',unit:'hrs'},
+      {id:'rh_121',lbl:'NO.1 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_122',lbl:'NO.1 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_123',lbl:'NO.2 ECR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_124',lbl:'NO.2 ECR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_125',lbl:'NO.1 MCC PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_126',lbl:'NO.1 MCC PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_129',lbl:'CCR PACKAGE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_130',lbl:'CCR PACKAGE UNIT COOLER COMPRESSOR',unit:'hrs'},
+      {id:'rh_131',lbl:'WHEELHOUSE UNIT COOLER FAN',unit:'hrs'},
+      {id:'rh_132',lbl:'WHEELHOUSE UNIT COOLER COMPRESSOR',unit:'hrs'},
+    ]}]},
+  {id:'rh_vent',name:'EOM R/H — Ventilation',sub:'4 × ER supply fans',icon:'🌀',tabs:[{
+    id:'rh_vent_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_107',lbl:'NO.1 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_108',lbl:'NO.2 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_109',lbl:'NO.3 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_110',lbl:'NO.4 ER VENT SUPPLY FAN',unit:'hrs'},
+      {id:'rh_111',lbl:'BOILER FD FAN',unit:'hrs'},
+    ]}]},
+  {id:'rh_cargo',name:'EOM R/H — Cargo System',sub:'Deep well · Booster · Reliq · IGG',icon:'🚢',tabs:[{
+    id:'rh_cargo_t',label:'Running Hours',icon:'⏱️',fields:[
+      {id:'rh_5',lbl:'CARGO TANK 1 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_6',lbl:'CARGO TANK 1 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_7',lbl:'CARGO TANK 2 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_8',lbl:'CARGO TANK 2 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_9',lbl:'CARGO TANK 3 DEEP WELL PUMP PORT',unit:'hrs'},
+      {id:'rh_10',lbl:'CARGO TANK 3 DEEP WELL PUMP STBD',unit:'hrs'},
+      {id:'rh_11',lbl:'NO.1 CARGO BOOSTER PUMP',unit:'hrs'},
+      {id:'rh_12',lbl:'NO.2 CARGO BOOSTER PUMP',unit:'hrs'},
+      {id:'rh_13',lbl:'NO.1 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_14',lbl:'NO.2 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_15',lbl:'NO.3 RELIQ COMPRESSOR',unit:'hrs'},
+      {id:'rh_25',lbl:'NO.1 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_26',lbl:'NO.2 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_27',lbl:'NO.3 CARGO CSW PUMP',unit:'hrs'},
+      {id:'rh_39',lbl:'NO.1 IGG BLOWER A',unit:'hrs'},
+      {id:'rh_40',lbl:'NO.2 IGG BLOWER B',unit:'hrs'},
+      {id:'rh_41',lbl:'IGG WET GAS BLOWER',unit:'hrs'},
+      {id:'rh_42',lbl:'IGG SYSTEM',unit:'hrs'},
+      {id:'rh_133',lbl:'IGG COMPRESSOR',unit:'hrs'},
+      {id:'rh_3',lbl:'NO.1 GAS FREEING FAN',unit:'hrs'},
+      {id:'rh_4',lbl:'NO.2 GAS FREEING FAN',unit:'hrs'},
+      {id:'rh_16',lbl:'BOW THRUSTER',unit:'hrs'},
+      {id:'rh_51',lbl:'NO.1 STEERING GEAR',unit:'hrs'},
+      {id:'rh_52',lbl:'NO.2 STEERING GEAR',unit:'hrs'},
+    ]}]},
 ]},
 ];
 
@@ -2303,11 +2342,19 @@ function buildForm(eq,tab){
       const lp=lastPrev(f.id);
       const pwTxt=lp!==null?lp.toFixed(1):'—';
       const pwCls=lp!==null&&v!==''&&Math.abs(parseFloat(v)-lp)>0.5?(parseFloat(v)>lp?'up':'dn'):'';
-      html_+=`<div class="fr" id="fr_${f.id}"><span class="flbl">${f.lbl}</span>
-        <input class="finp ${s==='e'?'':s} ${v!==''?trendClass(v,f.id):''}" id="fi_${f.id}" type="number" step="any" value="${v}" placeholder="—" data-fid="${f.id}" data-f='${sj(f)}' oninput="onF(this)">
-        <span class="funit">${f.unit}</span>
-        <span class="pw-val ${pwCls}">${pwTxt}</span>
-      </div>`;
+      if(f.readonly){
+        html_+=`<div class="fr fr-auto" id="fr_${f.id}"><span class="flbl">${f.lbl}</span>
+          <input class="finp finp-auto" id="fi_${f.id}" type="number" step="any" value="${v}" placeholder="—" readonly tabindex="-1">
+          <span class="funit">${f.unit}</span>
+          <span class="auto-badge">\u{1F504} Auto</span>
+        </div>`;
+      } else {
+        html_+=`<div class="fr" id="fr_${f.id}"><span class="flbl">${f.lbl}</span>
+          <input class="finp ${s==='e'?'':s} ${v!==''?trendClass(v,f.id):''}" id="fi_${f.id}" type="number" step="any" value="${v}" placeholder="—" data-fid="${f.id}" data-f='${sj(f)}' oninput="onF(this)">
+          <span class="funit">${f.unit}</span>
+          <span class="pw-val ${pwCls}">${pwTxt}</span>
+        </div>`;
+      }
     });
     html_+=`</div></div>`;
   }
@@ -2744,7 +2791,7 @@ function buildDashboard(){
   var FREQ=[
     {key:'daily',  label:'Daily Logs',    icon:'📅',color:'var(--blue)',  sub:'ER Rounds · MGPS · Stern Tube'},
     {key:'weekly', label:'Weekly Tests',  icon:'📊',color:'var(--warn)',  sub:'Lube Oil · Boiler · Cooling'},
-    {key:'monthly',label:'Monthly Logs',  icon:'📆',color:'var(--ok-tx)',sub:'Scavenge · Performance · Inventory'},
+    {key:'monthly',label:'Monthly Logs',  icon:'📆',color:'var(--ok-tx)',sub:'Scavenge · Performance · Inventory · EOM Running Hours'},
     {key:'rh',     label:'Running Hours', icon:'⏱️', color:'#a855f7',    sub:'141 equipment items'},
   ];
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">';
