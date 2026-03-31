@@ -5,6 +5,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+// Isolate EOM tables in their own schema on the consolidated DB
+pool.on('connect', client => { client.query('SET search_path TO eom, public'); });
 
 async function initDB() {
   const client = await pool.connect();
@@ -292,3 +294,4 @@ async function addUMSTables() {
   } finally { client.release(); }
 }
 module.exports.addUMSTables = addUMSTables;
+✅ EOM db.js patched
