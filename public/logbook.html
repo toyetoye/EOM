@@ -2660,7 +2660,8 @@ function buildDashboard(){
   var cyc_alerts=CYCLONE_STATUS?[1,2,3].filter(function(n){return CYCLONE_STATUS[n]&&(CYCLONE_STATUS[n].alert||CYCLONE_STATUS[n].warning);}).length:0;
   var today=document.getElementById('log_date')?document.getElementById('log_date').value:(new Date().toISOString().slice(0,10));
   var de=document.getElementById('de_select');
-  var deName=(de&&de.value&&de.options[de.selectedIndex])?de.options[de.selectedIndex].text:'Not selected';
+  var _storedDE=getSelectedDE();
+  var deName=_storedDE?_storedDE.label:((de&&de.value&&de.options[de.selectedIndex])?de.options[de.selectedIndex].text:'Not selected');
   var h='';
 
   // Header row
