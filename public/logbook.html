@@ -869,6 +869,8 @@ function applySelectedDE(de){
   // 3. Update the D/E label in the topbar and logbook header
   var deLabel = document.getElementById('de-active-label');
   if(deLabel) deLabel.textContent = de.label;
+  // 4. Re-render dashboard so subtitle line shows selected D/E immediately
+  if(typeof showDashboard === 'function') showDashboard();
 }
 
 function restoreSelectedDE(){
