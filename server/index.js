@@ -57,15 +57,21 @@ app.get('*', (req, res) => {
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3002;
 
-initDB()
-  .then(() => addUMSTables())
-  .then(() => {
-    app.listen(PORT, () => console.log(`EOM backend on :${PORT}`));
-  })
-  .catch(err => {
-    console.error('Failed to initialise DB:', err.message);
-    process.exit(1);
-  });
+// Start listening immediately so healthcheck passes while DB initialises
+app.listen(PORT, () => console.log(`EOM backend on :${PORT}`));
+
+// Initialise DB in background — retries on failure
+(async function bootDB(attempt) {
+  try {
+    await initDB();
+    await addUMSTables();
+    console.log('EOM DB initialised');
+  } catch (err) {
+    console.error(`DB init attempt ${attempt} failed: ${err.message}`);
+    if (attempt < 10) setTimeout(() => bootDB(attempt + 1), 3000 * attempt);
+    else { console.error('DB init failed after 10 attempts — exiting'); process.exit(1); }
+  }
+})(1);
 
 // ── AI DIAGNOSTIC PROXY ───────────────────────────────────────────────────────
 // POST /api/ai/diagnose — proxies to Anthropic so we avoid browser CORS
