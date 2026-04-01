@@ -12,6 +12,26 @@ async function initDB() {
   const client = await pool.connect();
   try {
 
+    // Ensure primary keys exist on migrated tables (migration may have omitted them)
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'eom_users'::regclass AND contype = 'p') THEN
+          ALTER TABLE eom_users ADD PRIMARY KEY (id); END IF;
+      END $$
+    `).catch(() => {});
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'eom_vessels'::regclass AND contype = 'p') THEN
+          ALTER TABLE eom_vessels ADD PRIMARY KEY (id); END IF;
+      END $$
+    `).catch(() => {});
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'eom_watches'::regclass AND contype = 'p') THEN
+          ALTER TABLE eom_watches ADD PRIMARY KEY (id); END IF;
+      END $$
+    `).catch(() => {});
+
     await client.query('BEGIN');
 
     await client.query(`
