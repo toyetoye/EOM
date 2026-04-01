@@ -294,4 +294,3 @@ async function addUMSTables() {
   } finally { client.release(); }
 }
 module.exports.addUMSTables = addUMSTables;
-✅ EOM db.js patched
