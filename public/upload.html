@@ -11,7 +11,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 .header{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px}
-.logo{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.logo{width:0;height:0;overflow:hidden;background:transparent;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
 .htitle{font-size:14px;font-weight:600}
 .hbtn{margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-block}
 .container{max-width:900px;margin:0 auto;padding:32px 20px}
@@ -77,7 +77,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:6px}
 </head>
 <body>
 <div class="header">
-  <img src="/forcap-logo.png" alt="FORCAP" style="height:64px;width:auto;margin:0 auto 12px;display:block"/>
+  <img src="/forcap-logo.png" alt="FORCAP" style="height:30px;width:auto;vertical-align:middle"/>
   <span class="htitle">FORCAP — Data Import</span>
   <a class="hbtn" href="/inventory.html">📊 Inventory Analytics</a><a class="hbtn" href="/logbook.html">← Back to Logbook</a>
 </div>
