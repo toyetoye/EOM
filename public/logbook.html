@@ -21,7 +21,7 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 /* TOPBAR */
 .topbar{height:56px;background:var(--app);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:12px;flex-shrink:0;box-shadow:var(--shadow);z-index:20;transition:background .2s;position:relative}
 .brand{display:flex;align-items:center;gap:8px;padding-right:14px;border-right:1px solid var(--line)}
-.logo{width:36px;height:36px;background:var(--blue2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:-.5px;box-shadow:0 2px 8px rgba(18,68,184,.3)}
+.logo{width:0;height:0;overflow:hidden;background:var(--blue2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:-.5px;box-shadow:0 2px 8px rgba(18,68,184,.3)}
 .brand-txt{font-size:16px;font-weight:700;letter-spacing:-.4px}
 .vessel-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surface2);border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--t2);font-weight:500;font-family:var(--font)}
 .run-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
@@ -47,7 +47,7 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 .left{background:var(--sidebar);border-right:none;display:flex;flex-direction:column;overflow:hidden;transition:background .2s;box-shadow:4px 0 20px rgba(0,0,0,0.2)}
 /* Logo block — matches UiUX blue accent header */
 .left-logo{padding:16px 16px 14px;border-bottom:1px solid var(--sidebar-line);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.02)}
-.left-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px;box-shadow:0 3px 10px rgba(18,100,216,.4)}
+.left-logo-icon{width:36px;height:36px;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px;box-shadow:0 3px 10px rgba(18,100,216,.4)}
 .left-logo-txt{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--font)}
 .left-logo-sub{font-size:10px;color:var(--sidebar-t3);margin-top:1px;font-family:var(--font)}
 /* Nav section label */
@@ -511,8 +511,8 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
 <!-- TOPBAR — single FORCAP logo, no duplicate -->
 <div class="topbar">
   <div class="brand">
-    <img src="/forcap-logo.png" alt="FORCAP" style="height:64px;width:auto;margin:0 auto 12px;display:block"/>
-    <div class="brand-txt"><img src="/forcap-logo.png" alt="FORCAP" style="height:28px;width:auto;vertical-align:middle"/></div>
+    <img src="/forcap-logo.png" alt="FORCAP" style="height:28px;width:auto;vertical-align:middle"/>
+    <div class="brand-txt">FORCAP LogBook</div>
   </div>
   <div class="vessel-chip"><div class="run-dot"></div><span id="vessel-chip-txt">Loading…</span><select id="vessel-selector" style="display:none;margin-left:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--t1,#f1f5f9);font-family:inherit;font-size:11px;font-weight:600;padding:4px 8px;border-radius:8px;outline:none;cursor:pointer;max-width:220px" onchange="onVesselSelectorChange(this.value)"></select></div>
   <div class="topbar-mid">
