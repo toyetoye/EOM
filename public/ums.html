@@ -12,7 +12,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;flex-direction:column}
 .hdr{height:52px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;print-color-adjust:exact}
-.logo{width:30px;height:30px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.logo{width:0;height:0;overflow:hidden;background:transparent;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
 .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 .hbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:.15s}
 .hbtn:hover{background:var(--sf2);color:var(--t1)}
@@ -118,7 +118,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 </head>
 <body>
 <div class="hdr">
-  <img src="/forcap-logo.png" alt="FORCAP" style="height:64px;width:auto;margin:0 auto 12px;display:block"/>
+  <img src="/forcap-logo.png" alt="FORCAP" style="height:30px;width:auto;vertical-align:middle"/>
   <span style="font-size:14px;font-weight:700">UMS Checklist</span>
   <span id="vessel-lbl" style="font-size:12px;color:var(--t2)"></span>
   <div class="hdr-right">
