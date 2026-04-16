@@ -40,6 +40,37 @@ app.use('/api/ums',      require('./routes/umsRoutes'));
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+
+// ── ONE-TIME PASSWORD RESET ── remove after use ──────────────────────────────
+app.get('/api/setup/reset-all', async (req, res) => {
+  const bcrypt = require('bcryptjs');
+  try {
+    const resets = [
+      { username: 'admin',              password: 'Admin@2025!',  role: 'admin' },
+      { username: 'superintendent',     password: 'Super@2025!',  role: 'superintendent' },
+      { username: 'yohanna james',      password: 'Super@2025!',  role: 'superintendent' },
+      { username: 'alfred temile 10',   password: 'Vessel@2025!', role: 'vessel' },
+      { username: 'at10 chief engineer',password: 'SMT@2025!',    role: 'smt' },
+      { username: 'lpg alfred temile',  password: 'Vessel@2025!', role: 'vessel' },
+    ];
+    const results = [];
+    for (const u of resets) {
+      const hash = await bcrypt.hash(u.password, 10);
+      const r = await pool.query(
+        'UPDATE eom_users SET password=$1, active=true WHERE LOWER(username)=LOWER($2) RETURNING id,username,role',
+        [hash, u.username]
+      );
+      if (r.rows.length) {
+        results.push({ username: r.rows[0].username, status: 'reset', password: u.password });
+      } else {
+        results.push({ username: u.username, status: 'not found' });
+      }
+    }
+    res.json({ ok: true, results });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// ── END ONE-TIME ─────────────────────────────────────────────────────────────
+
 // ── SERVE FRONTEND ────────────────────────────────────────────────────────────
 const PUBLIC = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC));
