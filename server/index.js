@@ -64,12 +64,18 @@ app.listen(PORT, () => console.log(`EOM backend on :${PORT}`));
 (async function bootDB(attempt) {
   try {
     await initDB();
-    await addUMSTables();
-    console.log('EOM DB initialised');
+    console.log('EOM DB core tables ready');
   } catch (err) {
     console.error(`DB init attempt ${attempt} failed: ${err.message}`);
-    if (attempt < 10) setTimeout(() => bootDB(attempt + 1), 3000 * attempt);
-    else { console.error('DB init failed after 10 attempts — exiting'); process.exit(1); }
+    if (attempt < 10) { setTimeout(() => bootDB(attempt + 1), 5000); return; }
+    else { console.error('DB init failed after 10 attempts — server will run in degraded mode'); return; }
+  }
+  // UMS tables are optional — failure here should NOT crash the server
+  try {
+    await addUMSTables();
+    console.log('EOM UMS tables ready');
+  } catch (err) {
+    console.error('UMS table init failed (non-fatal):', err.message);
   }
 })(1);
 
