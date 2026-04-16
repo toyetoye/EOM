@@ -43,34 +43,6 @@ app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOSt
 
 
 
-// ── TEMP SCHEMA DIAGNOSTIC — remove after use ────────────────────────────────
-app.get('/api/setup/schemacheck', async (req, res) => {
-  try {
-    const results = {};
-    // Check row counts in both public and eom schemas for key tables
-    for (const schema of ['public', 'eom']) {
-      results[schema] = {};
-      for (const table of ['eom_watches','eom_watch_readings','eom_users','eom_vessels','eom_defects']) {
-        try {
-          const r = await pool.query(
-            `SELECT COUNT(*) as cnt FROM ${schema}.${table}`
-          );
-          results[schema][table] = parseInt(r.rows[0].cnt);
-        } catch(e) {
-          results[schema][table] = `missing: ${e.message.split('\n')[0]}`;
-        }
-      }
-    }
-    // Also check which schemas exist
-    const schemas = await pool.query(
-      `SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog','information_schema','pg_toast') ORDER BY schema_name`
-    );
-    results._schemas = schemas.rows.map(r => r.schema_name);
-    res.json(results);
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-// ── END TEMP ──────────────────────────────────────────────────────────────────
-
 // ── SERVE FRONTEND ────────────────────────────────────────────────────────────
 const PUBLIC = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC));
