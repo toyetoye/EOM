@@ -41,6 +41,24 @@ app.use('/api/ums',      require('./routes/umsRoutes'));
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 
+
+// ── TEMP DB DIAGNOSTIC — remove after use ────────────────────────────────────
+app.get('/api/setup/dbinfo', async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT
+        current_database() AS db_name,
+        inet_server_addr() AS host,
+        inet_server_port() AS port,
+        (SELECT COUNT(*) FROM eom_users) AS user_count,
+        (SELECT COUNT(*) FROM eom_vessels) AS vessel_count,
+        (SELECT MAX(created_at) FROM eom_users) AS newest_user
+    `);
+    res.json(r.rows[0]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// ── END TEMP ──────────────────────────────────────────────────────────────────
+
 // ── SERVE FRONTEND ────────────────────────────────────────────────────────────
 const PUBLIC = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC));
