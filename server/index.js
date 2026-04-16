@@ -11,6 +11,7 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     const allowed = [
+      'https://logbook.forcap.io',
       'https://eom.forcap.io',
       'https://forcap.io',
       // Railway preview URLs
