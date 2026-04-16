@@ -301,7 +301,7 @@ router.get('/fleet-overview', requireAuth, requireRole('admin', 'superintendent'
   try {
     const { rows } = await pool.query(`
       SELECT
-        v.id, v.name, v.imo, v.type,
+        v.id, v.name, v.imo, v.vessel_type AS type,
         (SELECT COUNT(*) FROM eom_watches w WHERE w.vessel_id=v.id AND w.watch_date=CURRENT_DATE) as watches_today,
         (SELECT MAX(w.watch_date) FROM eom_watches w WHERE w.vessel_id=v.id AND w.status IN ('submitted','locked')) as last_submission,
         (SELECT COUNT(*) FROM eom_readings r
