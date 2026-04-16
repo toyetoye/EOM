@@ -505,6 +505,11 @@ body{font-family:var(--font);background:var(--canvas);color:var(--t1);font-size:
   cursor:pointer}
 .db-chart-title{font-size:11px;font-weight:700;color:var(--t1)}
 .db-chart-sub{font-size:10px;color:var(--t3)}
+
+/* Option elements in all dropdowns — solid bg + bright text so they're never greyed out */
+select option{background:#0f172a;color:#f1f5f9;font-weight:500;padding:6px 10px}
+select option:hover,select option:checked{background:#1e40af;color:#ffffff}
+select option:disabled{color:#64748b;background:#0f172a}
 </style>
 </head>
 <body>
